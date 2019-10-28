@@ -82,6 +82,10 @@ public class XmlEntity implements Value {
         return (isNull(value)) ? null : emptyIfNull(value.getValue());
     }
 
+    public boolean hasValue() {
+        return !CheckerForEmptiness.isEmpty(value);
+    }
+
     public XmlValue<?> getXmlValue() {
         return value;
     }

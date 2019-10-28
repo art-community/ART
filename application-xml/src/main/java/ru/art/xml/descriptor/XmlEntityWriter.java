@@ -18,25 +18,34 @@
 
 package ru.art.xml.descriptor;
 
-import lombok.experimental.*;
-import ru.art.entity.*;
-import ru.art.entity.constants.*;
-import ru.art.xml.exception.*;
-import static java.nio.charset.StandardCharsets.*;
-import static java.util.Objects.*;
-import static ru.art.core.checker.CheckerForEmptiness.*;
-import static ru.art.core.constants.StringConstants.*;
-import static ru.art.core.context.Context.*;
-import static ru.art.core.extension.FileExtensions.*;
-import static ru.art.logging.LoggingModule.*;
-import static ru.art.xml.constants.XmlDocumentConstants.*;
-import static ru.art.xml.constants.XmlLoggingMessages.*;
-import static ru.art.xml.constants.XmlMappingExceptionMessages.*;
-import static ru.art.xml.module.XmlModule.*;
-import javax.xml.stream.*;
-import java.io.*;
-import java.nio.file.*;
-import java.util.*;
+import lombok.experimental.UtilityClass;
+import ru.art.entity.XmlEntity;
+import ru.art.entity.XmlValue;
+import ru.art.xml.exception.XmlMappingException;
+
+import javax.xml.stream.XMLOutputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamWriter;
+import java.io.ByteArrayOutputStream;
+import java.io.OutputStream;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
+import static ru.art.core.checker.CheckerForEmptiness.isEmpty;
+import static ru.art.core.constants.StringConstants.EMPTY_STRING;
+import static ru.art.core.constants.StringConstants.LINE_DELIMITER;
+import static ru.art.core.context.Context.contextConfiguration;
+import static ru.art.core.extension.FileExtensions.writeFileQuietly;
+import static ru.art.entity.constants.ValueType.XmlValueType.CDATA;
+import static ru.art.logging.LoggingModule.loggingModule;
+import static ru.art.xml.constants.XmlDocumentConstants.XML_VERSION;
+import static ru.art.xml.constants.XmlLoggingMessages.XML_GENERATOR_CLOSING_ERROR;
+import static ru.art.xml.constants.XmlMappingExceptionMessages.XML_FACTORY_IS_NULL;
+import static ru.art.xml.module.XmlModule.xmlModule;
 
 @UtilityClass
 public class XmlEntityWriter {
@@ -89,17 +98,19 @@ public class XmlEntityWriter {
 
     private static void writeAllElements(XMLStreamWriter xmlStreamWriter, XmlEntity xmlEntity) throws XMLStreamException {
         writeStartDocument(xmlStreamWriter);
-        writeXmlEntity(xmlStreamWriter, xmlEntity);
+        writeXmlEntity(xmlStreamWriter, xmlEntity, 0);
         writeEndDocument(xmlStreamWriter);
     }
 
-    private static void writeXmlEntity(XMLStreamWriter xmlStreamWriter, XmlEntity entity) throws XMLStreamException {
+    private static void writeXmlEntity(XMLStreamWriter xmlStreamWriter, XmlEntity entity, int depth) throws XMLStreamException {
         //gather all child elements
         List<XmlEntity> children = entity.getChildren();
         if (isEmpty(entity.getTag())) {
             for (XmlEntity xmlEntity : children) {
                 if (isEmpty(xmlEntity)) continue;
-                writeXmlEntity(xmlStreamWriter, xmlEntity);
+                xmlStreamWriter.writeCharacters(LINE_DELIMITER);
+                writeTabs(xmlStreamWriter, depth + 1);
+                writeXmlEntity(xmlStreamWriter, xmlEntity, depth + 1);
             }
             return;
         }
@@ -109,15 +120,15 @@ public class XmlEntityWriter {
         writeNamespaces(xmlStreamWriter, entity);
         writeAttributes(xmlStreamWriter, entity);
 
-        //gather elements sequence
         for (XmlEntity xmlEntity : children) {
             if (isEmpty(xmlEntity)) continue;
-            writeXmlEntity(xmlStreamWriter, xmlEntity);
+            xmlStreamWriter.writeCharacters(LINE_DELIMITER);
+            writeTabs(xmlStreamWriter, depth + 1);
+            writeXmlEntity(xmlStreamWriter, xmlEntity, depth + 1);
         }
         writeValue(xmlStreamWriter, entity);
 
-
-        writeEndElement(xmlStreamWriter);
+        writeEndElement(xmlStreamWriter, depth, !entity.hasValue());
     }
 
     private static void writeValue(XMLStreamWriter xmlStreamWriter, XmlEntity entity) throws XMLStreamException {
@@ -132,12 +143,19 @@ public class XmlEntityWriter {
         String namespace = entity.getNamespace();
         String prefix = entity.getPrefix();
 
-        xmlStreamWriter.writeCharacters(NEW_LINE);
         if (!isEmpty(prefix) && !isEmpty(namespace)) {
             xmlStreamWriter.writeStartElement(prefix, entity.getTag(), namespace);
             return;
         }
         xmlStreamWriter.writeStartElement(entity.getTag());
+    }
+
+    private static void writeTabs(XMLStreamWriter xmlStreamWriter, int depth) throws XMLStreamException {
+        StringBuilder stringBuilder = new StringBuilder();
+        for (int i = 0; i < depth; i++) {
+            stringBuilder.append("\t");
+        }
+        xmlStreamWriter.writeCharacters(stringBuilder.toString());
     }
 
     private static void writeNamespaces(XMLStreamWriter xmlStreamWriter, XmlEntity entity) throws XMLStreamException {
@@ -163,7 +181,7 @@ public class XmlEntityWriter {
 
     private static void writeCData(XMLStreamWriter xmlStreamWriter, XmlEntity entity) throws XMLStreamException {
         XmlValue<?> xmlValue = entity.getXmlValue();
-        if (ValueType.XmlValueType.CDATA.equals(xmlValue.getType())) {
+        if (CDATA.equals(xmlValue.getType())) {
             String cDataValue = writeXml(xmlModule().getXmlOutputFactory(), (XmlEntity) xmlValue.getValue());
 
             if (!isEmpty(xmlValue)) {
@@ -172,12 +190,18 @@ public class XmlEntityWriter {
         }
     }
 
-    private static void writeEndElement(XMLStreamWriter xmlStreamWriter) throws XMLStreamException {
+    private static void writeEndElement(XMLStreamWriter xmlStreamWriter, int depth, boolean isValueEmpty) throws XMLStreamException {
+        if (isValueEmpty) {
+            xmlStreamWriter.writeCharacters(LINE_DELIMITER);
+            writeTabs(xmlStreamWriter, depth);
+        }
+
         xmlStreamWriter.writeEndElement();
     }
 
     private static void writeStartDocument(XMLStreamWriter xmlStreamWriter) throws XMLStreamException {
         xmlStreamWriter.writeStartDocument(UTF_8.name(), XML_VERSION);
+        xmlStreamWriter.writeCharacters(LINE_DELIMITER);
         xmlStreamWriter.writeCharacters(LINE_DELIMITER);
     }
 
