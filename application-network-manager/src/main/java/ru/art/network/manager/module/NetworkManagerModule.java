@@ -59,11 +59,8 @@ public class NetworkManagerModule implements Module<NetworkManagerModuleConfigur
     public void onLoad() {
         asynchronousPeriod(commonRunnableTask(ModuleEndpointsRefresher::refreshModuleEndpoints), of(networkManagerModule().getRefreshRateSeconds(), SECONDS));
         asynchronousPeriod(commonRunnableTask(ApplicationStateClient::connect), of(networkManagerModule().getConnectionPingRateSeconds(), SECONDS));
-        int statePort = networkManagerModule().getStatePort();
-        String stateHost = networkManagerModule().getStateHost();
-        String statePath = networkManagerModule().getStatePath();
         serviceModuleState().getServiceRegistry()
-                .registerService(new NetworkServiceProxySpecification(statePath, stateHost, statePort))
-                .registerService(new LockServiceProxySpecification(statePath, stateHost, statePort));
+                .registerService(new NetworkServiceGrpcCommunicationSpec())
+                .registerService(new LockServiceProxySpecification());
     }
 }

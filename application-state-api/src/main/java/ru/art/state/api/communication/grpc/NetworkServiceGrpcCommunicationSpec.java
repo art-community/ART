@@ -26,6 +26,7 @@ import ru.art.service.exception.*;
 import static ru.art.core.caster.Caster.*;
 import static ru.art.entity.PrimitiveMapping.*;
 import static ru.art.grpc.client.communicator.GrpcCommunicator.*;
+import static ru.art.grpc.client.module.GrpcClientModule.grpcClientModule;
 import static ru.art.state.api.constants.StateApiConstants.NetworkServiceConstants.Methods.*;
 import static ru.art.state.api.constants.StateApiConstants.NetworkServiceConstants.*;
 import static ru.art.state.api.mapping.ClusterProfileRequestResponseMapper.ClusterProfileRequestMapper.*;
@@ -34,15 +35,13 @@ import static ru.art.state.api.mapping.ModuleConnectionRequestMapper.*;
 
 @Getter
 @RequiredArgsConstructor
-public class NetworkServiceProxySpecification implements GrpcCommunicationSpecification {
+public class NetworkServiceGrpcCommunicationSpec implements GrpcCommunicationSpecification {
     private final String serviceId = NETWORK_COMMUNICATION_SERVICE_ID;
-    private final String path;
-    private final String host;
-    private final Integer port;
 
     @Getter(lazy = true)
     @Accessors(fluent = true)
-    private final GrpcCommunicator getClusterProfile = grpcCommunicator(host, port, path)
+    private final GrpcCommunicator getClusterProfile = grpcCommunicator(grpcClientModule()
+            .getCommunicationTargetConfiguration(serviceId))
             .serviceId(NETWORK_SERVICE_ID)
             .methodId(GET_CLUSTER_PROFILE)
             .requestMapper(fromClusterProfileRequest)
@@ -50,28 +49,32 @@ public class NetworkServiceProxySpecification implements GrpcCommunicationSpecif
 
     @Getter(lazy = true)
     @Accessors(fluent = true)
-    private final GrpcCommunicator connect = grpcCommunicator(host, port, path)
+    private final GrpcCommunicator connect = grpcCommunicator(grpcClientModule()
+            .getCommunicationTargetConfiguration(serviceId))
             .serviceId(NETWORK_SERVICE_ID)
             .requestMapper(fromModuleConnectionRequest)
             .methodId(CONNECT);
 
     @Getter(lazy = true)
     @Accessors(fluent = true)
-    private final GrpcCommunicator incrementSession = grpcCommunicator(host, port, path)
+    private final GrpcCommunicator incrementSession = grpcCommunicator(grpcClientModule()
+            .getCommunicationTargetConfiguration(serviceId))
             .serviceId(NETWORK_SERVICE_ID)
             .methodId(INCREMENT_SESSION)
             .requestMapper(fromModuleConnectionRequest);
 
     @Getter(lazy = true)
     @Accessors(fluent = true)
-    private final GrpcCommunicator decrementSession = grpcCommunicator(host, port, path)
+    private final GrpcCommunicator decrementSession = grpcCommunicator(grpcClientModule()
+            .getCommunicationTargetConfiguration(serviceId))
             .serviceId(NETWORK_SERVICE_ID)
             .methodId(DECREMENT_SESSION)
             .requestMapper(fromModuleConnectionRequest);
 
     @Getter(lazy = true)
     @Accessors(fluent = true)
-    private final GrpcCommunicator getSessions = grpcCommunicator(host, port, path)
+    private final GrpcCommunicator getSessions = grpcCommunicator(grpcClientModule()
+            .getCommunicationTargetConfiguration(serviceId))
             .serviceId(NETWORK_SERVICE_ID)
             .methodId(GET_SESSIONS)
             .requestMapper(fromModuleConnectionRequest)

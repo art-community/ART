@@ -28,7 +28,7 @@ import java.util.*;
 public interface Specification {
     String getServiceId();
 
-    <P, R> R executeMethod(String methodId, P request);
+    <RequestType, ResponseType> ResponseType executeMethod(String methodId, RequestType request);
 
     default DeactivationConfig getDeactivationConfig() {
         return serviceModule().getDeactivationConfigurations().getOrDefault(getServiceId(), DeactivationConfig.builder().build());

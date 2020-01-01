@@ -24,7 +24,7 @@ import static java.util.Objects.*;
 
 @UtilityClass
 public class ServiceResponseDataExtractor {
-    public static <T> T extractResponseDataChecked(ServiceResponse<T> response) {
+    public static <ResponseType> ResponseType extractResponseDataChecked(ServiceResponse<ResponseType> response) {
         if (nonNull(response.getServiceException())) {
             return null;
         }

@@ -25,33 +25,27 @@ import ru.art.grpc.client.specification.*;
 import ru.art.service.exception.*;
 import static ru.art.core.caster.Caster.*;
 import static ru.art.grpc.client.communicator.GrpcCommunicator.*;
+import static ru.art.grpc.client.module.GrpcClientModule.grpcClientModule;
 import static ru.art.state.api.constants.StateApiConstants.LockServiceConstants.*;
 import static ru.art.state.api.constants.StateApiConstants.LockServiceConstants.Methods.*;
 import static ru.art.state.api.mapping.LockRequestMapper.*;
 
 @Getter
 public class LockServiceProxySpecification implements GrpcCommunicationSpecification {
-    private final String path;
-    private final String host;
-    private final Integer port;
     private final String serviceId = LOCK_SERVICE_ID;
-
-    public LockServiceProxySpecification(String path, String host, Integer port) {
-        this.path = path;
-        this.host = host;
-        this.port = port;
-    }
 
     @Getter(lazy = true)
     @Accessors(fluent = true)
-    private final GrpcCommunicator lock = grpcCommunicator(host, port, path)
+    private final GrpcCommunicator lock = grpcCommunicator(grpcClientModule()
+            .getCommunicationTargetConfiguration(serviceId))
             .serviceId(LOCK_SERVICE_ID)
             .methodId(LOCK)
             .requestMapper(fromLockRequest);
 
     @Getter(lazy = true)
     @Accessors(fluent = true)
-    private final GrpcCommunicator unlock = grpcCommunicator(host, port, path)
+    private final GrpcCommunicator unlock = grpcCommunicator(grpcClientModule()
+            .getCommunicationTargetConfiguration(serviceId))
             .serviceId(LOCK_SERVICE_ID)
             .methodId(UNLOCK)
             .requestMapper(fromLockRequest);
