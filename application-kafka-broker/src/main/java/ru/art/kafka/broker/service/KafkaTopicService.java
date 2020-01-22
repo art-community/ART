@@ -13,7 +13,7 @@ public interface KafkaTopicService {
     }
 
     // topic
-    static void deleteTopic() {
+    static void deleteTopic(String topic) {
 
     }
 }
