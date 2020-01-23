@@ -22,7 +22,6 @@ import ru.art.kafka.broker.configuration.KafkaBrokerModuleConfiguration.*;
 import ru.art.kafka.broker.constants.KafkaBrokerModuleConstants.*;
 import ru.art.kafka.broker.embedded.*;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import static java.util.Objects.*;
@@ -46,11 +45,11 @@ public class KafkaBrokerAgileConfiguration extends KafkaBrokerModuleDefaultConfi
 
     @Override
     public void refresh() {
-        Map<String, KafkaTopicConfiguration> kafkaDefaultTopics = configInnerMap(KAFKA_DEFAULT_TOPIC_SECTION_ID, (key, config) ->
+        Map<String, KafkaTopicConfiguration> kafkaDefaultTopics = configInnerMap(KAFKA_TOPICS_SECTION_ID, (key, config) ->
                 KafkaTopicConfiguration.topicConfiguration()
                         .partitions(config.getInt(PARTITIONS))
                         .retention(config.getLong(RETENTION))
-                        .build(), new HashMap<>());
+                        .build(), super.getZookeeperConfiguration().getKafkaDefaultTopics());
         ZookeeperConfiguration defaultZookeeperConfiguration = super.getZookeeperConfiguration();
         ZookeeperConfiguration newZookeeperConfiguration = ZookeeperConfiguration.builder()
                 .logsDirectory(configString(KAFKA_BROKER_ZOOKEEPER_SECTION_ID, LOGS_DIRECTORY, defaultZookeeperConfiguration.getLogsDirectory()))

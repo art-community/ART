@@ -19,7 +19,7 @@ package ru.art.config.extensions.kafka;
 public interface KafkaConfigKeys {
     String KAFKA_BROKER_SECTION_ID = "kafka.broker";
     String KAFKA_CONSUMER_SECTION_ID = "kafka.consumer";
-    String KAFKA_DEFAULT_TOPIC_SECTION_ID = "kafka.topics";
+    String KAFKA_TOPICS_SECTION_ID = "kafka.topics";
     String STREAMS_SECTION_ID = "streams";
     String KAFKA_PRODUCERS_SECTION_ID = "kafka.producers";
     String KAFKA_BROKER_ZOOKEEPER_SECTION_ID = "kafka.broker.zookeeper";

@@ -29,11 +29,7 @@ import static ru.art.core.extension.NullCheckingExtensions.*;
 import static ru.art.core.wrapper.ExceptionWrapper.*;
 import static ru.art.kafka.broker.configuration.KafkaBrokerModuleConfiguration.*;
 import static ru.art.kafka.broker.constants.KafkaBrokerModuleConstants.*;
-/*
- * topic - при старте брокера из конфига получать список топиков + проверял его наличие, если нет, то создать.
- * get, create, delete topics [CreateTopicCommand]
- * http-service, добавляющий тематики
- */
+
 @Getter
 public class KafkaBrokerModule implements Module<KafkaBrokerModuleConfiguration, KafkaBrokerModuleState> {
     @Getter(lazy = true, value = PRIVATE)
