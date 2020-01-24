@@ -20,7 +20,6 @@ import kafka.admin.RackAwareMode;
 import kafka.log.LogConfig;
 import kafka.server.*;
 import kafka.zk.AdminZkClient;
-import kafka.zk.KafkaZkClient;
 import lombok.*;
 import ru.art.kafka.broker.configuration.*;
 import scala.collection.immutable.List;
@@ -39,14 +38,15 @@ import static scala.Option.*;
 import java.util.*;
 
 @Getter
-@RequiredArgsConstructor(access = PRIVATE)
-@AllArgsConstructor(access = PRIVATE)
+@Builder(access = PRIVATE)
+@Setter(AccessLevel.PRIVATE)
 public class EmbeddedKafkaBroker {
     private final KafkaBrokerConfiguration kafkaBrokerConfiguration;
     private final ZookeeperConfiguration zookeeperConfiguration;
     private final ZookeeperInitializationMode zookeeperInitializationMode;
     private final KafkaServer server;
     private EmbeddedZookeeper embeddedZookeeper;
+    private AdminZkClient adminZookeeperClient;
 
     /**
      *
@@ -66,27 +66,30 @@ public class EmbeddedKafkaBroker {
         properties.putAll(kafkaBrokerConfiguration.getAdditionalProperties());
         KafkaServer kafkaServer = new KafkaServer(new KafkaConfig(properties), SYSTEM, empty(), List.empty());
         if (zookeeperInitializationMode == ON_KAFKA_BROKER_INITIALIZATION) {
-            EmbeddedKafkaBroker broker = new EmbeddedKafkaBroker(kafkaBrokerConfiguration,
-                    zookeeperConfiguration,
-                    zookeeperInitializationMode,
-                    kafkaServer,
-                    startZookeeper(zookeeperConfiguration));
+            EmbeddedKafkaBroker broker = builder().kafkaBrokerConfiguration(kafkaBrokerConfiguration)
+                    .zookeeperConfiguration(zookeeperConfiguration)
+                    .zookeeperInitializationMode(zookeeperInitializationMode)
+                    .server(kafkaServer)
+                    .embeddedZookeeper(startZookeeper(zookeeperConfiguration))
+                    .build();
             kafkaBrokerModuleState().setBroker(broker);
             kafkaServer.startup();
+            broker.setAdminZookeeperClient(new AdminZkClient(kafkaServer.zkClient()));
 
             if (isNotEmpty(zookeeperConfiguration.getKafkaDefaultTopics())) {
-                KafkaZkClient kafkaZkClient = kafkaServer.zkClient();
-                AdminZkClient adminZkClient = new AdminZkClient(kafkaZkClient);
                 for (Map.Entry<String, KafkaTopicConfiguration> topic: zookeeperConfiguration.getKafkaDefaultTopics().entrySet()) {
                     Properties topicProperties = new Properties();
                     topicProperties.put(LogConfig.RetentionMsProp(), String.valueOf(topic.getValue().getRetention()));
-                    adminZkClient.createTopic(topic.getKey(), topic.getValue().getPartitions(), DEFAULT_TOPIC_REPLICATION_FACTOR, topicProperties, RackAwareMode.Disabled$.MODULE$);
+                    broker.getAdminZookeeperClient().createTopic(topic.getKey(), topic.getValue().getPartitions(), DEFAULT_TOPIC_REPLICATION_FACTOR, topicProperties, RackAwareMode.Disabled$.MODULE$);
                 }
-
             }
             return broker;
         }
-        EmbeddedKafkaBroker broker = new EmbeddedKafkaBroker(kafkaBrokerConfiguration, zookeeperConfiguration, zookeeperInitializationMode, kafkaServer);
+        EmbeddedKafkaBroker broker = builder().kafkaBrokerConfiguration(kafkaBrokerConfiguration)
+                .zookeeperConfiguration(zookeeperConfiguration)
+                .zookeeperInitializationMode(zookeeperInitializationMode)
+                .server(kafkaServer)
+                .build();
         kafkaBrokerModuleState().setBroker(broker);
         kafkaServer.startup();
         return broker;
