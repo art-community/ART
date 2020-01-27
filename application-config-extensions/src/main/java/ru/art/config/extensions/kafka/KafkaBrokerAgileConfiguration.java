@@ -45,8 +45,8 @@ public class KafkaBrokerAgileConfiguration extends KafkaBrokerModuleDefaultConfi
 
     @Override
     public void refresh() {
-        Map<String, KafkaTopicConfiguration> kafkaDefaultTopics = configInnerMap(KAFKA_TOPICS_SECTION_ID, (key, config) ->
-                KafkaTopicConfiguration.topicConfiguration()
+        Map<String, KafkaTopicProperties> kafkaDefaultTopics = configInnerMap(KAFKA_TOPICS_SECTION_ID, (key, config) ->
+                KafkaTopicProperties.topicProperties()
                         .partitions(config.getInt(PARTITIONS))
                         .retention(config.getLong(RETENTION))
                         .build(), super.getZookeeperConfiguration().getKafkaDefaultTopics());

@@ -40,5 +40,5 @@ public class ZookeeperConfiguration {
     @Builder.Default
     private final int tickTime = DEFAULT_ZOOKEEPER_TICK_TIME;
     @Singular
-    private Map<String, KafkaTopicConfiguration> kafkaDefaultTopics;
+    private Map<String, KafkaTopicProperties> kafkaDefaultTopics;
 }
