@@ -19,6 +19,7 @@
 art {
     providedModules {
         applicationCore()
+        applicationService()
         applicationEntity()
         applicationLogging()
     }

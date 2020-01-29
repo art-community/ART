@@ -21,6 +21,7 @@ art {
         applicationCore()
         applicationEntity()
         applicationLogging()
+        //applicationKafkaBrokerApi()
     }
 }
 
