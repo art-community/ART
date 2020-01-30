@@ -21,6 +21,7 @@ import kafka.log.LogConfig;
 import kafka.server.*;
 import kafka.zk.AdminZkClient;
 import lombok.*;
+import ru.art.kafka.broker.api.model.KafkaTopicProperties;
 import ru.art.kafka.broker.configuration.*;
 import scala.collection.immutable.List;
 import static java.util.Objects.*;

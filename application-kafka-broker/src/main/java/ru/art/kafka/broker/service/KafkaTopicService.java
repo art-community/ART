@@ -1,6 +1,6 @@
 package ru.art.kafka.broker.service;
 
-import ru.art.kafka.broker.configuration.KafkaTopicProperties;
+import ru.art.kafka.broker.api.model.KafkaTopicProperties;
 public interface KafkaTopicService {
     static void addTopic(KafkaTopicProperties topic) {
 

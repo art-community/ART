@@ -17,6 +17,7 @@
 package ru.art.kafka.broker.configuration;
 
 import lombok.*;
+import ru.art.kafka.broker.api.model.KafkaTopicProperties;
 
 import java.util.Map;
 
