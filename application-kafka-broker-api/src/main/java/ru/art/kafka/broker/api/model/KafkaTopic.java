@@ -13,8 +13,9 @@ import static ru.art.service.validation.ValidationExpressions.notEmptyString;
 @Builder
 @ToString
 @EqualsAndHashCode
-public class KafkaTopicWithProperties implements Validatable {
+public class KafkaTopic implements Validatable {
     private String topic;
+    private KafkaTopicProperties properties;
 
     @Override
     public void onValidating(Validator validator) {
