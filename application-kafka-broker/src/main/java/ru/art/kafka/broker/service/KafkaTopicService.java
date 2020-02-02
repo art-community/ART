@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Properties;
 
 import static ru.art.core.checker.CheckerForEmptiness.isEmpty;
+import static ru.art.kafka.broker.api.converter.ScalaToJavaConverter.seqToList;
 import static ru.art.kafka.broker.constants.KafkaBrokerModuleConstants.*;
 import static ru.art.kafka.broker.module.KafkaBrokerModule.kafkaBrokerModuleState;
 
@@ -57,6 +58,6 @@ public interface KafkaTopicService {
      */
     static List<String> getAllTopics() {
         Seq<String> topicSeq =  kafkaBrokerModuleState().getBroker().getServer().zkClient().getAllTopicsInCluster();
-        return topicSeq == null || topicSeq.isEmpty() ? new ArrayList<>() : JavaConverters.seqAsJavaList(topicSeq);
+        return seqToList(topicSeq);
     }
 }
