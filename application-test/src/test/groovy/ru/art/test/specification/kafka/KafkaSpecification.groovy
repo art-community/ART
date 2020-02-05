@@ -22,6 +22,8 @@ import ru.art.kafka.broker.service.KafkaTopicService
 import spock.lang.Specification
 
 import java.util.concurrent.CountDownLatch
+import java.util.function.BiFunction
+import java.util.function.Function
 
 import static ru.art.config.extensions.ConfigExtensions.configInnerMap
 import static ru.art.config.extensions.activator.AgileConfigurationsActivator.useAgileConfigurations
@@ -55,24 +57,25 @@ class KafkaSpecification extends Specification {
         result == "testKey_testValue"
     }
 
-    /*def "Should start kafka broker and check default topics" () {
+    def "Should start kafka broker and check default topics" () {
         setup:
         useAgileConfigurations()
-        def result = new ArrayList<String>()
-        Map<String, KafkaTopicProperties> kafkaDefaultTopics =  configInnerMap(KAFKA_TOPICS_SECTION_ID, (key, config) ->
-                KafkaTopicProperties.topicProperties()
-                        .partitions(config.getInt(PARTITIONS))
-                        .retention(config.getLong(RETENTION))
-                        .build(), new HashMap<String, KafkaTopicProperties>());
+        def result
+        Map<String, KafkaTopicProperties> kafkaDefaultTopics = configInnerMap(KAFKA_TOPICS_SECTION_ID, { key, config ->
+            KafkaTopicProperties.topicProperties()
+                    .partitions(config.getInt(PARTITIONS))
+                    .retention(config.getLong(RETENTION))
+                    .build()
+        } as BiFunction, new HashMap<String, KafkaTopicProperties>())
 
         def configThemes = kafkaDefaultTopics.keySet().asList()
         when:
         startKafkaBroker()
-        result =  KafkaTopicService.allTopics()
+        result =  KafkaTopicService.getAllTopics()
 
         then:
         System.out.println(result)
         System.out.println(configThemes)
         result == configThemes
-    }*/
+    }
 }
