@@ -17,6 +17,7 @@
 package ru.art.config.extensions.kafka;
 
 import lombok.*;
+import ru.art.kafka.broker.api.model.KafkaTopicProperties;
 import ru.art.kafka.broker.configuration.*;
 import ru.art.kafka.broker.configuration.KafkaBrokerModuleConfiguration.*;
 import ru.art.kafka.broker.constants.KafkaBrokerModuleConstants.*;

@@ -20,6 +20,7 @@ art {
     providedModules {
         applicationCore()
         applicationEntity()
+        applicationService()
         applicationLogging()
         applicationKafkaBrokerApi()
     }

@@ -39,6 +39,7 @@ art {
         applicationNetworkManager()
         applicationKafkaClient()
         applicationKafkaBroker()
+        applicationKafkaBrokerApi()
         applicationKafkaConsumer()
         applicationKafkaProducer()
         applicationReactiveService()

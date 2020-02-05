@@ -3,10 +3,8 @@ package ru.art.kafka.broker.service;
 import kafka.admin.RackAwareMode;
 import kafka.log.LogConfig;
 import ru.art.kafka.broker.api.model.KafkaTopic;
-import scala.collection.JavaConverters;
 import scala.collection.Seq;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 

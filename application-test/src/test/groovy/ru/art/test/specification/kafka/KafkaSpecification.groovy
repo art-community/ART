@@ -17,11 +17,17 @@
 package ru.art.test.specification.kafka
 
 import ru.art.entity.Value
+import ru.art.kafka.broker.api.model.KafkaTopicProperties
+import ru.art.kafka.broker.service.KafkaTopicService
 import spock.lang.Specification
 
 import java.util.concurrent.CountDownLatch
 
+import static ru.art.config.extensions.ConfigExtensions.configInnerMap
 import static ru.art.config.extensions.activator.AgileConfigurationsActivator.useAgileConfigurations
+import static ru.art.config.extensions.kafka.KafkaConfigKeys.KAFKA_TOPICS_SECTION_ID
+import static ru.art.config.extensions.kafka.KafkaConfigKeys.PARTITIONS
+import static ru.art.config.extensions.kafka.KafkaConfigKeys.RETENTION
 import static ru.art.core.constants.StringConstants.UNDERSCORE
 import static ru.art.entity.PrimitivesFactory.stringPrimitive
 import static ru.art.kafka.broker.embedded.EmbeddedKafkaBroker.startKafkaBroker
@@ -48,4 +54,25 @@ class KafkaSpecification extends Specification {
         then:
         result == "testKey_testValue"
     }
+
+    /*def "Should start kafka broker and check default topics" () {
+        setup:
+        useAgileConfigurations()
+        def result = new ArrayList<String>()
+        Map<String, KafkaTopicProperties> kafkaDefaultTopics =  configInnerMap(KAFKA_TOPICS_SECTION_ID, (key, config) ->
+                KafkaTopicProperties.topicProperties()
+                        .partitions(config.getInt(PARTITIONS))
+                        .retention(config.getLong(RETENTION))
+                        .build(), new HashMap<String, KafkaTopicProperties>());
+
+        def configThemes = kafkaDefaultTopics.keySet().asList()
+        when:
+        startKafkaBroker()
+        result =  KafkaTopicService.allTopics()
+
+        then:
+        System.out.println(result)
+        System.out.println(configThemes)
+        result == configThemes
+    }*/
 }

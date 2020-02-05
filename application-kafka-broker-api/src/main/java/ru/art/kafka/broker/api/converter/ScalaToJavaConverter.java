@@ -16,7 +16,7 @@ public interface ScalaToJavaConverter {
      * @param <T> - 
      * @return - java List.
      */
-    static <T> List<T> seqToList(Seq<T> scalaSequence){
+    static <T> List<T> seqToList(Seq<T> scalaSequence) {
         return scalaSequence == null || scalaSequence.isEmpty() ?
                 new ArrayList<>() :
                 JavaConverters.seqAsJavaList(scalaSequence);
