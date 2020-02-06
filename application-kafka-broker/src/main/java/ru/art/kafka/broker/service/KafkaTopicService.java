@@ -2,6 +2,7 @@ package ru.art.kafka.broker.service;
 
 import kafka.admin.RackAwareMode;
 import kafka.log.LogConfig;
+import ru.art.kafka.broker.api.model.TopicPartitions;
 import ru.art.kafka.broker.api.model.KafkaTopic;
 import scala.collection.Seq;
 
@@ -38,8 +39,9 @@ public interface KafkaTopicService {
     }
 
     // topic + num of partitions
-    static void addPartitions() {
-
+    static void addPartitions(TopicPartitions add) {
+        if (!kafkaBrokerModuleState().getBroker().getServer().zkClient().topicExists(add.getTopic())) return;
+        //kafkaBrokerModuleState().getBroker().getAdminZookeeperClient().addPartitions()
     }
 
     /**
