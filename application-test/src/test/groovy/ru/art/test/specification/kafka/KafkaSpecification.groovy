@@ -17,6 +17,7 @@
 package ru.art.test.specification.kafka
 
 import ru.art.entity.Value
+import ru.art.kafka.broker.api.model.KafkaTopic
 import ru.art.kafka.broker.api.model.KafkaTopicProperties
 import ru.art.kafka.broker.service.KafkaTopicService
 import spock.lang.Specification
@@ -61,7 +62,7 @@ class KafkaSpecification extends Specification {
         setup:
         useAgileConfigurations()
         def result
-        Map<String, KafkaTopicProperties> kafkaDefaultTopics = configInnerMap(KAFKA_TOPICS_SECTION_ID, { key, config ->
+        def kafkaDefaultTopics = configInnerMap(KAFKA_TOPICS_SECTION_ID, { key, config ->
             KafkaTopicProperties.topicProperties()
                     .partitions(config.getInt(PARTITIONS))
                     .retentionMs(config.getLong(RETENTION_MS))
@@ -71,7 +72,7 @@ class KafkaSpecification extends Specification {
         def configThemes = kafkaDefaultTopics.keySet().asList()
         when:
         startKafkaBroker()
-        result =  KafkaTopicService.getAllTopics()
+        result = KafkaTopicService.getAllTopics()
         kafkaBrokerModuleState().getBroker().shutdown()
 
         then:
@@ -79,5 +80,21 @@ class KafkaSpecification extends Specification {
         System.out.println("Topics in cluster: " + result)
 
         result.containsAll(configThemes)
+    }
+
+    def "Should delete one default topic" () {
+        setup:
+        useAgileConfigurations()
+        def result
+        def deletedTopic = KafkaTopic.builder()
+                .topic("test1")
+                .build()
+        when:
+        startKafkaBroker()
+        KafkaTopicService.deleteTopic(deletedTopic)
+        result = KafkaTopicService.getAllTopics()
+        kafkaBrokerModuleState().getBroker().shutdown()
+        then:
+        !result.contains(deletedTopic.getTopic())
     }
 }

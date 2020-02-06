@@ -4,6 +4,7 @@ import kafka.admin.RackAwareMode;
 import kafka.log.LogConfig;
 import ru.art.kafka.broker.api.model.TopicPartitions;
 import ru.art.kafka.broker.api.model.KafkaTopic;
+import ru.art.kafka.broker.exception.KafkaBrokerModuleException;
 import scala.collection.Seq;
 
 import java.util.List;
@@ -12,6 +13,7 @@ import java.util.Properties;
 import static ru.art.core.checker.CheckerForEmptiness.isEmpty;
 import static ru.art.kafka.broker.api.converter.ScalaToJavaConverter.seqToList;
 import static ru.art.kafka.broker.constants.KafkaBrokerModuleConstants.*;
+import static ru.art.kafka.broker.constants.KafkaBrokerModuleConstants.KafkaServiceErrors.TOPIC_NOT_EXISTS;
 import static ru.art.kafka.broker.module.KafkaBrokerModule.kafkaBrokerModuleState;
 
 public interface KafkaTopicService {
@@ -49,7 +51,9 @@ public interface KafkaTopicService {
      * @param topic - topic for deletion;
      */
     static void deleteTopic(KafkaTopic topic) {
-        if (!kafkaBrokerModuleState().getBroker().getServer().zkClient().topicExists(topic.getTopic())) return;
+        if (!kafkaBrokerModuleState().getBroker().getServer().zkClient().topicExists(topic.getTopic())) {
+            throw new KafkaBrokerModuleException(String.format(TOPIC_NOT_EXISTS, topic.getTopic()));
+        }
        kafkaBrokerModuleState().getBroker().getAdminZookeeperClient().deleteTopic(topic.getTopic());
     }
 

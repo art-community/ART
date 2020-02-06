@@ -38,4 +38,7 @@ public interface KafkaBrokerModuleConstants {
         ON_KAFKA_BROKER_INITIALIZATION,
         MANUAL
     }
+    interface KafkaServiceErrors {
+        String TOPIC_NOT_EXISTS = "Topic %s doesn't exists in Kafka cluster!";
+    }
 }
