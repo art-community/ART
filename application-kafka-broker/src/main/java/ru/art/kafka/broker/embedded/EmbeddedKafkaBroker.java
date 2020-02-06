@@ -80,7 +80,7 @@ public class EmbeddedKafkaBroker {
             if (isNotEmpty(zookeeperConfiguration.getKafkaDefaultTopics())) {
                 for (Map.Entry<String, KafkaTopicProperties> topic: zookeeperConfiguration.getKafkaDefaultTopics().entrySet()) {
                     Properties topicProperties = new Properties();
-                    topicProperties.put(LogConfig.RetentionMsProp(), String.valueOf(topic.getValue().getRetention()));
+                    topicProperties.put(LogConfig.RetentionMsProp(), String.valueOf(topic.getValue().getRetentionMs()));
                     broker.getAdminZookeeperClient().createTopic(topic.getKey(), topic.getValue().getPartitions(), DEFAULT_TOPIC_REPLICATION_FACTOR, topicProperties, RackAwareMode.Disabled$.MODULE$);
                 }
             }

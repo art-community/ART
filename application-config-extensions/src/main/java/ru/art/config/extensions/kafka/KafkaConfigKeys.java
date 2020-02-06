@@ -35,7 +35,7 @@ public interface KafkaConfigKeys {
     String KEY_DESERIALIZER = "keyDeserializer";
     String VALUE_DESERIALIZER = "valueDeserializer";
     String TOPICS = "topics";
-    String RETENTION = "retention";
+    String RETENTION_MS = "retentionMs";
     String PARTITIONS = "partitions";
     String POLL_TIMEOUT = "pollTimeout";
     String GROUP_ID = "groupId";

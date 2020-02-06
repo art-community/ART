@@ -4,10 +4,10 @@ kafka:
   topics:
     test1:
       partitions: 3
-      retention: 200
+      retentionMs: 86400000
     test2:
       partitions: 3
-      retention: 200
+      retentionMs: 86400000
   consumer:
     enableTracing: true
     streams:

@@ -29,7 +29,7 @@ public interface KafkaTopicService {
                     RackAwareMode.Disabled$.MODULE$);
             return;
         }
-        topicProperties.put(LogConfig.RetentionMsProp(), String.valueOf(topic.getProperties().getRetention()));
+        topicProperties.put(LogConfig.RetentionMsProp(), String.valueOf(topic.getProperties().getRetentionMs()));
         kafkaBrokerModuleState().getBroker().getAdminZookeeperClient().createTopic(topic.getTopic(),
                 topic.getProperties().getPartitions(),
                 topic.getProperties().getReplicationFactor(),

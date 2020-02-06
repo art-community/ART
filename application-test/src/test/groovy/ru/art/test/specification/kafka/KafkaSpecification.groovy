@@ -23,16 +23,16 @@ import spock.lang.Specification
 
 import java.util.concurrent.CountDownLatch
 import java.util.function.BiFunction
-import java.util.function.Function
 
 import static ru.art.config.extensions.ConfigExtensions.configInnerMap
 import static ru.art.config.extensions.activator.AgileConfigurationsActivator.useAgileConfigurations
 import static ru.art.config.extensions.kafka.KafkaConfigKeys.KAFKA_TOPICS_SECTION_ID
 import static ru.art.config.extensions.kafka.KafkaConfigKeys.PARTITIONS
-import static ru.art.config.extensions.kafka.KafkaConfigKeys.RETENTION
+import static ru.art.config.extensions.kafka.KafkaConfigKeys.RETENTION_MS
 import static ru.art.core.constants.StringConstants.UNDERSCORE
 import static ru.art.entity.PrimitivesFactory.stringPrimitive
 import static ru.art.kafka.broker.embedded.EmbeddedKafkaBroker.startKafkaBroker
+import static ru.art.kafka.broker.module.KafkaBrokerModule.kafkaBrokerModuleState
 import static ru.art.kafka.consumer.module.KafkaConsumerModule.kafkaStreamsRegistry
 import static ru.art.kafka.consumer.starter.KafkaStreamsStarter.startKafkaStreams
 import static ru.art.kafka.producer.communicator.KafkaProducerCommunicator.kafkaProducerCommunicator
@@ -64,7 +64,7 @@ class KafkaSpecification extends Specification {
         Map<String, KafkaTopicProperties> kafkaDefaultTopics = configInnerMap(KAFKA_TOPICS_SECTION_ID, { key, config ->
             KafkaTopicProperties.topicProperties()
                     .partitions(config.getInt(PARTITIONS))
-                    .retention(config.getLong(RETENTION))
+                    .retentionMs(config.getLong(RETENTION_MS))
                     .build()
         } as BiFunction, new HashMap<String, KafkaTopicProperties>())
 
@@ -72,10 +72,12 @@ class KafkaSpecification extends Specification {
         when:
         startKafkaBroker()
         result =  KafkaTopicService.getAllTopics()
+        kafkaBrokerModuleState().getBroker().shutdown()
 
         then:
-        System.out.println(result)
-        System.out.println(configThemes)
-        result == configThemes
+        System.out.println("Topics in config: " + configThemes)
+        System.out.println("Topics in cluster: " + result)
+
+        result.containsAll(configThemes)
     }
 }

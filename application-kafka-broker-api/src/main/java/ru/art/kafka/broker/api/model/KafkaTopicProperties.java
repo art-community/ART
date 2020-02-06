@@ -7,6 +7,6 @@ import lombok.Value;
 @Builder(builderMethodName = "topicProperties")
 public class KafkaTopicProperties {
     private Integer partitions;
-    private Long retention;
+    private Long retentionMs;
     private Integer replicationFactor;
 }

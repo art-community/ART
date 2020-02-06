@@ -49,7 +49,7 @@ public class KafkaBrokerAgileConfiguration extends KafkaBrokerModuleDefaultConfi
         Map<String, KafkaTopicProperties> kafkaDefaultTopics = configInnerMap(KAFKA_TOPICS_SECTION_ID, (key, config) ->
                 KafkaTopicProperties.topicProperties()
                         .partitions(config.getInt(PARTITIONS))
-                        .retention(config.getLong(RETENTION))
+                        .retentionMs(config.getLong(RETENTION_MS))
                         .build(), super.getZookeeperConfiguration().getKafkaDefaultTopics());
         ZookeeperConfiguration defaultZookeeperConfiguration = super.getZookeeperConfiguration();
         ZookeeperConfiguration newZookeeperConfiguration = ZookeeperConfiguration.builder()
