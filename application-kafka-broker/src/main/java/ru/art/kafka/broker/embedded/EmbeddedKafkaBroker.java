@@ -20,6 +20,7 @@ import kafka.admin.RackAwareMode;
 import kafka.log.LogConfig;
 import kafka.server.*;
 import kafka.zk.AdminZkClient;
+import kafka.zk.KafkaZkClient;
 import lombok.*;
 import ru.art.kafka.broker.api.model.KafkaTopicProperties;
 import ru.art.kafka.broker.configuration.*;
@@ -47,7 +48,7 @@ public class EmbeddedKafkaBroker {
     private final ZookeeperInitializationMode zookeeperInitializationMode;
     private final KafkaServer server;
     private EmbeddedZookeeper embeddedZookeeper;
-    private AdminZkClient adminZookeeperClient;
+    private KafkaZkClient zookeeperClient;
 
     /**
      *
@@ -75,13 +76,14 @@ public class EmbeddedKafkaBroker {
                     .build();
             kafkaBrokerModuleState().setBroker(broker);
             kafkaServer.startup();
-            broker.setAdminZookeeperClient(new AdminZkClient(kafkaServer.zkClient()));
+            broker.setZookeeperClient(kafkaServer.zkClient());
 
             if (isNotEmpty(zookeeperConfiguration.getKafkaDefaultTopics())) {
                 for (Map.Entry<String, KafkaTopicProperties> topic: zookeeperConfiguration.getKafkaDefaultTopics().entrySet()) {
                     Properties topicProperties = new Properties();
                     topicProperties.put(LogConfig.RetentionMsProp(), String.valueOf(topic.getValue().getRetentionMs()));
-                    broker.getAdminZookeeperClient().createTopic(topic.getKey(), topic.getValue().getPartitions(), DEFAULT_TOPIC_REPLICATION_FACTOR, topicProperties, RackAwareMode.Disabled$.MODULE$);
+                    AdminZkClient adminClient = new AdminZkClient(kafkaServer.zkClient());
+                    adminClient.createTopic(topic.getKey(), topic.getValue().getPartitions(), DEFAULT_TOPIC_REPLICATION_FACTOR, topicProperties, RackAwareMode.Disabled$.MODULE$);
                 }
             }
             return broker;

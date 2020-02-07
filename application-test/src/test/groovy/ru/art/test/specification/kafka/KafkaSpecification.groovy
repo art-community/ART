@@ -19,6 +19,7 @@ package ru.art.test.specification.kafka
 import ru.art.entity.Value
 import ru.art.kafka.broker.api.model.KafkaTopic
 import ru.art.kafka.broker.api.model.KafkaTopicProperties
+import ru.art.kafka.broker.module.KafkaBrokerModule
 import ru.art.kafka.broker.service.KafkaTopicService
 import spock.lang.Specification
 
@@ -93,8 +94,13 @@ class KafkaSpecification extends Specification {
         startKafkaBroker()
         KafkaTopicService.deleteTopic(deletedTopic)
         result = KafkaTopicService.getAllTopics()
+        System.out.println("- Is my topic marked for deletion? - " + kafkaBrokerModuleState().getBroker().getZookeeperClient().isTopicMarkedForDeletion(deletedTopic.getTopic()))
         kafkaBrokerModuleState().getBroker().shutdown()
         then:
         !result.contains(deletedTopic.getTopic())
+    }
+
+    def "Should create topic without properties" () {
+
     }
 }
