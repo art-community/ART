@@ -18,19 +18,13 @@ package ru.art.test.specification.kafka
 
 import ru.art.entity.Value
 import ru.art.kafka.broker.api.model.KafkaTopic
-import ru.art.kafka.broker.api.model.KafkaTopicProperties
-import ru.art.kafka.broker.module.KafkaBrokerModule
+import ru.art.kafka.broker.operations.KafkaTopicServiceOperations
 import ru.art.kafka.broker.service.KafkaTopicService
 import spock.lang.Specification
 
 import java.util.concurrent.CountDownLatch
-import java.util.function.BiFunction
 
-import static ru.art.config.extensions.ConfigExtensions.configInnerMap
 import static ru.art.config.extensions.activator.AgileConfigurationsActivator.useAgileConfigurations
-import static ru.art.config.extensions.kafka.KafkaConfigKeys.KAFKA_TOPICS_SECTION_ID
-import static ru.art.config.extensions.kafka.KafkaConfigKeys.PARTITIONS
-import static ru.art.config.extensions.kafka.KafkaConfigKeys.RETENTION_MS
 import static ru.art.core.constants.StringConstants.UNDERSCORE
 import static ru.art.entity.PrimitivesFactory.stringPrimitive
 import static ru.art.kafka.broker.embedded.EmbeddedKafkaBroker.startKafkaBroker
@@ -63,12 +57,7 @@ class KafkaSpecification extends Specification {
         setup:
         useAgileConfigurations()
         def result
-        def kafkaDefaultTopics = configInnerMap(KAFKA_TOPICS_SECTION_ID, { key, config ->
-            KafkaTopicProperties.topicProperties()
-                    .partitions(config.getInt(PARTITIONS))
-                    .retentionMs(config.getLong(RETENTION_MS))
-                    .build()
-        } as BiFunction, new HashMap<String, KafkaTopicProperties>())
+        def kafkaDefaultTopics = KafkaOperations.defaultTopicsFromConfig
 
         def configThemes = kafkaDefaultTopics.keySet().asList()
         when:
@@ -83,24 +72,53 @@ class KafkaSpecification extends Specification {
         result.containsAll(configThemes)
     }
 
-    def "Should delete one default topic" () {
+    def "Should delete one default topic and check it's mark for deletion" () {
         setup:
         useAgileConfigurations()
         def result
+        def kafkaDefaultTopics = KafkaOperations.defaultTopicsFromConfig
         def deletedTopic = KafkaTopic.builder()
-                .topic("test1")
+                .topic(kafkaDefaultTopics.keySet()[0])
                 .build()
         when:
         startKafkaBroker()
         KafkaTopicService.deleteTopic(deletedTopic)
-        result = KafkaTopicService.getAllTopics()
-        System.out.println("- Is my topic marked for deletion? - " + kafkaBrokerModuleState().getBroker().getZookeeperClient().isTopicMarkedForDeletion(deletedTopic.getTopic()))
+        result = kafkaBrokerModuleState().getBroker().getZookeeperClient().isTopicMarkedForDeletion(deletedTopic.getTopic())
+        kafkaBrokerModuleState().getBroker().shutdown()
+        then:
+        result
+    }
+
+    def "Should delete one default topic and check it's not in actual topic's list" () {
+        setup:
+        useAgileConfigurations()
+        def result
+        def kafkaDefaultTopics = KafkaOperations.defaultTopicsFromConfig
+        def deletedTopic = KafkaTopic.builder()
+                .topic(kafkaDefaultTopics.keySet()[0])
+                .build()
+        when:
+        startKafkaBroker()
+        KafkaTopicService.deleteTopic(deletedTopic)
+        result = KafkaTopicService.getActualTopics()
         kafkaBrokerModuleState().getBroker().shutdown()
         then:
         !result.contains(deletedTopic.getTopic())
     }
 
-    def "Should create topic without properties" () {
-
+    def "Should create one topic without properties" () {
+        setup:
+        useAgileConfigurations()
+        def topic = "newTestTopic"
+        def result
+        when:
+        startKafkaBroker()
+        KafkaTopicService.addTopic(KafkaTopic.builder()
+                .topic(topic)
+                .build())
+        result = kafkaBrokerModuleState().getBroker().getZookeeperClient().topicExists(topic)
+        kafkaBrokerModuleState().getBroker().shutdown()
+        then:
+        result
     }
 }

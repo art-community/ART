@@ -11,9 +11,9 @@ import java.util.List;
  */
 public interface ScalaToJavaConverter {
     /**
-     * TODO: see does it works with T for scala...it's different T..Tomorrow.
+     * Method converts scala seq to java list.
      * @param scalaSequence - scala Seq;
-     * @param <T> - 
+     * @param <T> - type;
      * @return - java List.
      */
     static <T> List<T> seqToList(Seq<T> scalaSequence) {

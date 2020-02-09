@@ -59,10 +59,19 @@ public interface KafkaTopicService {
     }
 
     /**
-     * @return all topics in cluster of brokers, if no topics returns empty list.
+     * @return ALL (and marked for deletion too!) topics in cluster of brokers, if no topics returns empty list.
      */
     static List<String> getAllTopics() {
         Seq<String> topicSeq =  kafkaBrokerModuleState().getBroker().getServer().zkClient().getAllTopicsInCluster();
         return seqToList(topicSeq);
+    }
+
+    /**
+     * @return only ACTUAL topics, without marked for deletion;
+     */
+    static List<String> getActualTopics() {
+        List<String> allTopics =  seqToList(kafkaBrokerModuleState().getBroker().getServer().zkClient().getAllTopicsInCluster());
+        allTopics.removeIf(topic -> kafkaBrokerModuleState().getBroker().getServer().zkClient().isTopicMarkedForDeletion(topic));
+        return allTopics;
     }
 }
