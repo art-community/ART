@@ -2,15 +2,21 @@ package ru.art.kafka.broker.service;
 
 import kafka.admin.RackAwareMode;
 import kafka.log.LogConfig;
+import ru.art.kafka.broker.api.model.KafkaTopicResult;
 import ru.art.kafka.broker.api.model.TopicPartitions;
 import ru.art.kafka.broker.api.model.KafkaTopic;
 import ru.art.kafka.broker.exception.KafkaBrokerModuleException;
 import scala.collection.Seq;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static ru.art.core.checker.CheckerForEmptiness.isEmpty;
+import static ru.art.kafka.broker.api.converter.ScalaToJavaConverter.JavaSetToScalaSet;
 import static ru.art.kafka.broker.api.converter.ScalaToJavaConverter.seqToList;
 import static ru.art.kafka.broker.constants.KafkaBrokerModuleConstants.*;
 import static ru.art.kafka.broker.constants.KafkaBrokerModuleConstants.KafkaServiceErrors.TOPIC_NOT_EXISTS;
@@ -20,7 +26,7 @@ import static ru.art.kafka.broker.operations.KafkaTopicServiceOperations.getAdmi
 public interface KafkaTopicService {
     /**
      * if topic's properties are empty, topic's created with default properties;
-     * @param topic - topic and properties (optionally) to create.
+     * @param topic - topic's name and properties (optionally) to create.
      */
     static void addTopic(KafkaTopic topic) {
         Properties topicProperties = new Properties();
@@ -44,7 +50,9 @@ public interface KafkaTopicService {
     // topic + num of partitions
     static void addPartitions(TopicPartitions add) {
         if (!kafkaBrokerModuleState().getBroker().getServer().zkClient().topicExists(add.getTopic())) return;
-        //kafkaBrokerModuleState().getBroker().getAdminZookeeperClient().addPartitions()
+        Set<String> topicSet = Stream.of(add.getTopic()).collect(Collectors.toCollection(HashSet::new));
+        kafkaBrokerModuleState().getBroker().getZookeeperClient().getReplicaAssignmentForTopics(JavaSetToScalaSet(topicSet));
+        //getAdminZookeeperClient().addPartitions(add.getTopic(), )
     }
 
     /**
