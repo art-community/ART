@@ -9,9 +9,10 @@ import static ru.art.service.validation.ValidationExpressions.notNull;
 
 @Getter
 @Builder
-public class KafkaTopicResult implements Validatable {
+public class KafkaTopicResult <T> implements Validatable {
     private Boolean result;
     private String error;
+    private T data;
 
     @Override
     public void onValidating(Validator validator) {

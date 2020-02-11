@@ -2,7 +2,6 @@ package ru.art.kafka.broker.service;
 
 import kafka.admin.RackAwareMode;
 import kafka.log.LogConfig;
-import ru.art.kafka.broker.api.model.KafkaTopicResult;
 import ru.art.kafka.broker.api.model.TopicPartitions;
 import ru.art.kafka.broker.api.model.KafkaTopic;
 import ru.art.kafka.broker.exception.KafkaBrokerModuleException;
@@ -16,7 +15,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static ru.art.core.checker.CheckerForEmptiness.isEmpty;
-import static ru.art.kafka.broker.api.converter.ScalaToJavaConverter.JavaSetToScalaSet;
+import static ru.art.kafka.broker.api.converter.ScalaToJavaConverter.JavaSetToScalaImmutableSet;
 import static ru.art.kafka.broker.api.converter.ScalaToJavaConverter.seqToList;
 import static ru.art.kafka.broker.constants.KafkaBrokerModuleConstants.*;
 import static ru.art.kafka.broker.constants.KafkaBrokerModuleConstants.KafkaServiceErrors.TOPIC_NOT_EXISTS;
@@ -51,7 +50,7 @@ public interface KafkaTopicService {
     static void addPartitions(TopicPartitions add) {
         if (!kafkaBrokerModuleState().getBroker().getServer().zkClient().topicExists(add.getTopic())) return;
         Set<String> topicSet = Stream.of(add.getTopic()).collect(Collectors.toCollection(HashSet::new));
-        kafkaBrokerModuleState().getBroker().getZookeeperClient().getReplicaAssignmentForTopics(JavaSetToScalaSet(topicSet));
+        kafkaBrokerModuleState().getBroker().getZookeeperClient().getReplicaAssignmentForTopics(JavaSetToScalaImmutableSet(topicSet));
         //getAdminZookeeperClient().addPartitions(add.getTopic(), )
     }
 
