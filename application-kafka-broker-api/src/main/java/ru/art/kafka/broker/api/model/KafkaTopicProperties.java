@@ -8,5 +8,6 @@ import lombok.Value;
 public class KafkaTopicProperties {
     private Integer partitions;
     private Long retentionMs;
+    private Long retentionBytes;
     private Integer replicationFactor;
 }

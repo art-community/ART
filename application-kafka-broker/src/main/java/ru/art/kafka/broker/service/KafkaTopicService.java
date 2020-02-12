@@ -2,22 +2,19 @@ package ru.art.kafka.broker.service;
 
 import kafka.admin.RackAwareMode;
 import kafka.log.LogConfig;
-import ru.art.kafka.broker.api.model.TopicPartitions;
 import ru.art.kafka.broker.api.model.KafkaTopic;
-import ru.art.kafka.broker.exception.KafkaBrokerModuleException;
+import ru.art.kafka.broker.api.model.KafkaTopicResult;
+import ru.art.kafka.broker.api.model.TopicPartitions;
 import scala.Option;
 import scala.collection.Seq;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static ru.art.core.checker.CheckerForEmptiness.isEmpty;
-import static ru.art.kafka.broker.api.converter.ScalaToJavaConverter.JavaSetToScalaImmutableSet;
 import static ru.art.kafka.broker.api.converter.ScalaToJavaConverter.seqToList;
+import static ru.art.kafka.broker.api.operations.KafkaTopicResultsFactory.createErrorResponse;
+import static ru.art.kafka.broker.api.operations.KafkaTopicResultsFactory.createOkEmptyResponse;
 import static ru.art.kafka.broker.constants.KafkaBrokerModuleConstants.*;
 import static ru.art.kafka.broker.constants.KafkaBrokerModuleConstants.KafkaServiceErrors.TOPIC_NOT_EXISTS;
 import static ru.art.kafka.broker.module.KafkaBrokerModule.kafkaBrokerModuleState;
@@ -48,26 +45,36 @@ public interface KafkaTopicService {
                 RackAwareMode.Disabled$.MODULE$);
     }
 
-    // topic + num of partitions
-    static void addPartitions(TopicPartitions add) {
-        if (!kafkaBrokerModuleState().getBroker().getServer().zkClient().topicExists(add.getTopic())) return;
+    /**
+     * Method adds partition to
+     * @param add - consists topic name and number of adding partitions;
+     * @return
+     */
+    static KafkaTopicResult addPartitions(TopicPartitions add) {
+        if (!kafkaBrokerModuleState().getBroker().getServer().zkClient().topicExists(add.getTopic())) {
+            return createErrorResponse(String.format(TOPIC_NOT_EXISTS, add.getTopic()));
+        }
         getAdminZookeeperClient().addPartitions(add.getTopic(),
                 getExistingAssignmentForTopic(add.getTopic()),
                 getAdminZookeeperClient().getBrokerMetadatas(RackAwareMode.Enforced$.MODULE$, scala.Option.apply(null)),
                 add.getNumberOfPartitions(),
                 Option.empty(),
                 false);
+        return createOkEmptyResponse();
     }
 
     /**
-     * If topic exists at broker, delete it.
-     * @param topic - topic for deletion;
+     * f topic exists at broker, delete it.
+     * @param topic- topic for deletion;
+     * @return
      */
-    static void deleteTopic(KafkaTopic topic) {
+
+    static KafkaTopicResult deleteTopic(KafkaTopic topic) {
         if (!kafkaBrokerModuleState().getBroker().getServer().zkClient().topicExists(topic.getTopic())) {
-            throw new KafkaBrokerModuleException(String.format(TOPIC_NOT_EXISTS, topic.getTopic()));
+            return createErrorResponse(String.format(TOPIC_NOT_EXISTS, topic.getTopic()));
         }
         getAdminZookeeperClient().deleteTopic(topic.getTopic());
+        return createOkEmptyResponse();
     }
 
     /**

@@ -48,4 +48,5 @@ public interface CharConstants {
     char BOM_UTF = '\uFEFF';
     char PIPE = '|';
     char EXCLAMATION_MARK = '1';
+    char ESCAPE = '\n';
 }
