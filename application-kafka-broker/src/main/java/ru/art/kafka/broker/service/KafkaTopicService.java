@@ -50,7 +50,7 @@ public interface KafkaTopicService {
      * @param add - consists topic name and number of adding partitions;
      * @return
      */
-    static KafkaTopicResult addPartitions(TopicPartitions add) {
+    static <T> KafkaTopicResult<T> addPartitions(TopicPartitions add) {
         if (!kafkaBrokerModuleState().getBroker().getServer().zkClient().topicExists(add.getTopic())) {
             return createErrorResponse(String.format(TOPIC_NOT_EXISTS, add.getTopic()));
         }
@@ -69,7 +69,7 @@ public interface KafkaTopicService {
      * @return
      */
 
-    static KafkaTopicResult deleteTopic(KafkaTopic topic) {
+    static <T> KafkaTopicResult<T> deleteTopic(KafkaTopic topic) {
         if (!kafkaBrokerModuleState().getBroker().getServer().zkClient().topicExists(topic.getTopic())) {
             return createErrorResponse(String.format(TOPIC_NOT_EXISTS, topic.getTopic()));
         }
