@@ -23,6 +23,7 @@ art {
         applicationService()
         applicationLogging()
         applicationKafkaBrokerApi()
+        applicationHttpServer()
     }
 }
 

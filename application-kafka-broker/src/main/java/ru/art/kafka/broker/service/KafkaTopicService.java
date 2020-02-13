@@ -13,8 +13,7 @@ import java.util.Properties;
 
 import static ru.art.core.checker.CheckerForEmptiness.isEmpty;
 import static ru.art.kafka.broker.api.converter.ScalaToJavaConverter.seqToList;
-import static ru.art.kafka.broker.api.operations.KafkaTopicResultsFactory.createErrorResponse;
-import static ru.art.kafka.broker.api.operations.KafkaTopicResultsFactory.createOkEmptyResponse;
+import static ru.art.kafka.broker.api.operations.KafkaTopicResultsFactory.*;
 import static ru.art.kafka.broker.constants.KafkaBrokerModuleConstants.*;
 import static ru.art.kafka.broker.constants.KafkaBrokerModuleConstants.KafkaServiceErrors.TOPIC_NOT_EXISTS;
 import static ru.art.kafka.broker.module.KafkaBrokerModule.kafkaBrokerModuleState;
@@ -26,7 +25,7 @@ public interface KafkaTopicService {
      * if topic's properties are empty, topic's created with default properties;
      * @param topic - topic's name and properties (optionally) to create.
      */
-    static void addTopic(KafkaTopic topic) {
+    static  <T> KafkaTopicResult<T> addTopic(KafkaTopic topic) {
         Properties topicProperties = new Properties();
         if (isEmpty(topic.getProperties())) {
             topicProperties.put(LogConfig.RetentionMsProp(), String.valueOf(DEFAULT_TOPIC_RETENTION));
@@ -35,7 +34,7 @@ public interface KafkaTopicService {
                     DEFAULT_TOPIC_REPLICATION_FACTOR,
                     topicProperties,
                     RackAwareMode.Disabled$.MODULE$);
-            return;
+            return createOkEmptyResponse();
         }
         topicProperties.put(LogConfig.RetentionMsProp(), String.valueOf(topic.getProperties().getRetentionMs()));
         getAdminZookeeperClient().createTopic(topic.getTopic(),
@@ -43,12 +42,13 @@ public interface KafkaTopicService {
                 topic.getProperties().getReplicationFactor(),
                 topicProperties,
                 RackAwareMode.Disabled$.MODULE$);
+        return createOkEmptyResponse();
     }
 
     /**
-     * Method adds partition to
+     * Method adds partition to topic.
      * @param add - consists topic name and number of adding partitions;
-     * @return
+     * @return - error, if topic doesn't exists.
      */
     static <T> KafkaTopicResult<T> addPartitions(TopicPartitions add) {
         if (!kafkaBrokerModuleState().getBroker().getServer().zkClient().topicExists(add.getTopic())) {
@@ -64,9 +64,9 @@ public interface KafkaTopicService {
     }
 
     /**
-     * f topic exists at broker, delete it.
-     * @param topic- topic for deletion;
-     * @return
+     * If topic exists at broker, delete it.
+     * @param topic - topic for deletion;
+     * @return - error, if topic doesn't exists.
      */
 
     static <T> KafkaTopicResult<T> deleteTopic(KafkaTopic topic) {
@@ -80,17 +80,17 @@ public interface KafkaTopicService {
     /**
      * @return ALL (and marked for deletion too!) topics in cluster of brokers, if no topics returns empty list.
      */
-    static List<String> getAllTopics() {
+    static KafkaTopicResult<List<String>> getAllTopics() {
         Seq<String> topicSeq =  kafkaBrokerModuleState().getBroker().getServer().zkClient().getAllTopicsInCluster();
-        return seqToList(topicSeq);
+        return createOkResponse(seqToList(topicSeq));
     }
 
     /**
      * @return only ACTUAL topics, without marked for deletion;
      */
-    static List<String> getActualTopics() {
+    static KafkaTopicResult<List<String>> getActualTopics() {
         List<String> allTopics =  seqToList(kafkaBrokerModuleState().getBroker().getServer().zkClient().getAllTopicsInCluster());
         allTopics.removeIf(topic -> kafkaBrokerModuleState().getBroker().getServer().zkClient().isTopicMarkedForDeletion(topic));
-        return allTopics;
+        return createOkResponse(allTopics);
     }
 }

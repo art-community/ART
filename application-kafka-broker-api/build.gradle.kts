@@ -23,6 +23,10 @@ art {
         applicationEntity()
         applicationLogging()
     }
+
+    generator {
+        packageName = "ru.art.kafka.broker.api"
+    }
 }
 
 dependencies {
