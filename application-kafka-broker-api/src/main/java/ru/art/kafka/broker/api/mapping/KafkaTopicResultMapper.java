@@ -9,17 +9,17 @@ import java.util.List;
 
 import static ru.art.core.checker.CheckerForEmptiness.isNotEmpty;
 
-public class KafkaTopicResultMapper <T> {
-    private String result = "result";
-    private String error = "error";
-    private String data = "data";
+public interface KafkaTopicResultMapper  {
+    String result = "result";
+    String error = "error";
+    String data = "data";
 
-    ValueToModelMapper<KafkaTopicResult<T>, Entity> toKafkaTopicResultEmptyData = entity -> isNotEmpty(entity) ? KafkaTopicResult.<T>builder()
+    ValueToModelMapper<KafkaTopicResult<?>, Entity> toKafkaTopicResultEmptyData = entity -> isNotEmpty(entity) ? KafkaTopicResult.builder()
             .error(entity.getString(error))
             .result(entity.getBool(result))
             .build() : null;
 
-    ValueFromModelMapper<KafkaTopicResult<T>, Entity> fromKafkaTopicResultEmptyData = model -> isNotEmpty(model) ? Entity.entityBuilder()
+    ValueFromModelMapper<KafkaTopicResult<?>, Entity> fromKafkaTopicResultEmptyData = model -> isNotEmpty(model) ? Entity.entityBuilder()
             .stringField(error, model.getError())
             .boolField(result, model.getResult())
             .build() : null;
