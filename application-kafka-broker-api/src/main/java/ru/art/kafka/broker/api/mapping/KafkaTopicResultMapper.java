@@ -30,9 +30,9 @@ public class KafkaTopicResultMapper <T> {
             .data(entity.findStringList(data))
             .build() : null;
 
-//    ValueFromModelMapper<KafkaTopicResult<T>, Entity> fromKafkaTopicResultStringList = model -> isNotEmpty(model) ? Entity.entityBuilder()
-//            .stringField(error, model.getError())
-//            .boolField(result, model.getResult())
-//            .stringCollectionField(data, )
-//            .build() : null;
+    ValueFromModelMapper<KafkaTopicResult<List<String>>, Entity> fromKafkaTopicResultStringList = model -> isNotEmpty(model) ? Entity.entityBuilder()
+            .stringField(error, model.getError())
+            .boolField(result, model.getResult())
+            .stringCollectionField(data, model.getData())
+            .build() : null;
 }
