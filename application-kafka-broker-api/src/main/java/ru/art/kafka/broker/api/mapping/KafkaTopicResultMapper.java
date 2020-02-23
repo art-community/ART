@@ -9,7 +9,7 @@ import java.util.List;
 
 import static ru.art.core.checker.CheckerForEmptiness.isNotEmpty;
 
-public interface KafkaTopicResultMapper  {
+public interface KafkaTopicResultMapper {
     String result = "result";
     String error = "error";
     String data = "data";

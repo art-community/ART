@@ -24,6 +24,7 @@ art {
         applicationLogging()
         applicationKafkaBrokerApi()
         applicationHttpServer()
+        applicationHttpClient()
     }
 }
 
