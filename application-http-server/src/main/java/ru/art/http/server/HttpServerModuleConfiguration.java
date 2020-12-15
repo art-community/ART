@@ -136,7 +136,7 @@ public interface HttpServerModuleConfiguration extends HttpModuleConfiguration {
     HttpServerModuleDefaultConfiguration DEFAULT_CONFIGURATION = new HttpServerModuleDefaultConfiguration();
 
     @Getter
-    class HttpServerModuleDefaultConfiguration extends HttpModuleDefaultConfiguration implements HttpServerModuleConfiguration {
+    class HttpServerModuleDefaultConfiguration extends HttpCommonDefaultConfiguration implements HttpServerModuleConfiguration {
         private final boolean web = true;
         private final boolean enableMetrics = true;
         private final boolean allowCasualMultipartParsing = true;
@@ -148,10 +148,13 @@ public interface HttpServerModuleConfiguration extends HttpModuleConfiguration {
         private final String host = BROADCAST_IP_ADDRESS;
         private final int port = findAvailableTcpPort();
         private final String path = DEFAULT_MODULE_PATH;
-        @Getter(lazy = true, onMethod = @__({@SuppressWarnings("unchecked")}))
+
+        @Getter(lazy = true)
         private final List<HttpServerInterceptor> requestInterceptors = initializeInterceptors();
-        @Getter(lazy = true, onMethod = @__({@SuppressWarnings("unchecked")}))
+
+        @Getter(lazy = true)
         private final List<HttpServerInterceptor> responseInterceptors = linkedListOf();
+
         private final boolean ignoreAcceptHeader = false;
         private final HttpResourceConfiguration resourceConfiguration = HttpResourceConfiguration.builder()
                 .accessControlParameter(ACCESS_CONTROL_ALLOW_METHODS_KEY, ACCESS_CONTROL_ALLOW_METHODS_VALUE)

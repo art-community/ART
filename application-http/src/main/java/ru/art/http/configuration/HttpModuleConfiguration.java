@@ -49,26 +49,4 @@ public interface HttpModuleConfiguration extends ModuleConfiguration {
     MimeToContentTypeMapper getConsumesMimeTypeMapper();
 
     MimeToContentTypeMapper getProducesMimeTypeMapper();
-
-    @Getter
-    class HttpModuleDefaultConfiguration implements HttpModuleConfiguration {
-        private final boolean enableRawDataTracing = false;
-        private final boolean enableValueTracing = false;
-        private final boolean enableMetricsMonitoring = true;
-        private final MimeToContentTypeMapper consumesMimeTypeMapper = all();
-        private final MimeToContentTypeMapper producesMimeTypeMapper = all();
-        private final HttpTextPlainMapper textPlainMapper = new HttpTextPlainMapper();
-        @Getter(lazy = true, onMethod = @__({@SuppressWarnings("unchecked")}))
-        private final Map<MimeType, HttpContentMapper> contentMappers = mapOf(ALL, new HttpContentMapper(getTextPlainMapper(), getTextPlainMapper()));
-        @Getter(lazy = true, onMethod = @__({@SuppressWarnings("unchecked")}))
-        private final List<ValueInterceptor<Value, Value>> requestValueInterceptors = initializeValueInterceptors();
-        @Getter(lazy = true, onMethod = @__({@SuppressWarnings("unchecked")}))
-        private final List<ValueInterceptor<Value, Value>> responseValueInterceptors = initializeValueInterceptors();
-        @Getter(lazy = true)
-        private final Logbook logbook = Logbook.builder().writer(new ZalangoLogbookLogWriter(this::isEnableRawDataTracing)).build();
-
-        private List<ValueInterceptor<Value, Value>> initializeValueInterceptors() {
-            return linkedListOf(new LoggingValueInterceptor<>(this::isEnableValueTracing));
-        }
-    }
 }

@@ -57,6 +57,7 @@ import javax.net.ssl.*;
 import java.io.*;
 import java.security.*;
 import java.util.*;
+import ru.art.http.configuration.HttpCommonDefaultConfiguration;
 
 public interface HttpClientModuleConfiguration extends HttpModuleConfiguration {
     int getMaxConnectionsPerRoute();
@@ -108,33 +109,52 @@ public interface HttpClientModuleConfiguration extends HttpModuleConfiguration {
 
     HttpClientModuleDefaultConfiguration DEFAULT_CONFIGURATION = new HttpClientModuleDefaultConfiguration();
 
-    @Getter
-    class HttpClientModuleDefaultConfiguration extends HttpModuleDefaultConfiguration implements HttpClientModuleConfiguration {
+    class HttpClientModuleDefaultConfiguration extends HttpCommonDefaultConfiguration implements HttpClientModuleConfiguration {
         private static HostnameVerifier ALLOW_ALL = (hostName, session) -> true;
+        @Getter
         int maxConnectionsPerRoute = DEFAULT_MAX_CONNECTIONS_PER_ROUTE;
+        @Getter
         int maxConnectionsTotal = DEFAULT_MAX_CONNECTIONS_TOTAL;
+        @Getter
         int validateAfterInactivityMillis = DEFAULT_VALIDATE_AFTER_INACTIVITY_MILLIS;
+        @Getter
         private final RequestConfig requestConfig = RequestConfig.DEFAULT;
+        @Getter
         private final SocketConfig socketConfig = SocketConfig.DEFAULT;
+        @Getter
         private final ConnectionConfig connectionConfig = ConnectionConfig.DEFAULT;
+        @Getter
         private final IOReactorConfig ioReactorConfig = IOReactorConfig.DEFAULT;
+        @Getter
         private final HttpVersion httpVersion = HTTP_1_1;
-        @Getter(lazy = true, onMethod = @__({@SuppressWarnings("unchecked")}))
-        private final List<HttpClientInterceptor> requestInterceptors =
-                linkedListOf(interceptRequest(new HttpClientTracingIdentifiersRequestInterception()));
-        @Getter(lazy = true, onMethod = @__({@SuppressWarnings("unchecked")}))
-        private final List<HttpClientInterceptor> responseInterceptors = linkedListOf();
+        @Getter
         private final int responseBodyBufferSize = RESPONSE_BUFFER_DEFAULT_SIZE;
+        @Getter
         private final boolean ssl = false;
+        @Getter
         private final boolean disableSslHostNameVerification = true;
+        @Getter
         private final String sslKeyStoreType = EMPTY_STRING;
+        @Getter
         private final String sslKeyStoreFilePath = EMPTY_STRING;
+        @Getter
         private final String sslKeyStorePassword = EMPTY_STRING;
+        @Getter
         private final String balancerHost = LOCALHOST;
+        @Getter
         private final int balancerPort = DEFAULT_HTTP_PORT;
+        @Getter
         private final Map<String, HttpCommunicationTargetConfiguration> communicationTargets = emptyMap();
+
         @Getter(lazy = true)
         private final CloseableHttpClient client = createHttpClient();
+
+        @Getter(lazy = true)
+        private final List<HttpClientInterceptor> requestInterceptors = getHttpClientInterceptors();
+
+        @Getter(lazy = true)
+        private final List<HttpClientInterceptor> responseInterceptors = linkedListOf();
+
         @Getter(lazy = true)
         private final CloseableHttpAsyncClient asynchronousClient = createAsyncHttpClient();
 
@@ -235,6 +255,10 @@ public interface HttpClientModuleConfiguration extends HttpModuleConfiguration {
             } catch (Throwable throwable) {
                 throw new HttpClientException(HTTP_SSL_CONFIGURATION_FAILED, throwable);
             }
+        }
+
+        private List<HttpClientInterceptor> getHttpClientInterceptors() {
+            return linkedListOf(interceptRequest(new HttpClientTracingIdentifiersRequestInterception()));
         }
     }
 }
