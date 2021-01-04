@@ -44,9 +44,7 @@ public class RemoteConfigProvider {
     public static void useRemoteConfigurations() {
         try {
             Config localConfig = config(EMPTY_STRING);
-            if (!localConfig.hasPath(CONFIGURATOR_HOST) ||
-                    !localConfig.hasPath(CONFIGURATOR_PORT) ||
-                    !localConfig.hasPath(CONFIGURATOR_PATH)) {
+            if (!localConfig.hasPath(CONFIGURATOR_HOST) || !localConfig.hasPath(CONFIGURATOR_PORT) || !localConfig.hasPath(CONFIGURATOR_PATH)) {
                 loggingModule().getLogger(RemoteConfigProvider.class).warn(CONFIGURATOR_CONNECTION_PROPERTIES_NOT_EXISTS);
                 return;
             }
@@ -83,10 +81,12 @@ public class RemoteConfigProvider {
         String moduleId = contextConfiguration().getMainModuleId();
 
         if (isNull(moduleId)) throw new ConfigException(MODULE_ID_IS_EMPTY);
-        if (CONFIG_CACHE_CONTAINER.containsConfig(moduleId, REMOTE_ENTITY_CONFIG) && CONFIG_CACHE_CONTAINER.configCacheActualized(moduleId, REMOTE_ENTITY_CONFIG)) {
+        if (CONFIG_CACHE_CONTAINER.containsConfig(moduleId, REMOTE_ENTITY_CONFIG) &&
+                CONFIG_CACHE_CONTAINER.configCacheActualized(moduleId, REMOTE_ENTITY_CONFIG)) {
             return CONFIG_CACHE_CONTAINER.getConfigFromCache(moduleId, REMOTE_ENTITY_CONFIG);
         }
-        return CONFIG_CACHE_CONTAINER.putConfigToCache(moduleId, REMOTE_ENTITY_CONFIG, new Config(loadRemoteConfig(), REMOTE_ENTITY_CONFIG));
+        return CONFIG_CACHE_CONTAINER
+                .putConfigToCache(moduleId, REMOTE_ENTITY_CONFIG, new Config(loadRemoteConfig(), REMOTE_ENTITY_CONFIG));
     }
 
 }

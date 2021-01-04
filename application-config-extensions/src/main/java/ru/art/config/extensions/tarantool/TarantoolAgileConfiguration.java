@@ -45,7 +45,7 @@ public class TarantoolAgileConfiguration extends TarantoolModuleDefaultConfigura
     private boolean enableTracing;
     private long probeConnectionTimeout;
     private long connectionTimeout;
-    private TarantoolInitializationMode initializationMode;
+    private TarantoolInitializationMode initializationMode = super.getInitializationMode();
     private TarantoolLocalConfiguration localConfiguration;
     private Map<String, TarantoolConfiguration> tarantoolConfigurations;
 
@@ -56,20 +56,25 @@ public class TarantoolAgileConfiguration extends TarantoolModuleDefaultConfigura
     @Override
     public void refresh() {
         enableTracing = configBoolean(TARANTOOL_SECTION_ID, ENABLE_TRACING, super.isEnableTracing());
-        probeConnectionTimeout = configLong(TARANTOOL_SECTION_ID, PROBE_CONNECTION_TIMEOUT, super.getProbeConnectionTimeout());
-        connectionTimeout = configLong(TARANTOOL_SECTION_ID, CONNECTION_TIMEOUT, super.getConnectionTimeout());
-        initializationMode = super.getInitializationMode();
+        probeConnectionTimeout = configLong(TARANTOOL_SECTION_ID, PROBE_CONNECTION_TIMEOUT_MILLIS, super.getProbeConnectionTimeoutMillis());
+        connectionTimeout = configLong(TARANTOOL_SECTION_ID, CONNECTION_TIMEOUT_MILLIS, super.getConnectionTimeoutMillis());
         initializationMode = ifException(() -> TarantoolInitializationMode.valueOf(configString(TARANTOOL_SECTION_ID, INITIALIZATION_MODE).toUpperCase()), initializationMode);
         TarantoolLocalConfiguration defaultLocalConfiguration = super.getLocalConfiguration();
-        String executabe = defaultLocalConfiguration.getExecutable();
-        executabe = configString(TARANTOOL_LOCAL_SECTION_ID, EXECUTABLE, executabe);
+        String executable = defaultLocalConfiguration.getExecutable();
+        executable = configString(TARANTOOL_LOCAL_SECTION_ID, EXECUTABLE, executable);
+        String executableFilePath = defaultLocalConfiguration.getExecutableFilePath();
+        executableFilePath = configString(TARANTOOL_LOCAL_SECTION_ID, EXECUTABLE_FILE_PATH, executableFilePath);
         String workingDirectory = defaultLocalConfiguration.getWorkingDirectory();
         workingDirectory = configString(TARANTOOL_LOCAL_SECTION_ID, WORKING_DIRECTORY, workingDirectory);
-        int startupTimeoutMillis = defaultLocalConfiguration.getStartupTimeoutMillis();
-        startupTimeoutMillis = configInt(TARANTOOL_LOCAL_SECTION_ID, STARTUP_TIMEOUT_MILLIS, startupTimeoutMillis);
+        int processStartupCheckIntervalMillis = defaultLocalConfiguration.getProcessStartupCheckIntervalMillis();
+        processStartupCheckIntervalMillis = configInt(TARANTOOL_LOCAL_SECTION_ID, PROCESS_STARTUP_CHECK_INTERVAL_MILLIS, processStartupCheckIntervalMillis);
+        int processStartupTimeoutMillis = defaultLocalConfiguration.getProcessStartupTimeoutMillis();
+        processStartupTimeoutMillis = configInt(TARANTOOL_LOCAL_SECTION_ID, PROCESS_STARTUP_TIMEOUT_MILLIS, processStartupTimeoutMillis);
         localConfiguration = TarantoolLocalConfiguration.builder()
-                .executable(executabe)
-                .startupTimeoutMillis(startupTimeoutMillis)
+                .executable(executable)
+                .executableFilePath(executableFilePath)
+                .processStartupCheckIntervalMillis(processStartupCheckIntervalMillis)
+                .processStartupTimeoutMillis(processStartupTimeoutMillis)
                 .workingDirectory(workingDirectory)
                 .build();
         Function<Config, TarantoolConfiguration> mapper = config -> TarantoolConfiguration.builder()
@@ -78,6 +83,8 @@ public class TarantoolAgileConfiguration extends TarantoolModuleDefaultConfigura
                         .port(ifExceptionOrEmpty(() -> config.getInt(CONNECTION_SECTION_ID + DOT + PORT), DEFAULT_TARANTOOL_PORT))
                         .username(ifExceptionOrEmpty(() -> config.getString(CONNECTION_SECTION_ID + DOT + USERNAME), DEFAULT_TARANTOOL_USERNAME))
                         .password(ifExceptionOrEmpty(() -> config.getString(CONNECTION_SECTION_ID + DOT + PASSWORD), EMPTY_STRING))
+                        .operationTimeoutMillis(ifExceptionOrEmpty(() -> config.getInt(CONNECTION_SECTION_ID + DOT + OPERATION_TIMEOUT_MILLIS), DEFAULT_TARANTOOL_OPERATION_TIMEOUT))
+                        .maxRetryCount(ifExceptionOrEmpty(() -> config.getInt(CONNECTION_SECTION_ID + DOT + MAX_RETRY_COUNT), DEFAULT_TARANTOOL_RETRIES))
                         .build())
                 .initialConfiguration(TarantoolInitialConfiguration.builder()
                         .background(nullIfException(() -> config.getBool(INITIAL_SECTION_ID + DOT + BACKGROUND)))
@@ -95,6 +102,7 @@ public class TarantoolAgileConfiguration extends TarantoolModuleDefaultConfigura
                         .slabAllocMaximal(nullIfException(() -> config.getLong(INITIAL_SECTION_ID + DOT + SLAB_ALLOC_MAXIMAL)))
                         .slabAllocArena(nullIfException(() -> config.getInt(INITIAL_SECTION_ID + DOT + SLAB_ALLOC_ARENA))).build())
                 .instanceMode(ifException(() -> TarantoolInstanceMode.valueOf(config.getString(INSTANCE_MODE).toUpperCase()), LOCAL))
+                .replicas(config.getStringList(REPLICAS))
                 .entityFieldsMappings(ifExceptionOrEmpty(() -> config.getConfig(ENTITIES).getKeys()
                         .stream().collect(toMap(identity(), entityName -> entityFieldsMapping()
                                 .fieldsMapping(cast(config.getConfig(ENTITIES + DOT + entityName + DOT + FIELDS)
@@ -104,6 +112,6 @@ public class TarantoolAgileConfiguration extends TarantoolModuleDefaultConfigura
                                                 config.getInt(ENTITIES + DOT + entityName + DOT + FIELDS + DOT + fieldName)))))
                                 .map())), emptyMap()))
                 .build();
-        tarantoolConfigurations = configInnerMap(TARANTOOL_CONFIGURATIONS_SECTION_ID, mapper, super.getTarantoolConfigurations());
+        tarantoolConfigurations = configInnerMap(TARANTOOL_INSTANCES_SECTION_ID, mapper, super.getTarantoolConfigurations());
     }
 }

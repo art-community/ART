@@ -83,6 +83,8 @@ public class Generator {
         String packageModel = parentPackage + DOT + modelPackageName;
         String genPackage = parentPackage + DOT + generatedPackageName;
         String jarPathToMain = fullGenPackagePath.substring(0, fullGenPackagePath.lastIndexOf(MAIN) + 5);
+        String pathToSrcMainJava = fullModelPackagePath
+                .substring(0, fullModelPackagePath.indexOf(BUILD_CLASSES_JAVA_MAIN)) + SRC_MAIN_JAVA + separator;
 
         GenerationPackageModel generationPackageInfo = GenerationPackageModel.builder()
                 .startPackage(parentPackage)
@@ -95,6 +97,7 @@ public class Generator {
                 .genPackagePath(fullGenPackagePath.replace(BUILD_CLASSES_JAVA_MAIN, SRC_MAIN_JAVA))
                 .genPackagePathCompiled(fullGenPackagePath)
                 .jarPathToMain(jarPathToMain)
+                .pathToSrcMainJava(pathToSrcMainJava)
                 .build();
 
         List<File> modelFileList = getListOfFilesInCompiledPackage(fullModelPackagePath);
@@ -160,6 +163,7 @@ public class Generator {
                         .genPackagePath(generationPackageInfo.getGenPackagePath() + separator + currentModelFileName)
                         .genPackagePathCompiled(generationPackageInfo.getGenPackagePathCompiled() + separator + currentModelFileName)
                         .jarPathToMain(generationPackageInfo.getJarPathToMain())
+                        .pathToSrcMainJava(generationPackageInfo.getPathToSrcMainJava())
                         .build();
                 mapperGeneration(innerPackageInfo, filesInDirectory);
                 continue;
@@ -192,7 +196,7 @@ public class Generator {
                 }
             } else {
                 try {
-                    createMapper(generationPackageInfo, currentModelFileName);
+                   createMapper(generationPackageInfo, currentModelFileName);
                 } catch (MappingGeneratorException exception) {
                     printError(exception.getMessage());
                 }

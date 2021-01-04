@@ -22,15 +22,16 @@ import lombok.*;
 import ru.art.config.configuration.*;
 import ru.art.config.state.*;
 import ru.art.core.module.Module;
+import static lombok.AccessLevel.PRIVATE;
 import static ru.art.config.configuration.ConfigModuleConfiguration.*;
 import static ru.art.config.constants.ConfigModuleConstants.*;
 import static ru.art.core.context.Context.*;
 
 @Getter
 public class ConfigModule implements Module<ConfigModuleConfiguration, ConfigModuleState> {
-    @Getter(lazy = true)
+    @Getter(lazy = true, value = PRIVATE)
     private static final ConfigModuleConfiguration configModule = context().getModule(CONFIG_MODULE_ID, ConfigModule::new);
-    @Getter(lazy = true)
+    @Getter(lazy = true, value = PRIVATE)
     private static final ConfigModuleState configModuleState = context().getModuleState(CONFIG_MODULE_ID, ConfigModule::new);
     private final ConfigModuleConfiguration defaultConfiguration = DEFAULT_CONFIGURATION;
     private final String id = CONFIG_MODULE_ID;

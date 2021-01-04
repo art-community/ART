@@ -18,12 +18,14 @@
 
 package ru.art.http.client.communicator;
 
+import lombok.*;
 import org.apache.http.*;
 import org.apache.http.client.config.*;
 import org.apache.http.impl.client.*;
 import org.apache.http.impl.nio.client.*;
+import org.apache.logging.log4j.*;
 import ru.art.core.validator.*;
-import ru.art.entity.*;
+import ru.art.entity.Value;
 import ru.art.entity.interceptor.*;
 import ru.art.entity.mapper.*;
 import ru.art.http.client.communicator.HttpCommunicator.*;
@@ -32,16 +34,19 @@ import ru.art.http.client.interceptor.*;
 import ru.art.http.client.model.*;
 import ru.art.http.constants.*;
 import static java.util.Optional.*;
+import static lombok.AccessLevel.*;
 import static ru.art.core.caster.Caster.*;
 import static ru.art.core.checker.CheckerForEmptiness.*;
 import static ru.art.core.constants.StringConstants.*;
 import static ru.art.core.context.Context.*;
 import static ru.art.core.extension.NullCheckingExtensions.*;
 import static ru.art.core.extension.StringExtensions.*;
+import static ru.art.core.wrapper.ExceptionWrapper.*;
 import static ru.art.http.client.communicator.HttpCommunicationExecutor.*;
-import static ru.art.http.client.model.HttpCommunicationTargetConfiguration.*;
+import static ru.art.http.client.constants.HttpClientModuleConstants.*;
 import static ru.art.http.client.module.HttpClientModule.*;
 import static ru.art.http.constants.HttpMethodType.*;
+import static ru.art.logging.LoggingModule.*;
 import java.nio.charset.*;
 import java.util.*;
 import java.util.concurrent.*;
@@ -49,9 +54,11 @@ import java.util.concurrent.*;
 public class HttpCommunicatorImplementation implements HttpCommunicator, HttpAsynchronousCommunicator {
     private final BuilderValidator validator = new BuilderValidator(HttpCommunicator.class.getName());
     private final HttpCommunicationConfiguration configuration = new HttpCommunicationConfiguration();
+    @Getter(lazy = true, value = PRIVATE)
+    private final static Logger logger = loggingModule().getLogger(HttpCommunicator.class);
 
     HttpCommunicatorImplementation(String url) {
-        this(httpCommunicationTarget().build().url(url));
+        this(HttpCommunicationTargetConfiguration.httpCommunicationTarget().build().url(url));
     }
 
     HttpCommunicatorImplementation(HttpCommunicationTargetConfiguration targetConfiguration) {
@@ -214,8 +221,20 @@ public class HttpCommunicatorImplementation implements HttpCommunicator, HttpAsy
     }
 
     @Override
+    public HttpCommunicator connectionClosingPolicy(ConnectionClosingPolicy policy) {
+        configuration.setConnectionClosingPolicy(policy);
+        return this;
+    }
+
+    @Override
     public HttpCommunicator requestEncoding(String encoding) {
         configuration.setRequestContentEncoding(emptyIfNull(encoding));
+        return this;
+    }
+
+    @Override
+    public HttpCommunicator enableKeepAlive() {
+        configuration.setEnableKeepAlive(true);
         return this;
     }
 
@@ -232,18 +251,28 @@ public class HttpCommunicatorImplementation implements HttpCommunicator, HttpAsy
     }
 
     @Override
+    public void closeClient() {
+        ignoreException(configuration.getSynchronousClient()::close, getLogger()::error);
+    }
+
+    @Override
     public <RequestType, ResponseType> Optional<ResponseType> execute(RequestType request) {
-        configuration.setRequest(validator.notNullField(request, "request"));
+        request = validator.notNullField(request, "request");
         validator.validate();
-        return ofNullable(executeSynchronousHttpRequest(configuration));
+        return ofNullable(executeSynchronousHttpRequest(configuration, request));
     }
 
     @Override
     public <ResponseType> Optional<ResponseType> execute() {
         validator.validate();
-        return ofNullable(executeSynchronousHttpRequest(configuration));
+        return ofNullable(executeSynchronousHttpRequest(configuration, null));
     }
 
+
+    @Override
+    public void closeAsynchronousClient() {
+        ignoreException(configuration.getAsynchronousClient()::close, getLogger()::error);
+    }
 
     @Override
     public HttpAsynchronousCommunicator client(CloseableHttpAsyncClient client) {
@@ -271,9 +300,9 @@ public class HttpCommunicatorImplementation implements HttpCommunicator, HttpAsy
 
     @Override
     public <RequestType, ResponseType> CompletableFuture<Optional<ResponseType>> executeAsynchronous(RequestType request) {
-        configuration.setRequest(validator.notNullField(request, "request"));
+        request = validator.notNullField(request, "request");
         validator.validate();
-        return executeAsynchronousHttpRequest(configuration);
+        return executeAsynchronousHttpRequest(configuration, request);
     }
 
     @Override
@@ -284,6 +313,6 @@ public class HttpCommunicatorImplementation implements HttpCommunicator, HttpAsy
     @Override
     public <ResponseType> CompletableFuture<Optional<ResponseType>> executeAsynchronous() {
         validator.validate();
-        return executeAsynchronousHttpRequest(configuration);
+        return executeAsynchronousHttpRequest(configuration, null);
     }
 }

@@ -26,6 +26,7 @@ public interface HttpConfigKeys {
     String MIN_SPARE_THREADS_COUNT = "minSpareThreadsCount";
     String CONNECTION_TIMEOUT = "connectionTimeout";
     String SO_TIMEOUT = "soTimeout";
+    String VALIDATE_AFTER_INACTIVITY_MILLIS = "validateAfterInactivityMillis";
     String CONNECTION_REQUEST_TIMEOUT = "connectionRequestTimeout";
     String SOCKET_TIMEOUT = "socketTimeout";
     String SCHEME = "scheme";
@@ -33,8 +34,11 @@ public interface HttpConfigKeys {
     String SSL = "ssl";
     String SSL_KEY_STORE_FILE_PATH = "sslKeyStoreFilePath";
     String SSL_KEY_STORE_PASSWORD = "sslKeyStorePassword";
+    String MAX_CONNECTIONS_PER_ROUTE = "maxConnectionsPerRoute";
+    String MAX_CONNECTIONS_TOTAL = "maxConnectionsTotal";
     String SSL_KEY_STORE_TYPE = "sslKeyStoreType";
     String CONSUMES_MIME_TYPE = "consumesMimeType";
     String PRODUCES_MIME_TYPE = "producesMimeType";
     String WEB = "web";
+
 }

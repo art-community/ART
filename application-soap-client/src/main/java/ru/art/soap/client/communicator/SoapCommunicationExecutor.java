@@ -33,13 +33,17 @@ import java.util.concurrent.*;
 
 @NoArgsConstructor(access = PACKAGE)
 class SoapCommunicationExecutor {
-    static <ResponseType> Optional<ResponseType> execute(SoapCommunicationConfiguration configuration) {
+    static <RequestType, ResponseType> Optional<ResponseType> execute(SoapCommunicationConfiguration configuration, RequestType request) {
         final HttpCommunicator httpCommunicator = httpCommunicator(configuration.getUrl());
         configuration.getRequestInterceptors().forEach(httpCommunicator::addRequestInterceptor);
         configuration.getResponseInterceptors().forEach(httpCommunicator::addResponseInterceptor);
         configuration.getRequestValueInterceptors().forEach(interceptor -> httpCommunicator.addRequestValueInterceptor(cast(interceptor)));
         configuration.getResponseValueInterceptors().forEach(interceptor -> httpCommunicator.addResponseValueInterceptor(cast(interceptor)));
+        if (configuration.isEnableKeepAlive()) {
+            httpCommunicator.enableKeepAlive();
+        }
         httpCommunicator
+                .connectionClosingPolicy(configuration.getConnectionClosingPolicy())
                 .version(configuration.getHttpVersion())
                 .requestCharset(configuration.getRequestCharset())
                 .addHeader(ACCEPT, configuration.getConsumesMimeType().getMimeType().toString())
@@ -58,16 +62,20 @@ class SoapCommunicationExecutor {
                 .requestEncoding(configuration.getRequestBodyEncoding())
                 .produces(configuration.getProducesMimeType().toHttpMimeToContentTypeMapper())
                 .client(configuration.getHttpClient())
-                .execute(configuration.getRequest());
+                .execute(request);
     }
 
-    static <ResponseType> CompletableFuture<Optional<ResponseType>> executeAsynchronous(SoapCommunicationConfiguration configuration) {
+    static <RequestType, ResponseType> CompletableFuture<Optional<ResponseType>> executeAsynchronous(SoapCommunicationConfiguration configuration, RequestType request) {
         final HttpCommunicator httpCommunicator = httpCommunicator(configuration.getUrl());
         configuration.getRequestInterceptors().forEach(httpCommunicator::addRequestInterceptor);
         configuration.getRequestInterceptors().forEach(httpCommunicator::addResponseInterceptor);
         configuration.getRequestValueInterceptors().forEach(interceptor -> httpCommunicator.addRequestValueInterceptor(cast(interceptor)));
         configuration.getResponseValueInterceptors().forEach(interceptor -> httpCommunicator.addResponseValueInterceptor(cast(interceptor)));
+        if (configuration.isEnableKeepAlive()) {
+            httpCommunicator.enableKeepAlive();
+        }
         httpCommunicator
+                .connectionClosingPolicy(configuration.getConnectionClosingPolicy())
                 .version(configuration.getHttpVersion())
                 .requestCharset(configuration.getRequestCharset())
                 .addHeader(ACCEPT, configuration.getConsumesMimeType().getMimeType().toString())
@@ -90,6 +98,6 @@ class SoapCommunicationExecutor {
                 .exceptionHandler(configuration.getExceptionHandler())
                 .cancellationHandler(configuration.getCancellationHandler())
                 .client(configuration.getAsynchronousHttpClient())
-                .executeAsynchronous(configuration.getRequest());
+                .executeAsynchronous(request);
     }
 }

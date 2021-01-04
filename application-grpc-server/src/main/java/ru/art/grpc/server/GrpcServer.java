@@ -19,6 +19,7 @@
 package ru.art.grpc.server;
 
 import io.grpc.*;
+import io.grpc.netty.shaded.io.grpc.netty.*;
 import lombok.*;
 import org.apache.logging.log4j.Logger;
 import ru.art.grpc.server.configuration.GrpcServerModuleConfiguration.*;
@@ -30,6 +31,8 @@ import static java.lang.System.*;
 import static java.text.MessageFormat.*;
 import static java.util.Objects.*;
 import static java.util.concurrent.TimeUnit.*;
+import static lombok.AccessLevel.PRIVATE;
+import static ru.art.core.caster.Caster.*;
 import static ru.art.core.context.Context.*;
 import static ru.art.core.factory.CollectionsFactory.*;
 import static ru.art.grpc.server.constants.GrpcServerExceptionMessages.*;
@@ -43,12 +46,18 @@ import java.util.concurrent.*;
 
 @AllArgsConstructor
 public class GrpcServer {
-    private static final Logger logger = loggingModule().getLogger(GrpcServer.class);
+    @Getter(lazy = true, value = PRIVATE)
+    private final static Logger logger = loggingModule().getLogger(GrpcServer.class);
     private final Server server;
 
     public static GrpcServer grpcServer() {
-        ServerBuilder<?> serverBuilder = forPort(grpcServerModule().getPort());
-        serverBuilder.maxInboundMessageSize(grpcServerModule().getMaxInboundMessageSize());
+        NettyServerBuilder serverBuilder = cast(forPort(grpcServerModule().getPort()));
+        serverBuilder
+                .keepAliveTime(grpcServerModule().getKeepAliveTimeNanos(), NANOSECONDS)
+                .keepAliveTimeout(grpcServerModule().getKeepAliveTimeOutNanos(), NANOSECONDS)
+                .permitKeepAliveTime(grpcServerModule().getPermitKeepAliveTimeNanos(), NANOSECONDS)
+                .permitKeepAliveWithoutCalls(grpcServerModule().isPermitKeepAliveWithoutCalls())
+                .maxInboundMessageSize(grpcServerModule().getMaxInboundMessageSize());
         if (grpcServerModule().isExecuteServiceInTransportThread()) {
             serverBuilder.directExecutor();
         }
@@ -79,7 +88,7 @@ public class GrpcServer {
             long timestamp = currentTimeMillis();
             GrpcServer grpcServer = grpcServer();
             grpcServer.server.start();
-            logger.info(format(GRPC_STARTED_MESSAGE, currentTimeMillis() - timestamp));
+            getLogger().info(format(GRPC_STARTED_MESSAGE, currentTimeMillis() - timestamp));
             return grpcServer;
         } catch (Throwable throwable) {
             throw new GrpcServerException(GRPC_SERVER_INITIALIZATION_FAILED, throwable);
@@ -95,7 +104,7 @@ public class GrpcServer {
     }
 
     private static void logService(GrpcServiceSpecification specification) {
-        logger.info(buildServiceLoadedMessage(specification));
+        getLogger().info(buildServiceLoadedMessage(specification));
     }
 
     public void await() {
@@ -110,15 +119,26 @@ public class GrpcServer {
         return !server.isTerminated();
     }
 
+    public void stop() {
+        long millis = currentTimeMillis();
+        try {
+            server.shutdownNow();
+            server.awaitTermination();
+            getLogger().info(format(GRPC_STOPPED_MESSAGE, currentTimeMillis() - millis));
+        } catch (Throwable throwable) {
+            getLogger().error(GRPC_SERVER_STOPPING_FAILED);
+        }
+    }
+
     public void restart() {
         long millis = currentTimeMillis();
         try {
             server.shutdownNow();
             server.awaitTermination();
             startGrpcServer();
-            logger.info(format(GRPC_RESTARTED_MESSAGE, currentTimeMillis() - millis));
+            getLogger().info(format(GRPC_RESTARTED_MESSAGE, currentTimeMillis() - millis));
         } catch (Throwable throwable) {
-            logger.error(GRPC_SERVER_RESTART_FAILED);
+            getLogger().error(GRPC_SERVER_RESTARTING_FAILED);
         }
     }
 }

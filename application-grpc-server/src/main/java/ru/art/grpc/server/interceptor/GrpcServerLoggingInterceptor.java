@@ -22,22 +22,27 @@ import io.grpc.ForwardingServerCall.*;
 import io.grpc.ForwardingServerCallListener.*;
 import io.grpc.*;
 import io.grpc.ServerCall.*;
+import lombok.*;
 import org.apache.logging.log4j.Logger;
+import ru.art.grpc.server.module.GrpcServerModule;
 import ru.art.logging.*;
 import static io.grpc.Metadata.*;
 import static io.grpc.Metadata.Key.*;
 import static java.lang.System.*;
 import static java.text.MessageFormat.*;
 import static java.util.UUID.*;
+import static lombok.AccessLevel.PRIVATE;
 import static ru.art.core.checker.CheckerForEmptiness.*;
 import static ru.art.core.extension.StringExtensions.*;
 import static ru.art.grpc.server.constants.GrpcServerLoggingMessages.*;
 import static ru.art.grpc.server.constants.GrpcServerModuleConstants.*;
+import static ru.art.grpc.server.module.GrpcServerModule.grpcServerModule;
 import static ru.art.logging.LoggingModule.*;
 import static ru.art.logging.LoggingParametersManager.*;
 
 public class GrpcServerLoggingInterceptor implements ServerInterceptor {
-    private final Logger logger = loggingModule().getLogger(GrpcServerLoggingInterceptor.class);
+    @Getter(lazy = true, value = PRIVATE)
+    private static final Logger logger = loggingModule().getLogger(GrpcServerLoggingInterceptor.class);
 
     @Override
     public <ReqT, RespT> Listener<ReqT> interceptCall(ServerCall<ReqT, RespT> serverCall, Metadata metadata, ServerCallHandler<ReqT, RespT> serverCallHandler) {
@@ -51,53 +56,56 @@ public class GrpcServerLoggingInterceptor implements ServerInterceptor {
                 .requestId(randomUUID().toString())
                 .traceId(isEmpty(traceIdHeader) ? randomUUID().toString() : traceIdHeader)
                 .build());
-        logger.info(format(GRPC_ON_REQUEST_HEADERS, emptyIfNull(metadata.toString())));
+        if (!grpcServerModule().isEnableRawDataTracing()) {
+            return serverCallHandler.startCall(serverCall, metadata);
+        }
+        getLogger().info(format(GRPC_ON_REQUEST_HEADERS, emptyIfNull(metadata.toString())));
         return new SimpleForwardingServerCallListener<ReqT>(serverCallHandler.startCall(new SimpleForwardingServerCall<ReqT, RespT>(serverCall) {
             @Override
             public void sendMessage(RespT message) {
-                logger.info(format(GRPC_ON_RESPONSE_MESSAGE, emptyIfNull(message)));
+                getLogger().info(format(GRPC_ON_RESPONSE_MESSAGE, emptyIfNull(message)));
                 super.sendMessage(message);
             }
 
             @Override
             public void sendHeaders(Metadata headers) {
-                logger.info(format(GRPC_ON_RESPONSE_HEADERS, emptyIfNull(metadata.toString())));
+                getLogger().info(format(GRPC_ON_RESPONSE_HEADERS, emptyIfNull(metadata.toString())));
                 super.sendHeaders(headers);
             }
 
             @Override
             public void close(Status status, Metadata trailers) {
-                logger.info(format(GRPC_ON_CLOSE, emptyIfNull(metadata.toString())));
+                getLogger().info(format(GRPC_ON_CLOSE, emptyIfNull(metadata.toString())));
                 super.close(status, trailers);
             }
         }, metadata)) {
             @Override
             public void onMessage(ReqT message) {
-                logger.info(format(GRPC_ON_REQUEST_MESSAGE, emptyIfNull(message)));
+                getLogger().info(format(GRPC_ON_REQUEST_MESSAGE, emptyIfNull(message)));
                 super.onMessage(message);
             }
 
             @Override
             public void onHalfClose() {
-                logger.info(GRPC_ON_HALF_CLOSE);
+                getLogger().info(GRPC_ON_HALF_CLOSE);
                 super.onHalfClose();
             }
 
             @Override
             public void onCancel() {
-                logger.info(GRPC_ON_CANCEL);
+                getLogger().info(GRPC_ON_CANCEL);
                 super.onCancel();
             }
 
             @Override
             public void onComplete() {
-                logger.info(GRPC_ON_COMPLETE);
+                getLogger().info(GRPC_ON_COMPLETE);
                 super.onComplete();
             }
 
             @Override
             public void onReady() {
-                logger.info(GRPC_ON_READY);
+                getLogger().info(GRPC_ON_READY);
                 super.onReady();
             }
         };

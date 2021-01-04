@@ -58,12 +58,12 @@ public final class TarantoolValueDao extends TarantoolCommonDao {
         if (!entity.getFieldNames().contains(ID_FIELD) && idCalculationMode == MANUAL) {
             throw new TarantoolDaoException(format(ENTITY_WITHOUT_ID_FILED, spaceName));
         }
-        evaluateValueScript(instanceId, spaceName);
+        evaluateValueScript(clusterIds, spaceName);
         PlainTupleWriterResult valueTupleResult = writeTuple(merge(entityBuilder().longField(ID_FIELD, null).build(), entity));
         if (isNull(valueTupleResult)) {
             throw new TarantoolDaoException(format(ENTITY_IS_NULL, spaceName));
         }
-        TarantoolClient client = tarantoolModuleState().getClient(instanceId);
+
         String valueFunctionName = PUT + spaceName + VALUE_POSTFIX;
         List<?> valueTuple = valueTupleResult.getTuple();
         List<?> schemaTuple = valueTupleResult.getSchema().toTuple();
@@ -109,8 +109,8 @@ public final class TarantoolValueDao extends TarantoolCommonDao {
 
 
     public Optional<Entity> get(String spaceName, Collection<?> keys) {
-        evaluateValueScript(instanceId, spaceName);
-        TarantoolClient client = tarantoolModuleState().getClient(instanceId);
+        evaluateValueScript(clusterIds, spaceName);
+
         List<?> result = cast(callTarantoolFunction(client, GET + spaceName + VALUE_POSTFIX, keys));
         if (isEmpty(result) || (isEmpty(result = cast(result.get(0)))) || result.size() == 1) {
             return empty();
@@ -162,8 +162,8 @@ public final class TarantoolValueDao extends TarantoolCommonDao {
 
 
     public List<Entity> select(String spaceName, Collection<?> keys) {
-        evaluateValueScript(instanceId, spaceName);
-        TarantoolClient client = tarantoolModuleState().getClient(instanceId);
+        evaluateValueScript(clusterIds, spaceName);
+
         List<List<?>> result = cast(callTarantoolFunction(client, SELECT + spaceName + VALUES_POSTFIX, keys));
         if (isEmpty(result) || (isEmpty(result = cast(result.get(0)))) || result.size() == 1) {
             return emptyList();
@@ -245,12 +245,12 @@ public final class TarantoolValueDao extends TarantoolCommonDao {
         if (!entity.getFieldNames().contains(ID_FIELD) && idCalculationMode == MANUAL) {
             throw new TarantoolDaoException(format(ENTITY_WITHOUT_ID_FILED, spaceName));
         }
-        evaluateValueScript(instanceId, spaceName);
+        evaluateValueScript(clusterIds, spaceName);
         PlainTupleWriterResult valueTupleResult = writeTuple(merge(entityBuilder().longField(ID_FIELD, null).build(), entity));
         if (isNull(valueTupleResult)) {
             throw new TarantoolDaoException(format(ENTITY_IS_NULL, spaceName));
         }
-        TarantoolClient client = tarantoolModuleState().getClient(instanceId);
+
         String valueFunctionName = INSERT + spaceName + VALUE_POSTFIX;
         List<?> valueTuple = valueTupleResult.getTuple();
         List<?> schemaTuple = valueTupleResult.getSchema().toTuple();
@@ -296,8 +296,8 @@ public final class TarantoolValueDao extends TarantoolCommonDao {
 
 
     public Optional<Entity> delete(String spaceName, Collection<?> keys) {
-        evaluateValueScript(instanceId, spaceName);
-        TarantoolClient client = tarantoolModuleState().getClient(instanceId);
+        evaluateValueScript(clusterIds, spaceName);
+
         List<List<?>> result = cast(callTarantoolFunction(client, DELETE + spaceName + VALUES_POSTFIX, keys));
         if (isEmpty(result) || (isEmpty(result = cast(result.get(0)))) || result.size() == 1) {
             return empty();
@@ -312,8 +312,8 @@ public final class TarantoolValueDao extends TarantoolCommonDao {
     }
 
     public List<Entity> deleteAll(String spaceName) {
-        evaluateValueScript(instanceId, spaceName);
-        TarantoolClient client = tarantoolModuleState().getClient(instanceId);
+        evaluateValueScript(clusterIds, spaceName);
+
         List<List<?>> result = cast(callTarantoolFunction(client, DELETE_ALL + spaceName + VALUES_POSTFIX));
         if (isEmpty(result) || (isEmpty(result = cast(result.get(0)))) || result.size() == 1) {
             return emptyList();
@@ -346,8 +346,8 @@ public final class TarantoolValueDao extends TarantoolCommonDao {
     }
 
     private Optional<Entity> updateWithSchema(String spaceName, Collection<?> keys, List<TarantoolUpdateFieldOperation> operations) {
-        evaluateValueScript(instanceId, spaceName);
-        TarantoolClient client = tarantoolModuleState().getClient(instanceId);
+        evaluateValueScript(clusterIds, spaceName);
+
         String functionName = UPDATE + spaceName + VALUE_POSTFIX + WITH_SCHEMA_POSTFIX;
         List<?> valueOperations = operations
                 .stream()
@@ -367,8 +367,8 @@ public final class TarantoolValueDao extends TarantoolCommonDao {
     }
 
     private Optional<Entity> updateWithoutSchema(String spaceName, Collection<?> keys, List<TarantoolUpdateFieldOperation> operations) {
-        evaluateValueScript(instanceId, spaceName);
-        TarantoolClient client = tarantoolModuleState().getClient(instanceId);
+        evaluateValueScript(clusterIds, spaceName);
+
         String functionName = UPDATE + spaceName + VALUE_POSTFIX;
         List<List<?>> result = cast(callTarantoolFunction(client, functionName, fixedArrayOf(fixedArrayOf(keys), operations
                 .stream()
@@ -389,12 +389,12 @@ public final class TarantoolValueDao extends TarantoolCommonDao {
         if (!defaultEntity.getFieldNames().contains(ID_FIELD) && idCalculationMode == MANUAL) {
             throw new TarantoolDaoException(format(ENTITY_WITHOUT_ID_FILED, spaceName));
         }
-        evaluateValueScript(instanceId, spaceName);
+        evaluateValueScript(clusterIds, spaceName);
         PlainTupleWriterResult valueTupleResult = writeTuple(merge(entityBuilder().longField(ID_FIELD, null).build(), defaultEntity));
         if (isNull(valueTupleResult)) {
             throw new TarantoolDaoException(format(ENTITY_IS_NULL, spaceName));
         }
-        TarantoolClient client = tarantoolModuleState().getClient(instanceId);
+
         String functionName = UPSERT + spaceName + VALUE_POSTFIX + WITH_SCHEMA_POSTFIX;
         List<?> schemaTuple = valueTupleResult.getSchema().toTuple();
         List<?> valueTuple = valueTupleResult.getTuple();

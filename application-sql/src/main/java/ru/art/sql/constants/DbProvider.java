@@ -23,9 +23,13 @@ import lombok.*;
 @Getter
 @AllArgsConstructor
 public enum DbProvider {
-    POSTGRES("org.postgresql.Driver"),
-    ORACLE("oracle.jdbc.OracleDriver"),
-    MSSQL("com.microsoft.sqlserver.jdbc.SQLServerDriver");
+    POSTGRES("org.postgresql.Driver", "select 1"),
+    ORACLE("oracle.jdbc.OracleDriver", "select 1 from dual"),
+    MSSQL("com.microsoft.sqlserver.jdbc.SQLServerDriver", "select 1"),
+    HSQLDB("org.hsqldb.jdbcDriver", "select 1 from INFORMATION_SCHEMA.SYSTEM_USERS"),
+    DERBY("org.apache.derby.jdbc.ClientDriver", "values 1"),
+    DERBY_EMBEDDED("org.apache.derby.jdbc.EmbeddedDriver", "values 1");
 
     private final String driverClassName;
+    private final String validationQuery;
 }

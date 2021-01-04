@@ -34,6 +34,7 @@ ext {
     java.util.Set;
     java.util.Map;
     java.util.Queue;
+    ru.art.entity.Entity
 ```
 3. Классы-модели должны содержать аннотации @Getter или @Data или @Value, и @Builder.
 4. Не поддерживается генерация полей того же типа, что и класс, в котором они находятся.

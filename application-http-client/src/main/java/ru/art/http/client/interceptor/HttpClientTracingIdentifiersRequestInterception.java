@@ -20,6 +20,7 @@ package ru.art.http.client.interceptor;
 
 import org.apache.http.client.methods.*;
 import ru.art.core.constants.*;
+import ru.art.entity.*;
 import static org.apache.logging.log4j.ThreadContext.*;
 import static ru.art.core.checker.CheckerForEmptiness.*;
 import static ru.art.core.constants.InterceptionStrategy.*;
@@ -30,8 +31,12 @@ public class HttpClientTracingIdentifiersRequestInterception implements HttpClie
     @Override
     public InterceptionStrategy intercept(HttpUriRequest request) {
         String traceId = get(TRACE_ID_KEY);
+        String profile = get(PROFILE_HEADER);
         if (isNotEmpty(traceId)) {
             request.addHeader(TRACE_ID_HEADER, traceId);
+        }
+        if (isNotEmpty(profile)) {
+            request.addHeader(PROFILE_HEADER, profile);
         }
         return NEXT_INTERCEPTOR;
     }

@@ -39,7 +39,7 @@ import java.util.*;
 
 public interface TaskExecutionActions {
     static void executeDeferredTask(DeferredTask task) {
-        loggingModule().getLogger().info(format(TASK_STARTED_MESSAGE, task));
+        loggingModule().getLogger(TaskExecutionActions.class).info(format(TASK_STARTED_MESSAGE, task));
         try {
             ServiceResponse<Value> response = grpcCommunicator(remoteSchedulerModule().getBalancerHost(),
                     remoteSchedulerModule().getBalancerPort(),
@@ -55,7 +55,7 @@ public interface TaskExecutionActions {
     }
 
     static void submitPeriodicTask(PeriodicTask task) {
-        loggingModule().getLogger().info(format(TASK_STARTED_MESSAGE, task));
+        loggingModule().getLogger(TaskExecutionActions.class).info(format(TASK_STARTED_MESSAGE, task));
         try {
             ServiceResponse<Value> response = grpcCommunicator(remoteSchedulerModule().getBalancerHost(),
                     remoteSchedulerModule().getBalancerPort(),
@@ -71,7 +71,7 @@ public interface TaskExecutionActions {
     }
 
     static void submitInfinityProcess(InfinityProcess process) {
-        loggingModule().getLogger().info(format(PROCESS_STARTED_MESSAGE, process));
+        loggingModule().getLogger(TaskExecutionActions.class).info(format(PROCESS_STARTED_MESSAGE, process));
         try {
             ServiceResponse<Value> response = grpcCommunicator(remoteSchedulerModule().getBalancerHost(),
                     remoteSchedulerModule().getBalancerPort(),
@@ -87,21 +87,21 @@ public interface TaskExecutionActions {
     }
 
     static void handlePeriodicTaskError(Throwable error, PeriodicTask task) {
-        loggingModule().getLogger().error(format(TASK_FAILED_MESSAGE, task), error);
+        loggingModule().getLogger(TaskExecutionActions.class).error(format(TASK_FAILED_MESSAGE, task), error);
         handlePeriodicTaskAction(task);
     }
 
     static void handleDeferredTaskError(Throwable error, DeferredTask task) {
-        loggingModule().getLogger().error(format(TASK_FAILED_MESSAGE, task), error);
+        loggingModule().getLogger(TaskExecutionActions.class).error(format(TASK_FAILED_MESSAGE, task), error);
         executeServiceMethod(remoteSchedulerModule().getDbAdapterServiceId(), UPDATE_DEFERRED_TASK_STATUS, new UpdateTaskStatusRequest(task.getId(), FAILED));
     }
 
     static void handleInfinityProcessError(Throwable error, InfinityProcess process) {
-        loggingModule().getLogger().error(format(PROCESS_FAILED_MESSAGE, process), error);
+        loggingModule().getLogger(TaskExecutionActions.class).error(format(PROCESS_FAILED_MESSAGE, process), error);
     }
 
     static void handlePeriodicTaskCompletion(PeriodicTask task, ServiceResponse<Value> response) {
-        loggingModule().getLogger().info(format(TASK_COMPLETED_MESSAGE, task, getOrElse(response.getResponseData(), EMPTY_STRING)));
+        loggingModule().getLogger(TaskExecutionActions.class).info(format(TASK_COMPLETED_MESSAGE, task, getOrElse(response.getResponseData(), EMPTY_STRING)));
 
         if (task.isFinishAfterCompletion()) {
             executeServiceMethod(remoteSchedulerModule().getDbAdapterServiceId(), INC_EXECUTION_COUNT, task.getId());
@@ -114,12 +114,12 @@ public interface TaskExecutionActions {
     }
 
     static void handleDeferredTaskCompletion(DeferredTask task, ServiceResponse<Value> response) {
-        loggingModule().getLogger().info(format(TASK_COMPLETED_MESSAGE, task, getOrElse(response.getResponseData(), EMPTY_STRING)));
+        loggingModule().getLogger(TaskExecutionActions.class).info(format(TASK_COMPLETED_MESSAGE, task, getOrElse(response.getResponseData(), EMPTY_STRING)));
         executeServiceMethod(remoteSchedulerModule().getDbAdapterServiceId(), UPDATE_DEFERRED_TASK_STATUS, new UpdateTaskStatusRequest(task.getId(), COMPLETED));
     }
 
     static void handleInfinityProcessCompletion(InfinityProcess process, ServiceResponse<Value> response) {
-        loggingModule().getLogger().info(format(PROCESS_COMPLETED_MESSAGE, process, getOrElse(response.getResponseData(), EMPTY_STRING)));
+        loggingModule().getLogger(TaskExecutionActions.class).info(format(PROCESS_COMPLETED_MESSAGE, process, getOrElse(response.getResponseData(), EMPTY_STRING)));
     }
 
     static void updateTaskStatusProcessingIfFirstAttempt(String taskId, int currentRetryCount) {

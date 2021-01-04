@@ -23,6 +23,7 @@ import lombok.experimental.*;
 import ru.art.entity.*;
 import ru.art.json.exception.*;
 import static com.fasterxml.jackson.core.JsonToken.*;
+import static java.util.Collections.*;
 import static java.util.Objects.*;
 import static ru.art.core.checker.CheckerForEmptiness.isEmpty;
 import static ru.art.core.context.Context.*;
@@ -107,7 +108,6 @@ public class JsonEntityReader {
             currentName = emptyIfNull(currentName);
             switch (currentToken) {
                 case NOT_AVAILABLE:
-                case END_ARRAY:
                 case END_OBJECT:
                     return entityBuilder.build();
                 case START_OBJECT:
@@ -143,9 +143,11 @@ public class JsonEntityReader {
         String currentName = emptyIfNull(parser.getCurrentName());
         JsonToken currentToken = parser.nextToken();
         switch (currentToken) {
+            case END_ARRAY:
+                entityBuilder.valueCollectionField(currentName, emptyList());
+                return;
             case NOT_AVAILABLE:
             case END_OBJECT:
-            case END_ARRAY:
             case FIELD_NAME:
             case VALUE_EMBEDDED_OBJECT:
             case VALUE_NULL:
@@ -154,7 +156,7 @@ public class JsonEntityReader {
                 entityBuilder.entityCollectionField(currentName, parseEntityArray(parser));
                 return;
             case START_ARRAY:
-                parseArray(entityBuilder, parser);
+                entityBuilder.collectionValueCollectionField(currentName, parseArraysArray(parser));
                 return;
             case VALUE_STRING:
                 entityBuilder.stringCollectionField(currentName, parseStringArray(parser));
@@ -187,7 +189,7 @@ public class JsonEntityReader {
             case START_OBJECT:
                 return entityCollection(parseEntityArray(parser));
             case START_ARRAY:
-                return parseArray(parser);
+                return collectionOfCollections(parseArraysArray(parser));
             case VALUE_STRING:
                 return stringCollection(parseStringArray(parser));
             case VALUE_NUMBER_INT:
@@ -264,6 +266,21 @@ public class JsonEntityReader {
             if (currentToken != START_OBJECT) return array;
             array.add(parseJsonEntity(parser));
             currentToken = parser.nextToken();
+        } while (!parser.isClosed() && currentToken != END_ARRAY);
+        return array;
+    }
+
+    private Collection<CollectionValue<Entity>> parseArraysArray(JsonParser parser) throws IOException {
+        List<CollectionValue<Entity>> array = dynamicArrayOf();
+        JsonToken currentToken = parser.currentToken();
+        do {
+            if (currentToken != START_ARRAY) {
+                array.add(entityCollection(parseEntityArray(parser)));
+            }
+            currentToken = parser.nextToken();
+            if (currentToken == END_ARRAY && isEmpty(array)) {
+                array.add(entityCollection(dynamicArrayOf()));
+            }
         } while (!parser.isClosed() && currentToken != END_ARRAY);
         return array;
     }

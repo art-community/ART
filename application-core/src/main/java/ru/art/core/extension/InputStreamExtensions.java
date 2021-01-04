@@ -35,18 +35,18 @@ import java.nio.charset.*;
 
 @UtilityClass
 public class InputStreamExtensions {
-    public static byte[] toByteArray(InputStream is) {
-        return toByteArray(is, DEFAULT_BUFFER_SIZE);
+    public static byte[] toByteArray(InputStream inputStream) {
+        return toByteArray(inputStream, DEFAULT_BUFFER_SIZE);
     }
 
-    public static byte[] toByteArray(InputStream is, int bufferSize) {
+    public static byte[] toByteArray(InputStream inputStream, int bufferSize) {
         if (bufferSize <= 0) {
             return EMPTY_BYTES;
         }
         ByteBuffer buffer = allocateDirect(bufferSize);
         byte[] result = EMPTY_BYTES;
         try {
-            ReadableByteChannel channel = newChannel(is);
+            ReadableByteChannel channel = newChannel(inputStream);
             while (channel.read(buffer) != EOF) {
                 buffer.flip();
                 byte[] bufferBytes = new byte[buffer.limit()];
@@ -63,25 +63,32 @@ public class InputStreamExtensions {
         return result;
     }
 
-    public static byte[] toByteArraySafety(InputStream is) {
+    public static byte[] toByteArraySafety(InputStream inputStream) {
+        return toByteArraySafety(inputStream, DEFAULT_BUFFER_SIZE);
+    }
+
+    public static byte[] toByteArraySafety(InputStream inputStream, int bufferSize) {
         try {
-            return toByteArray(is);
+            return toByteArray(inputStream, bufferSize);
         } catch (Throwable throwable) {
             throwable.printStackTrace();
             return EMPTY_BYTES;
         }
     }
 
-    public static String toString(InputStream is, Charset charset) {
-        return new String(toByteArray(is), charset);
+    public static String toString(InputStream inputStream) {
+        return toString(inputStream, DEFAULT_BUFFER_SIZE);
     }
 
-    public static String toString(InputStream is) {
-        try {
-            return toString(is, contextConfiguration().getCharset());
-        } catch (Throwable throwable) {
-            throwable.printStackTrace();
-            return EMPTY_STRING;
-        }
+    public static String toString(InputStream inputStream, int bufferSize) {
+        return toString(inputStream, bufferSize, contextConfiguration().getCharset());
+    }
+
+    public static String toString(InputStream inputStream, Charset charset) {
+        return toString(inputStream, DEFAULT_BUFFER_SIZE, charset);
+    }
+
+    public static String toString(InputStream inputStream, int bufferSize, Charset charset) {
+        return new String(toByteArray(inputStream, bufferSize), charset);
     }
 }

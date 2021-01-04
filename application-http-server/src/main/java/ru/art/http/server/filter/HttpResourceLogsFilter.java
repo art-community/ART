@@ -20,8 +20,8 @@ package ru.art.http.server.filter;
 
 import org.zalando.logbook.*;
 import static ru.art.core.checker.CheckerForEmptiness.*;
-import static ru.art.core.extension.NullCheckingExtensions.*;
 import static ru.art.core.mime.MimeType.*;
+import static ru.art.http.server.HttpServerModuleConfiguration.*;
 import static ru.art.http.server.module.HttpServerModule.*;
 
 public interface HttpResourceLogsFilter {
@@ -31,9 +31,14 @@ public interface HttpResourceLogsFilter {
         if (isEmpty(contentType)) {
             return null;
         }
-        return getOrElse(httpServerModule()
+        return httpServerModule()
                 .getResourceConfiguration()
-                .getLogbookResponseBodyReplacers()
-                .get(valueOf(contentType)), null);
+                .getResourceExtensionMappings()
+                .values()
+                .stream()
+                .filter(mapping -> valueOf(contentType).equals(mapping.getMimeType()))
+                .findFirst()
+                .map(HttpResourceExtensionMapping::getLogbookBodyReplacement)
+                .orElse(null);
     }
 }

@@ -60,6 +60,9 @@ public class HttpClientAgileConfiguration extends HttpClientModuleDefaultConfigu
     private boolean enableValueTracing;
     private MimeToContentTypeMapper consumesMimeTypeMapper;
     private MimeToContentTypeMapper producesMimeTypeMapper;
+    private int maxConnectionsPerRoute;
+    private int maxConnectionsTotal;
+    private int validateAfterInactivityMillis;
 
     public HttpClientAgileConfiguration() {
         refresh();
@@ -94,15 +97,13 @@ public class HttpClientAgileConfiguration extends HttpClientModuleDefaultConfigu
                 .requestConfig(RequestConfig.custom()
                         .setConnectTimeout(getOrElse(config.getInt(CONNECTION_TIMEOUT), super.getRequestConfig().getConnectTimeout()))
                         .setSocketTimeout(getOrElse(config.getInt(SOCKET_TIMEOUT), super.getRequestConfig().getSocketTimeout()))
-                        .setConnectionRequestTimeout(getOrElse(config.getInt(CONNECTION_REQUEST_TIMEOUT),
-                                super.getRequestConfig().getConnectionRequestTimeout()))
+                        .setConnectionRequestTimeout(getOrElse(config.getInt(CONNECTION_REQUEST_TIMEOUT), super.getRequestConfig().getConnectionRequestTimeout()))
                         .build())
                 .build(), super.getCommunicationTargets());
         int socketTimeout = configInt(HTTP_COMMUNICATION_SECTION_ID, SOCKET_TIMEOUT, RequestConfig.DEFAULT.getSocketTimeout());
-        int connectionTimeout = configInt(HTTP_COMMUNICATION_SECTION_ID, CONNECTION_TIMEOUT, DEFAULT_TIMEOUT);
+        int connectionTimeout = configInt(HTTP_COMMUNICATION_SECTION_ID, CONNECTION_TIMEOUT, DEFAULT_HTTP_CLIENT_TIMEOUT);
         int soTimeout = configInt(HTTP_COMMUNICATION_SECTION_ID, SO_TIMEOUT, SocketConfig.DEFAULT.getSoTimeout());
-        int connectionRequestTimeout = configInt(HTTP_COMMUNICATION_SECTION_ID, CONNECTION_REQUEST_TIMEOUT,
-                RequestConfig.DEFAULT.getConnectionRequestTimeout());
+        int connectionRequestTimeout = configInt(HTTP_COMMUNICATION_SECTION_ID, CONNECTION_REQUEST_TIMEOUT, RequestConfig.DEFAULT.getConnectionRequestTimeout());
         int ioReactorThreadCount = configInt(HTTP_COMMUNICATION_SECTION_ID, THREAD_POOL_SIZE, DEFAULT_THREAD_POOL_SIZE);
         ioReactorConfig = IOReactorConfig.custom()
                 .setIoThreadCount(ioReactorThreadCount)
@@ -116,10 +117,12 @@ public class HttpClientAgileConfiguration extends HttpClientModuleDefaultConfigu
                 .setSoTimeout(soTimeout)
                 .build();
         ssl = configBoolean(HTTP_COMMUNICATION_SECTION_ID, SSL, super.isSsl());
-        disableSslHostNameVerification = configBoolean(HTTP_COMMUNICATION_SECTION_ID, IS_DISABLE_SSL_HOST_NAME_VERIFICATION,
-                super.isDisableSslHostNameVerification());
+        disableSslHostNameVerification = configBoolean(HTTP_COMMUNICATION_SECTION_ID, IS_DISABLE_SSL_HOST_NAME_VERIFICATION, super.isDisableSslHostNameVerification());
         sslKeyStoreType = configString(HTTP_COMMUNICATION_SECTION_ID, SSL_KEY_STORE_TYPE, super.getSslKeyStoreType());
         sslKeyStoreFilePath = configString(HTTP_COMMUNICATION_SECTION_ID, SSL_KEY_STORE_FILE_PATH, super.getSslKeyStoreFilePath());
         sslKeyStorePassword = configString(HTTP_COMMUNICATION_SECTION_ID, SSL_KEY_STORE_PASSWORD, super.getSslKeyStorePassword());
+        maxConnectionsPerRoute = configInt(HTTP_COMMUNICATION_SECTION_ID, MAX_CONNECTIONS_PER_ROUTE, super.getMaxConnectionsPerRoute());
+        maxConnectionsTotal = configInt(HTTP_COMMUNICATION_SECTION_ID, MAX_CONNECTIONS_TOTAL, super.getMaxConnectionsTotal());
+        validateAfterInactivityMillis = configInt(HTTP_COMMUNICATION_SECTION_ID, VALIDATE_AFTER_INACTIVITY_MILLIS, super.getValidateAfterInactivityMillis());
     }
 }

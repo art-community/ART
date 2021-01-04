@@ -379,4 +379,6 @@ public interface HttpHeaders {
      * @see <a href="http://tools.ietf.org/html/rfc7235#section-4.1">Section 4.1 of RFC 7235</a>
      */
     String WWW_AUTHENTICATE = "WWW-Authenticate";
+
+    String KEEP_ALIVE = "Keep-Alive";
 }

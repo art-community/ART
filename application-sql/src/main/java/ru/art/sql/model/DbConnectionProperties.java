@@ -24,7 +24,7 @@ import ru.art.sql.constants.*;
 @Getter
 @Builder
 public class DbConnectionProperties {
-    private final String login;
+    private final String userName;
     private final String password;
     private final String url;
     private final DbProvider driver;

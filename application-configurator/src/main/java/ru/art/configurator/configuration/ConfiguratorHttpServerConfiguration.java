@@ -22,9 +22,9 @@ import lombok.*;
 import org.zalando.logbook.*;
 import ru.art.core.mime.*;
 import ru.art.http.mapper.*;
-import ru.art.http.server.HttpServerModuleConfiguration.HttpResourceConfiguration.*;
 import ru.art.http.server.HttpServerModuleConfiguration.*;
 import ru.art.http.server.interceptor.*;
+import ru.art.http.server.module.*;
 import static ru.art.config.ConfigProvider.*;
 import static ru.art.configurator.api.constants.ConfiguratorServiceConstants.*;
 import static ru.art.configurator.constants.ConfiguratorModuleConstants.*;
@@ -40,6 +40,7 @@ import static ru.art.http.server.HttpServerModuleConfiguration.*;
 import static ru.art.http.server.constants.HttpServerModuleConstants.HttpResourceServiceConstants.HttpResourceType.*;
 import static ru.art.http.server.interceptor.CookieInterceptor.Error.*;
 import static ru.art.http.server.interceptor.HttpServerInterceptor.*;
+import static ru.art.http.server.module.HttpServerModule.*;
 import static ru.art.http.server.service.HttpResourceService.*;
 import static ru.art.metrics.http.filter.MetricsHttpLogFilter.*;
 import java.util.*;
@@ -48,7 +49,7 @@ import java.util.*;
 public class ConfiguratorHttpServerConfiguration extends HttpServerModuleDefaultConfiguration {
     private final Map<MimeType, HttpContentMapper> contentMappers = configureContentMappers(super.getContentMappers());
     private final int port = ifExceptionOrEmpty(() -> config(CONFIGURATOR_SECTION_ID).getInt(CONFIGURATOR_HTTP_PORT_PROPERTY), super.getPort());
-    private final Logbook logbook = logbookWithoutMetricsLogs(logbookWithoutResourceLogs()).build();
+    private final Logbook logbook = logbookWithoutMetricsLogs(logbookWithoutResourceLogs(this::isEnableValueTracing), this::isEnableRawDataTracing).build();
     private final String path = ifExceptionOrEmpty(() ->
             config(CONFIGURATOR_SECTION_ID).getString(CONFIGURATOR_HTTP_PATH_PROPERTY), CONFIGURATOR_PATH);
     private final List<HttpServerInterceptor> requestInterceptors = initializeRequestInterceptors(super.getRequestInterceptors());

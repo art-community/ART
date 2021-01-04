@@ -20,10 +20,12 @@ package ru.art.configurator.api.specification;
 
 import lombok.*;
 import ru.art.configurator.api.model.*;
+import ru.art.core.context.*;
 import ru.art.grpc.client.communicator.*;
 import ru.art.grpc.client.specification.*;
 import ru.art.service.exception.*;
 import static java.lang.System.*;
+import static lombok.AccessLevel.PRIVATE;
 import static ru.art.configurator.api.constants.ConfiguratorCommunicationConstants.*;
 import static ru.art.configurator.api.constants.ConfiguratorServiceConstants.*;
 import static ru.art.configurator.api.constants.ConfiguratorServiceConstants.Methods.*;
@@ -42,13 +44,13 @@ import static ru.art.grpc.client.communicator.GrpcCommunicator.*;
 @AllArgsConstructor
 public class ConfiguratorCommunicationSpecification implements GrpcCommunicationSpecification {
     private final String host;
-    private final Integer port;
+    private final int port;
     private final String path;
     private final String serviceId = CONFIGURATOR_COMMUNICATION_SERVICE_ID;
     private final String profileId = getProperty(PROFILE_PROPERTY);
     private final ModuleKey moduleKey = new ModuleKey(isEmpty(profileId) ? LOCAL_PROFILE : profileId, contextConfiguration().getMainModuleId());
 
-    @Getter(lazy = true)
+    @Getter(lazy = true, value = PRIVATE)
     private final GrpcCommunicator getProtobufConfig = getProtobufConfig();
 
     private GrpcCommunicator getProtobufConfig() {

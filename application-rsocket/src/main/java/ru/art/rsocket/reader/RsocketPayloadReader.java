@@ -32,19 +32,27 @@ import static ru.art.rsocket.constants.RsocketModuleConstants.ExceptionMessages.
 import static ru.art.rsocket.constants.RsocketModuleConstants.*;
 import static ru.art.rsocket.module.RsocketModule.*;
 import static ru.art.xml.descriptor.XmlEntityReader.*;
+import java.nio.*;
 
 @UtilityClass
 public class RsocketPayloadReader {
     public static Value readPayloadData(Payload payload, RsocketDataFormat dataFormat) {
         switch (dataFormat) {
             case PROTOBUF:
-                return readProtobuf(wrapException(() -> com.google.protobuf.Value.parseFrom(payload.getData()), RsocketServerException::new));
+                ByteBuffer data = payload.getData();
+                if (data.capacity() == 0) {
+                    return null;
+                }
+                return readProtobuf(wrapException(() -> com.google.protobuf.Value.parseFrom(data), RsocketServerException::new));
             case JSON:
                 return readJson(wrapException(payload::getDataUtf8, RsocketServerException::new));
             case XML:
                 return readXml(wrapException(payload::getDataUtf8, RsocketServerException::new));
             case MESSAGE_PACK:
                 ByteBuf byteBuf = payload.sliceData();
+                if (byteBuf.readableBytes() == 0) {
+                    return null;
+                }
                 byte[] bytes = new byte[byteBuf.readableBytes()];
                 byteBuf.readBytes(bytes);
                 return readMessagePack(bytes);
@@ -55,13 +63,20 @@ public class RsocketPayloadReader {
     public static Value readPayloadMetaData(Payload payload, RsocketDataFormat dataFormat) {
         switch (dataFormat) {
             case PROTOBUF:
-                return readProtobuf(wrapException(() -> com.google.protobuf.Value.parseFrom(payload.getMetadata()), RsocketServerException::new));
+                ByteBuffer metadata = payload.getMetadata();
+                if (metadata.capacity() == 0) {
+                    return null;
+                }
+                return readProtobuf(wrapException(() -> com.google.protobuf.Value.parseFrom(metadata), RsocketServerException::new));
             case JSON:
                 return readJson(wrapException(payload::getMetadataUtf8, RsocketServerException::new));
             case XML:
                 return readXml(wrapException(payload::getMetadataUtf8, RsocketServerException::new));
             case MESSAGE_PACK:
                 ByteBuf byteBuf = payload.sliceMetadata();
+                if (byteBuf.readableBytes() == 0) {
+                    return null;
+                }
                 byte[] bytes = new byte[byteBuf.readableBytes()];
                 byteBuf.readBytes(bytes);
                 return readMessagePack(bytes);

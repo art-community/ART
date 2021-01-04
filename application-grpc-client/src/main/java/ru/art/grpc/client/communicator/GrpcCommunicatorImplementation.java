@@ -19,22 +19,37 @@
 package ru.art.grpc.client.communicator;
 
 import io.grpc.*;
+import lombok.*;
+import org.apache.logging.log4j.*;
+import ru.art.core.lazy.*;
+import ru.art.core.runnable.*;
 import ru.art.core.validator.*;
 import ru.art.entity.*;
+import ru.art.entity.Value;
 import ru.art.entity.interceptor.*;
 import ru.art.entity.mapper.*;
 import ru.art.grpc.client.handler.*;
 import ru.art.grpc.client.model.*;
 import ru.art.service.model.*;
+import static java.util.Objects.*;
+import static java.util.concurrent.TimeUnit.*;
+import static lombok.AccessLevel.PRIVATE;
 import static ru.art.core.caster.Caster.*;
 import static ru.art.core.checker.CheckerForEmptiness.*;
 import static ru.art.core.constants.StringConstants.*;
+import static ru.art.core.lazy.LazyLoadingValue.*;
+import static ru.art.core.wrapper.ExceptionWrapper.*;
+import static ru.art.grpc.client.communicator.GrpcCommunicatorChannelFactory.*;
 import static ru.art.grpc.client.constants.GrpcClientModuleConstants.*;
+import static ru.art.logging.LoggingModule.*;
 import java.util.concurrent.*;
 
 public class GrpcCommunicatorImplementation implements GrpcCommunicator, GrpcCommunicator.GrpcAsynchronousCommunicator {
     private final GrpcCommunicationConfiguration configuration = new GrpcCommunicationConfiguration();
     private final BuilderValidator validator = new BuilderValidator(GrpcCommunicator.class.getName());
+    private final LazyLoadingValue<ManagedChannel> channel = lazyValue(() -> createChannel(configuration));
+    @Getter(lazy = true, value = PRIVATE)
+    private static final Logger logger = loggingModule().getLogger(GrpcCommunicator.class);
 
     GrpcCommunicatorImplementation(String host, int port, String path) {
         configuration.setUrl(validator.notEmptyField(host, "host") + COLON + validator.notNullField(port, "port"));
@@ -53,14 +68,22 @@ public class GrpcCommunicatorImplementation implements GrpcCommunicator, GrpcCom
     GrpcCommunicatorImplementation(GrpcCommunicationTargetConfiguration targetConfiguration) {
         configuration.setPath(validator.notEmptyField(targetConfiguration.path(), "path"));
         deadlineTimeout(targetConfiguration.timeout());
+        keepAliveTimeNanos(targetConfiguration.keepAliveTimeNanos());
+        keepAliveTimeNanos(targetConfiguration.keepAliveTimeOutNanos());
+        keepAliveWithoutCalls(targetConfiguration.keepAliveWithoutCalls());
         if (targetConfiguration.secured()) {
             secured();
+        }
+        if (targetConfiguration.waitForReady()) {
+            waitForReady();
         }
         if (isNotEmpty(targetConfiguration.url())) {
             configuration.setUrl(targetConfiguration.url());
             return;
         }
-        configuration.setUrl(validator.notEmptyField(targetConfiguration.host(), "host") + COLON + validator.notNullField(targetConfiguration.port(), "port"));
+        configuration.setUrl(validator.notEmptyField(targetConfiguration.host(), "host")
+                + COLON
+                + validator.notNullField(targetConfiguration.port(), "port"));
     }
 
     @Override
@@ -101,6 +124,12 @@ public class GrpcCommunicatorImplementation implements GrpcCommunicator, GrpcCom
     }
 
     @Override
+    public GrpcCommunicator waitForReady() {
+        configuration.setWaitForReady(true);
+        return this;
+    }
+
+    @Override
     public GrpcCommunicator addInterceptor(ClientInterceptor interceptor) {
         configuration.getInterceptors().add(validator.notNullField(interceptor, "interceptor"));
         return this;
@@ -119,6 +148,35 @@ public class GrpcCommunicatorImplementation implements GrpcCommunicator, GrpcCom
     }
 
     @Override
+    public GrpcCommunicator keepAliveTimeNanos(long time) {
+        configuration.setKeepAliveTimeNanos(time);
+        return this;
+    }
+
+    @Override
+    public GrpcCommunicator keepAliveTimeOutNanos(long timeOut) {
+        configuration.setKeepAliveTimeNanos(timeOut);
+        return this;
+    }
+
+    @Override
+    public GrpcCommunicator keepAliveWithoutCalls(boolean keepAliveWithoutCalls) {
+        configuration.setKeepAliveWithoutCalls(keepAliveWithoutCalls);
+        return null;
+    }
+
+    @Override
+    public void shutdownChannel() {
+        ManagedChannel channel = this.channel.safeValue();
+        if (isNull(channel) || channel.isShutdown() || channel.isTerminated()) {
+            return;
+        }
+        ignoreException((ExceptionRunnable) () -> channel
+                .shutdownNow()
+                .awaitTermination(GRPC_CHANNEL_SHUTDOWN_TIMEOUT, MILLISECONDS), getLogger()::error);
+    }
+
+    @Override
     public GrpcAsynchronousCommunicator asynchronous() {
         return this;
     }
@@ -127,15 +185,15 @@ public class GrpcCommunicatorImplementation implements GrpcCommunicator, GrpcCom
     public <ResponseType> ServiceResponse<ResponseType> execute() {
         validator.validate();
         configuration.validateRequiredFields();
-        return GrpcCommunicationExecutor.execute(configuration);
+        return GrpcCommunicationExecutor.execute(channel.safeValue(), configuration, null);
     }
 
     @Override
     public <RequestType, ResponseType> ServiceResponse<ResponseType> execute(RequestType request) {
-        configuration.setRequest(validator.notNullField(request, "request"));
+        request = validator.notNullField(request, "request");
         validator.validate();
         configuration.validateRequiredFields();
-        return GrpcCommunicationExecutor.execute(configuration);
+        return GrpcCommunicationExecutor.execute(channel.safeValue(), configuration, request);
     }
 
     @Override
@@ -172,14 +230,14 @@ public class GrpcCommunicatorImplementation implements GrpcCommunicator, GrpcCom
     public <ResponseType> CompletableFuture<ServiceResponse<ResponseType>> executeAsynchronous() {
         validator.validate();
         configuration.validateRequiredFields();
-        return GrpcCommunicationAsynchronousExecutor.execute(configuration);
+        return GrpcCommunicationAsynchronousExecutor.execute(channel.safeValue(), configuration, null);
     }
 
     @Override
     public <RequestType, ResponseType> CompletableFuture<ServiceResponse<ResponseType>> executeAsynchronous(RequestType request) {
-        configuration.setRequest(validator.notNullField(request, "request"));
+        request = validator.notNullField(request, "request");
         validator.validate();
         configuration.validateRequiredFields();
-        return GrpcCommunicationAsynchronousExecutor.execute(configuration);
+        return GrpcCommunicationAsynchronousExecutor.execute(channel.safeValue(), configuration, request);
     }
 }

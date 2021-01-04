@@ -21,6 +21,7 @@ package ru.art.grpc.server.constants;
 public interface GrpcServerLoggingMessages {
     String GRPC_STARTED_MESSAGE = "GRPC server started in {0}[ms]";
     String GRPC_RESTARTED_MESSAGE = "GRPC Server restarted in {0}[ms]";
+    String GRPC_STOPPED_MESSAGE = "GRPC Server stopped in {0}[ms]";
     String GRPC_LOADED_SERVICE_MESSAGE = "GRPC service loaded: ''{0}:{1,number,#}'' - ''{2}''.''{3}''.''{4}''";
     String GRPC_ON_REQUEST_MESSAGE = "GRPC onMessage() request message:\n''{0}''";
     String GRPC_ON_RESPONSE_MESSAGE = "GRPC onMessage() response message:\n''{0}''";

@@ -38,4 +38,12 @@ public class GrpcCommunicationTargetConfiguration {
     private String path;
     @Setter
     private boolean secured;
+    @Builder.Default
+    private Long keepAliveTimeNanos = grpcClientModule().getKeepAliveTimeNanos();
+    @Builder.Default
+    private Long keepAliveTimeOutNanos = grpcClientModule().getKeepAliveTimeOutNanos();
+    @Builder.Default
+    private boolean keepAliveWithoutCalls = grpcClientModule().isKeepAliveWithoutCalls();
+    @Builder.Default
+    private boolean waitForReady = grpcClientModule().isKeepAliveWithoutCalls();
 }

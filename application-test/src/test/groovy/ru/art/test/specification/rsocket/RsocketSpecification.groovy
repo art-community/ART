@@ -20,6 +20,7 @@ package ru.art.test.specification.rsocket
 
 import reactor.core.publisher.Flux
 import ru.art.core.caster.Caster
+import ru.art.core.configurator.ModuleConfigurator
 import ru.art.entity.Entity
 import ru.art.reactive.service.configuration.ReactiveServiceModuleConfiguration
 import ru.art.reactive.service.module.ReactiveServiceModule
@@ -53,12 +54,18 @@ class RsocketSpecification extends Specification {
     static errorCode = MyException.class.name
 
     def setupSpec() {
-        useAgileConfigurations().loadModule(new ReactiveServiceModule(), new ReactiveServiceModuleConfiguration.ReactiveServiceModuleDefaultConfiguration() {
-            @Override
-            ReactiveServiceExceptionWrappers getReactiveServiceExceptionWrappers() {
-                return super.getReactiveServiceExceptionWrappers().add(MyException) { command, exception -> new ServiceExecutionException(command, errorCode, exception) }
+        def configurator = {
+            new ReactiveServiceModuleConfiguration.ReactiveServiceModuleDefaultConfiguration() {
+                @Override
+                ReactiveServiceExceptionWrappers getReactiveServiceExceptionWrappers() {
+                    return super.getReactiveServiceExceptionWrappers().add(MyException) { command, exception ->
+                        new ServiceExecutionException(command, errorCode, exception)
+                    }
+                }
             }
-        })
+        } as ModuleConfigurator
+
+        useAgileConfigurations().loadModule(new ReactiveServiceModule(), configurator)
     }
 
     @Unroll

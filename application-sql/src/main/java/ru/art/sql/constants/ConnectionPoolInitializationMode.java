@@ -16,13 +16,9 @@
  * limitations under the License.
  */
 
-package ru.art.core.annotation;
+package ru.art.sql.constants;
 
-import static java.lang.annotation.RetentionPolicy.*;
-import java.lang.annotation.*;
-
-@Documented
-@Target(ElementType.TYPE)
-@Retention(SOURCE)
-public @interface PublicApi {
+public enum ConnectionPoolInitializationMode {
+    BOOTSTRAP,
+    LAZY
 }

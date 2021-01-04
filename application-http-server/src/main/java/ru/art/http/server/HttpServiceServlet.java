@@ -58,7 +58,6 @@ import static ru.art.logging.LoggingModule.*;
 import static ru.art.logging.LoggingModuleConstants.*;
 import static ru.art.logging.LoggingModuleConstants.LoggingParameters.*;
 import static ru.art.logging.LoggingParametersManager.*;
-import static ru.art.service.ServiceModule.*;
 import javax.servlet.*;
 import javax.servlet.annotation.*;
 import javax.servlet.http.*;
@@ -96,8 +95,7 @@ class HttpServiceServlet extends HttpServlet {
                 .serviceId(command.getServiceId())
                 .serviceMethodId(serviceCommand.toString())
                 .serviceMethodCommand(serviceCommand.toString() + DOT + getOrElse(get(REQUEST_ID_KEY), DEFAULT_REQUEST_ID))
-                .loggingEventType(HTTP_SERVLET_EVENT)
-                .loadedServices(serviceModuleState().getServiceRegistry().getServices().keySet())
+                .logEventType(HTTP_SERVLET_EVENT)
                 .build());
         try {
             updateRequestContext(command, request, response);
@@ -107,6 +105,7 @@ class HttpServiceServlet extends HttpServlet {
             }
             writeResponseBody(response, responseBody);
             clearServiceCallLoggingParameters();
+            httpServerModuleState().clearRequestContext();
         } catch (Throwable throwable) {
             handleException(request, response, throwable);
             clearServiceCallLoggingParameters();

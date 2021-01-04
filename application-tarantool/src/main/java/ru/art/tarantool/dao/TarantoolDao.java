@@ -59,4 +59,12 @@ public class TarantoolDao {
         valueDao.idCalculationMode = MANUAL;
         return this;
     }
+
+    public TarantoolDao clustered() {
+        indexDao.client = tarantoolModuleState().getClusterClient(indexDao.instanceId);
+        valueDao.client = tarantoolModuleState().getClusterClient(valueDao.instanceId);
+        indexDao.clusterIds.addAll(tarantoolModule().getTarantoolConfigurations().get(indexDao.instanceId).getReplicas());
+        valueDao.clusterIds.addAll(tarantoolModule().getTarantoolConfigurations().get(valueDao.instanceId).getReplicas());
+        return this;
+    }
 }

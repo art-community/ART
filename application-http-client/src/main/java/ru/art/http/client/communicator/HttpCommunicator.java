@@ -25,10 +25,12 @@ import org.apache.http.impl.nio.client.*;
 import ru.art.entity.*;
 import ru.art.entity.interceptor.*;
 import ru.art.entity.mapper.*;
+import ru.art.http.client.constants.*;
 import ru.art.http.client.handler.*;
 import ru.art.http.client.interceptor.*;
 import ru.art.http.client.model.*;
 import ru.art.http.constants.*;
+import static ru.art.http.client.constants.HttpClientModuleConstants.*;
 import java.nio.charset.*;
 import java.util.*;
 import java.util.concurrent.*;
@@ -76,6 +78,8 @@ public interface HttpCommunicator {
 
     HttpCommunicator options();
 
+    HttpCommunicator connectionClosingPolicy(ConnectionClosingPolicy policy);
+
     HttpCommunicator delete();
 
     HttpCommunicator trace();
@@ -92,6 +96,8 @@ public interface HttpCommunicator {
 
     HttpCommunicator requestEncoding(String encoding);
 
+    HttpCommunicator enableKeepAlive();
+
     <RequestType, ResponseType> Optional<ResponseType> execute(RequestType request);
 
     <ResponseType> Optional<ResponseType> execute();
@@ -100,9 +106,14 @@ public interface HttpCommunicator {
 
     HttpCommunicator addResponseValueInterceptor(ValueInterceptor<Value, Value> interceptor);
 
+    void closeClient();
+
     HttpAsynchronousCommunicator asynchronous();
 
+
     interface HttpAsynchronousCommunicator {
+        void closeAsynchronousClient();
+
         HttpAsynchronousCommunicator client(CloseableHttpAsyncClient client);
 
         <RequestType, ResponseType> HttpAsynchronousCommunicator completionHandler(HttpCommunicationResponseHandler<RequestType, ResponseType> handler);

@@ -24,7 +24,7 @@ import reactor.core.publisher.*;
 import ru.art.rsocket.flux.*;
 import ru.art.rsocket.model.*;
 import ru.art.rsocket.service.*;
-import ru.art.rsocket.state.RsocketModuleState.*;
+import ru.art.rsocket.state.*;
 import ru.art.service.model.*;
 import static reactor.core.publisher.Mono.*;
 import static ru.art.core.caster.Caster.*;
@@ -34,18 +34,28 @@ import static ru.art.rsocket.constants.RsocketModuleConstants.*;
 import static ru.art.rsocket.model.RsocketRequestContext.*;
 import static ru.art.rsocket.module.RsocketModule.*;
 import static ru.art.rsocket.selector.RsocketDataFormatMimeTypeConverter.*;
+import static ru.art.rsocket.state.RsocketModuleState.*;
 import static ru.art.rsocket.writer.RsocketPayloadWriter.*;
 import static ru.art.rsocket.writer.ServiceResponsePayloadWriter.*;
 import static ru.art.service.ServiceController.*;
 
-public class RsocketAcceptor extends AbstractRSocket {
+public class RsocketAcceptor implements RSocket {
+    private final CurrentRsocketState state;
+
     public RsocketAcceptor(RSocket socket, ConnectionSetupPayload setupPayload) {
-        rsocketModuleState().currentRocketState(new CurrentRsocketState(setupPayload.dataMimeType(), setupPayload.metadataMimeType(), socket));
+        state = CurrentRsocketState
+                .builder()
+                .dataMimeType(setupPayload.dataMimeType())
+                .metadataMimeType(setupPayload.metadataMimeType())
+                .rsocket(socket)
+                .dataFormat(fromMimeType(setupPayload.dataMimeType()))
+                .build();
+        updateState();
     }
 
     @Override
     public Mono<Void> fireAndForget(Payload payload) {
-        RsocketDataFormat dataFormat = fromMimeType(rsocketModuleState().currentRocketState().getDataMimeType());
+        RsocketDataFormat dataFormat = updateState().getDataFormat();
         RsocketRequestContext context = fromPayload(payload, dataFormat);
         if (context.isStopHandling()) {
             return never();
@@ -56,7 +66,7 @@ public class RsocketAcceptor extends AbstractRSocket {
 
     @Override
     public Mono<Payload> requestResponse(Payload payload) {
-        RsocketDataFormat dataFormat = fromMimeType(rsocketModuleState().currentRocketState().getDataMimeType());
+        RsocketDataFormat dataFormat = updateState().getDataFormat();
         RsocketRequestContext context = fromPayload(payload, dataFormat);
         if (context.isStopHandling()) {
             return just(writePayloadData(context.getAlternativeResponse(), dataFormat));
@@ -70,8 +80,8 @@ public class RsocketAcceptor extends AbstractRSocket {
 
     @Override
     public Flux<Payload> requestStream(Payload payload) {
-        RsocketDataFormat dataFormat = fromMimeType(rsocketModuleState().currentRocketState().getDataMimeType());
-        RsocketRequestContext context = fromPayload(payload, fromMimeType(rsocketModuleState().currentRocketState().getDataMimeType()));
+        RsocketDataFormat dataFormat = updateState().getDataFormat();
+        RsocketRequestContext context = fromPayload(payload, fromMimeType(state.getDataMimeType()));
         if (context.isStopHandling()) {
             return Flux.just(writePayloadData(context.getAlternativeResponse(), dataFormat));
         }
@@ -79,19 +89,29 @@ public class RsocketAcceptor extends AbstractRSocket {
             return Flux.empty();
         }
         ServiceResponse<?> serviceResponse = executeServiceMethodUnchecked(context.getRequest());
-        return writeResponseReactive(context.getRsocketReactiveMethods(), cast(serviceResponse), fromMimeType(rsocketModuleState().currentRocketState().getDataMimeType()));
+        return writeResponseReactive(context.getRsocketReactiveMethods(), cast(serviceResponse), fromMimeType(state.getDataMimeType()));
     }
 
     @Override
     public Flux<Payload> requestChannel(Publisher<Payload> payloads) {
-        return Flux.create(emitter -> new RsocketRequestChannelEmitter(emitter, payloads));
+        return Flux.create(emitter -> new RsocketRequestChannelEmitter(emitter, payloads, updateState().getDataFormat()));
     }
 
     @Override
     public Mono<Void> metadataPush(Payload payload) {
-        RsocketDataFormat dataFormat = fromMimeType(rsocketModuleState().currentRocketState().getDataMimeType());
+        RsocketDataFormat dataFormat = updateState().getDataFormat();
         executeServiceMethodUnchecked(fromPayload(payload, dataFormat).getRequest());
         return never();
     }
 
+    @Override
+    public void dispose() {
+        rsocketModuleState().clearCurrentRocketState();
+    }
+
+    private CurrentRsocketState updateState() {
+        RsocketModuleState state = rsocketModuleState();
+        state.setCurrentRocketState(this.state);
+        return this.state;
+    }
 }

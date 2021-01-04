@@ -22,6 +22,7 @@ import lombok.*;
 import ru.art.grpc.client.communicator.GrpcCommunicator.*;
 import ru.art.grpc.client.specification.*;
 import ru.art.service.exception.*;
+import static lombok.AccessLevel.PRIVATE;
 import static ru.art.config.remote.api.constants.RemoteConfigApiConstants.Methods.*;
 import static ru.art.config.remote.api.constants.RemoteConfigApiConstants.*;
 import static ru.art.grpc.client.communicator.GrpcCommunicator.*;
@@ -39,7 +40,7 @@ public class RemoteConfigCommunicationSpecification implements GrpcCommunication
         this.path = path;
     }
 
-    @Getter(lazy = true)
+    @Getter(lazy = true, value = PRIVATE)
     private final GrpcAsynchronousCommunicator applyConfiguration = grpcCommunicator(host, port, path)
             .serviceId(REMOTE_CONFIG_SERVICE_ID)
             .methodId(APPLY_CONFIGURATION_METHOD_ID)

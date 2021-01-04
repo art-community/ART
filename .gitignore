@@ -53,7 +53,6 @@ hs_err_pid*
 /build
 build
 dist
-package-lock.json
 node_modules
 .cache
 !gradle/wrapper/gradle-wrapper.jar

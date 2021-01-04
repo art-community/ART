@@ -22,22 +22,26 @@ public interface ServiceConfigKeys {
     String DEACTIVATED = "deactivated";
     String DEACTIVATED_METHODS = "deactivatedMethods";
     String SERVICE = "service";
-    String FAILURE_RATE_THRESHOLD = "failureRateThreshold";
-    String WAIT_DURATION_IN_OPEN_STATE = "waitDurationInOpenState";
-    String PERMITTED_NUMBER_OF_CALLS_IN_HALF_OPEN_STATE = "permittedNumberOfCallsInHalfOpenState";
-    String SLIDING_WINDOW_SIZE = "slidingWindow.size";
-    String SLIDING_WINDOW_TYPE = "slidingWindow.type";
-    String SLIDING_WINDOW_MINIMUM_NUMBER_OF_CALLS = "slidingWindow.minimumNumberOfCalls";
-    String AUTOMATIC_TRANSITION_FROM_OPEN_TO_HALF_OPEN_ENABLED = "automaticTransitionFromOpenToHalfOpenEnabled";
-    String TIMEOUT_DURATION = "timeoutDuration";
-    String LIMIT_REFRESH_PERIOD = "limitRefreshPeriod";
-    String LIMIT_FOR_PERIOD = "limitForPeriod";
-    String MAX_ATTEMPTS = "maxAttempts";
-    String WAIT_DURATION = "waitDuration";
-    String MAX_CONCURRENT_CALLS = "maxConcurrentCalls";
-    String MAX_WAIT_DURATION = "maxWaitDuration";
+
     String CIRCUIT_BREAKER = "circuitBreaker";
+    String FAILURE_RATE_THRESHOLD = "circuitBreaker.failureRateThreshold";
+    String PERMITTED_NUMBER_OF_CALLS_IN_HALF_OPEN_STATE = "circuitBreaker.permittedNumberOfCallsInHalfOpenState";
+    String SLIDING_WINDOW_SIZE = "circuitBreaker.slidingWindow.size";
+    String SLIDING_WINDOW_TYPE = "circuitBreaker.slidingWindow.type";
+    String SLIDING_WINDOW_MINIMUM_NUMBER_OF_CALLS = "circuitBreaker.slidingWindow.minimumNumberOfCalls";
+    String WAIT_DURATION_IN_OPEN_STATE = "circuitBreaker.waitDurationInOpenState";
+    String AUTOMATIC_TRANSITION_FROM_OPEN_TO_HALF_OPEN_ENABLED = "circuitBreaker.automaticTransitionFromOpenToHalfOpenEnabled";
+
     String RATE_LIMITER = "rateLimiter";
+    String LIMIT_FOR_PERIOD = "rateLimiter.limitForPeriod";
+    String LIMIT_REFRESH_PERIOD = "rateLimiter.limitRefreshPeriod";
+    String TIMEOUT_DURATION = "rateLimiter.timeoutDuration";
+
     String BULKHEAD = "bulkhead";
+    String MAX_CONCURRENT_CALLS = "bulkhead.maxConcurrentCalls";
+    String MAX_WAIT_DURATION = "bulkhead.maxWaitDuration";
+
     String RETRYER = "retryer";
+    String MAX_ATTEMPTS = "retryer.maxAttempts";
+    String WAIT_DURATION = "retryer.waitDuration";
 }

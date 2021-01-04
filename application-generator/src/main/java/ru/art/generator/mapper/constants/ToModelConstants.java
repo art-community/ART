@@ -38,6 +38,7 @@ public interface ToModelConstants {
     String GET_ENTITY_BOOL = ".$L(entity.getBool($N))";
     String GET_ENTITY_DATE = ".$L(entity.getDate($N))";
     String GET_ENTITY_FLOAT = ".$L(entity.getFloat($N))";
+    String GET_ENTITY = ".$L(entity.getEntity($N))";
 
     String GET_VALUE = ".$L(entity.getValue($N, $T.$N))";
     String GET_ENUM_VALUE = ".$L($T.valueOf(entity.getString($N)))";

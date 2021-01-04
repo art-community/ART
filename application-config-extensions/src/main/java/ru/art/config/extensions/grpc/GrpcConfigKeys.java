@@ -24,4 +24,6 @@ public interface GrpcConfigKeys {
     String GRPC_BALANCER_SECTION_ID = "grpc.balancer";
     String HANDSHAKE_TIMEOUT = "handshakeTimeout";
     String SECURED = "secured";
+    String PERMIT_KEEP_ALIVE_WITHOUT_CALLS = "permitKeepAliveWithoutCalls";
+    String PERMIT_KEEP_ALIVE_TIME_MILLIS = "permitKeepAliveTimeMillis";
 }

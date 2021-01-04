@@ -36,4 +36,6 @@ public class TarantoolConfiguration {
     private final TarantoolInstanceMode instanceMode = LOCAL;
     @Singular("entityFieldsMapping")
     private final Map<String, TarantoolEntityFieldsMapping> entityFieldsMappings;
+    @Singular("replica")
+    private final Set<String> replicas;
 }

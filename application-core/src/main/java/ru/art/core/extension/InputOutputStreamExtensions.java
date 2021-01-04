@@ -20,17 +20,13 @@ package ru.art.core.extension;
 
 import lombok.experimental.*;
 import static ru.art.core.constants.BufferConstants.*;
-import static ru.art.core.constants.StreamConstants.*;
+import static ru.art.core.extension.InputStreamExtensions.*;
 import java.io.*;
 
 @UtilityClass
 public class InputOutputStreamExtensions {
     public static void transferBytes(InputStream inputStream, OutputStream outputStream, int bufferSize) throws IOException {
-        byte[] bytes = new byte[bufferSize];
-        int readChars;
-        while ((readChars = inputStream.read(bytes)) != EOF) {
-            outputStream.write(bytes, 0, readChars);
-        }
+        outputStream.write(toByteArray(inputStream, bufferSize));
     }
 
     public static void transferBytes(InputStream inputStream, OutputStream outputStream) throws IOException {

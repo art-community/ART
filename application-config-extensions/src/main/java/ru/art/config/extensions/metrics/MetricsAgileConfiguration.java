@@ -18,10 +18,33 @@
 
 package ru.art.config.extensions.metrics;
 
+import com.codahale.metrics.*;
+import io.github.mweirauch.micrometer.jvm.extras.*;
+import io.micrometer.core.instrument.binder.*;
+import io.micrometer.core.instrument.binder.jvm.*;
+import io.micrometer.core.instrument.binder.system.*;
+import io.micrometer.prometheus.*;
 import lombok.*;
+import ru.art.core.context.*;
 import ru.art.metrics.configuration.MetricModuleConfiguration.*;
+import ru.art.metrics.configurator.*;
+import static io.micrometer.prometheus.PrometheusConfig.DEFAULT;
+import static ru.art.core.context.Context.contextConfiguration;
+import static ru.art.core.factory.CollectionsFactory.setOf;
+import static ru.art.metrics.configurator.PrometheusRegistryConfigurator.*;
+import static ru.art.metrics.configurator.PrometheusRegistryConfigurator.prometheusRegistryForApplication;
+import static ru.art.metrics.factory.DropwizardMetricRegistryFactory.createDefaultDropwizardMetricRegistry;
+import java.util.*;
 
 @Getter
 public class MetricsAgileConfiguration extends MetricModuleDefaultConfiguration {
+    private Set<MeterBinder> meterBinders = super.getMeterBinders();
+    private PrometheusMeterRegistry prometheusMeterRegistry = super.getPrometheusMeterRegistry();
+    private MetricRegistry dropwizardMetricRegistry = super.getDropwizardMetricRegistry();
 
+    @Override
+    public void refresh() {
+        prometheusMeterRegistry = prometheusRegistryForApplication(contextConfiguration().getMainModuleId(), dropwizardMetricRegistry);
+        meterBinders.forEach(meter -> meter.bindTo(prometheusMeterRegistry));
+    }
 }

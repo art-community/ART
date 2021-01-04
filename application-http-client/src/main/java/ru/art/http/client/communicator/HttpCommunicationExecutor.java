@@ -36,6 +36,7 @@ import ru.art.http.client.exception.*;
 import ru.art.http.client.handler.*;
 import ru.art.http.client.interceptor.*;
 import ru.art.http.constants.*;
+import ru.art.http.constants.HttpHeaders;
 import ru.art.http.mapper.*;
 import static java.text.MessageFormat.*;
 import static java.util.Objects.*;
@@ -51,26 +52,32 @@ import static ru.art.core.extension.NullCheckingExtensions.*;
 import static ru.art.http.client.body.descriptor.HttpBodyDescriptor.*;
 import static ru.art.http.client.builder.HttpUriBuilder.*;
 import static ru.art.http.client.constants.HttpClientExceptionMessages.*;
+import static ru.art.http.client.constants.HttpClientModuleConstants.ConnectionClosingPolicy.CLOSE_AFTER_RESPONSE;
+import static ru.art.http.client.constants.HttpClientModuleConstants.HTTP_HEADER_CONNECTION_CLOSE;
+import static ru.art.http.client.constants.HttpClientModuleConstants.HTTP_HEADER_CONNECTION_KEEP_ALIVE;
 import static ru.art.http.client.module.HttpClientModule.*;
+import static ru.art.http.constants.HttpHeaders.CONNECTION;
+import static ru.art.http.constants.HttpHeaders.KEEP_ALIVE;
 import static ru.art.logging.LoggingModule.*;
+import javax.annotation.*;
 import java.util.*;
 import java.util.concurrent.*;
 
 @NoArgsConstructor(access = PACKAGE)
 class HttpCommunicationExecutor {
-    static <ResponseType> ResponseType executeSynchronousHttpRequest(HttpCommunicationConfiguration configuration) {
-        HttpUriRequest request = buildRequest(configuration);
-        if (isNull(request)) {
+    static <RequestType, ResponseType> ResponseType executeSynchronousHttpRequest(HttpCommunicationConfiguration configuration, RequestType request) {
+        HttpUriRequest uriRequest = buildRequest(configuration, request);
+        if (isNull(uriRequest)) {
             return null;
         }
         List<HttpClientInterceptor> requestInterceptors = configuration.getRequestInterceptors();
         for (HttpClientInterceptor requestInterceptor : requestInterceptors) {
-            InterceptionStrategy strategy = requestInterceptor.interceptRequest(request);
+            InterceptionStrategy strategy = requestInterceptor.interceptRequest(uriRequest);
             if (strategy == PROCESS_HANDLING) break;
             if (strategy == STOP_HANDLING) return null;
         }
         CloseableHttpClient client = getOrElse(configuration.getSynchronousClient(), httpClientModule().getClient());
-        return executeHttpUriRequest(configuration, request, client);
+        return executeHttpUriRequest(configuration, uriRequest, client);
     }
 
     private static <ResponseType> ResponseType executeHttpUriRequest(HttpCommunicationConfiguration configuration, HttpUriRequest request, CloseableHttpClient client) {
@@ -89,7 +96,18 @@ class HttpCommunicationExecutor {
         } finally {
             if (nonNull(httpResponse)) {
                 try {
-                    httpResponse.close();
+                    switch (configuration.getConnectionClosingPolicy()) {
+                        case CLOSE_AFTER_RESPONSE:
+                            httpResponse.close();
+                            break;
+                        case CLOSE_IF_NOT_KEEP_ALIVE_HEADER_PRESENTS:
+                            if (!httpResponse.containsHeader(KEEP_ALIVE)) {
+                                httpResponse.close();
+                            }
+                            break;
+                        case ALWAYS_KEEP_OPEN_AFTER_RESPONSE:
+                            break;
+                    }
                 } catch (Throwable closableThrowable) {
                     loggingModule()
                             .getLogger(HttpCommunicationExecutor.class)
@@ -100,8 +118,8 @@ class HttpCommunicationExecutor {
     }
 
 
-    static <ResponseType> CompletableFuture<Optional<ResponseType>> executeAsynchronousHttpRequest(HttpCommunicationConfiguration configuration) {
-        HttpUriRequest httpUriRequest = buildRequest(configuration);
+    static <RequestType, ResponseType> CompletableFuture<Optional<ResponseType>> executeAsynchronousHttpRequest(HttpCommunicationConfiguration configuration, @Nullable RequestType request) {
+        HttpUriRequest httpUriRequest = buildRequest(configuration, request);
         if (isNull(httpUriRequest)) {
             return completedFuture(empty());
         }
@@ -113,33 +131,39 @@ class HttpCommunicationExecutor {
         }
         CloseableHttpAsyncClient client = getOrElse(configuration.getAsynchronousClient(), httpClientModule().getAsynchronousClient());
         CompletableFuture<Optional<?>> completableFuture = new CompletableFuture<>();
-        HttpAsynchronousClientCallback callback = new HttpAsynchronousClientCallback(httpUriRequest, configuration, completableFuture);
+        HttpAsynchronousClientCallback callback = HttpAsynchronousClientCallback.builder()
+                .httpUriRequest(httpUriRequest)
+                .configuration(configuration)
+                .completableFuture(completableFuture)
+                .request(request)
+                .build();
         executeHttpUriRequest(httpUriRequest, client, callback);
         return cast(completableFuture);
     }
 
     private static void executeHttpUriRequest(HttpUriRequest httpUriRequest, CloseableHttpAsyncClient client, HttpAsynchronousClientCallback callback) {
         try {
-            if (httpClientModule().isEnableRawDataTracing()) {
-                LogbookHttpAsyncResponseConsumer<HttpResponse> logbookConsumer = new LogbookHttpAsyncResponseConsumer<>(createConsumer());
-                client.execute(HttpAsyncMethods.create(httpUriRequest), logbookConsumer, callback);
+            if (!httpClientModule().isEnableRawDataTracing()) {
+                client.execute(httpUriRequest, callback);
                 return;
             }
-            client.execute(httpUriRequest, callback);
+            LogbookHttpAsyncResponseConsumer<HttpResponse> logbookConsumer = new LogbookHttpAsyncResponseConsumer<>(createConsumer());
+            client.execute(HttpAsyncMethods.create(httpUriRequest), logbookConsumer, callback);
         } catch (Exception throwable) {
             throw new HttpClientException(throwable);
         }
     }
 
 
-    private static HttpUriRequest buildRequest(HttpCommunicationConfiguration configuration) {
+    private static HttpUriRequest buildRequest(HttpCommunicationConfiguration configuration, Object request) {
         RequestBuilder requestBuilder = create(configuration.getMethodType().name())
                 .setUri(buildUri(configuration.getUrl(), configuration.getPathParameters(), configuration.getQueryParameters()))
                 .setConfig(configuration.getRequestConfig())
                 .setCharset(configuration.getRequestContentCharset())
                 .setVersion(configuration.getHttpProtocolVersion());
         configuration.getHeaders().forEach(requestBuilder::addHeader);
-        if (isNull(configuration.getRequest())) {
+        requestBuilder.addHeader(CONNECTION, configuration.isEnableKeepAlive() ? HTTP_HEADER_CONNECTION_KEEP_ALIVE : HTTP_HEADER_CONNECTION_CLOSE);
+        if (isNull(request)) {
             return requestBuilder.build();
         }
         ValueFromModelMapper<Object, ? extends Value> requestMapper = cast(configuration.getRequestMapper());
@@ -150,7 +174,7 @@ class HttpCommunicationExecutor {
                 || isNull(producesMimeType = consumesMimeTypeMapper.getMimeType())) {
             return requestBuilder.build();
         }
-        Value requestValue = requestMapper.map(configuration.getRequest());
+        Value requestValue = requestMapper.map(request);
         List<ValueInterceptor<Value, Value>> requestValueInterceptors = configuration.getRequestValueInterceptors();
         for (ValueInterceptor<Value, Value> requestValueInterceptor : requestValueInterceptors) {
             ValueInterceptionResult<Value, Value> result = requestValueInterceptor.intercept(requestValue);
@@ -222,11 +246,12 @@ class HttpCommunicationExecutor {
     }
 
 
-    @AllArgsConstructor(access = PACKAGE)
+    @Builder(access = PACKAGE)
     static class HttpAsynchronousClientCallback implements FutureCallback<HttpResponse> {
         private final HttpUriRequest httpUriRequest;
         private final HttpCommunicationConfiguration configuration;
         private final CompletableFuture<Optional<?>> completableFuture;
+        private final Object request;
 
         @Override
         public void completed(HttpResponse result) {
@@ -234,7 +259,7 @@ class HttpCommunicationExecutor {
             for (HttpClientInterceptor responseInterceptor : responseInterceptors) {
                 InterceptionStrategy strategy = responseInterceptor.interceptResponse(httpUriRequest, result);
                 if (strategy == PROCESS_HANDLING) break;
-                if (strategy == STOP_HANDLING){
+                if (strategy == STOP_HANDLING) {
                     completableFuture.complete(empty());
                     return;
                 }
@@ -243,13 +268,13 @@ class HttpCommunicationExecutor {
                 HttpCommunicationResponseHandler<?, ?> completionHandler = configuration.getCompletionHandler();
                 Optional<?> optionalResponse = ofNullable(parseResponse(configuration, result));
                 if (nonNull(completionHandler)) {
-                    completionHandler.completed(cast(ofNullable(configuration.getRequest())), cast(optionalResponse));
+                    completionHandler.completed(cast(ofNullable(request)), cast(optionalResponse));
                 }
                 completableFuture.complete(optionalResponse);
             } catch (Throwable throwable) {
                 HttpCommunicationExceptionHandler<?> exceptionHandler = configuration.getExceptionHandler();
                 if (nonNull(exceptionHandler)) {
-                    exceptionHandler.failed(ofNullable(cast(configuration.getRequest())), throwable);
+                    exceptionHandler.failed(ofNullable(cast(request)), throwable);
                 }
                 completableFuture.completeExceptionally(throwable);
             }
@@ -259,7 +284,7 @@ class HttpCommunicationExecutor {
         public void failed(Exception exception) {
             HttpCommunicationExceptionHandler<?> exceptionHandler = configuration.getExceptionHandler();
             if (nonNull(exceptionHandler)) {
-                exceptionHandler.failed(ofNullable(cast(configuration.getRequest())), exception);
+                exceptionHandler.failed(ofNullable(cast(request)), exception);
             }
             completableFuture.completeExceptionally(exception);
         }
@@ -268,7 +293,7 @@ class HttpCommunicationExecutor {
         public void cancelled() {
             HttpCommunicationCancellationHandler<?> cancellationHandler = configuration.getCancellationHandler();
             if (nonNull(cancellationHandler)) {
-                cancellationHandler.cancelled(ofNullable(cast(configuration.getRequest())));
+                cancellationHandler.cancelled(ofNullable(cast(request)));
             }
             completableFuture.cancel(true);
         }

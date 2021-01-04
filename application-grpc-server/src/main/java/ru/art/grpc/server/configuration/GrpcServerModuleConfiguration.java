@@ -25,6 +25,7 @@ import ru.art.entity.*;
 import ru.art.entity.interceptor.*;
 import ru.art.grpc.server.interceptor.*;
 import ru.art.logging.*;
+import static io.grpc.internal.GrpcUtil.*;
 import static ru.art.core.constants.ThreadConstants.*;
 import static ru.art.core.factory.CollectionsFactory.*;
 import static ru.art.core.network.selector.PortSelector.*;
@@ -49,6 +50,14 @@ public interface GrpcServerModuleConfiguration extends ModuleConfiguration {
     int getHandshakeTimeout();
 
     int getPort();
+
+    long getKeepAliveTimeNanos();
+
+    long getPermitKeepAliveTimeNanos();
+
+    long getKeepAliveTimeOutNanos();
+
+    boolean isPermitKeepAliveWithoutCalls();
 
     boolean isEnableRawDataTracing();
 
@@ -84,13 +93,18 @@ public interface GrpcServerModuleConfiguration extends ModuleConfiguration {
         private final List<ValueInterceptor<Entity, Entity>> requestValueInterceptors = initializeValueInterceptors();
         @Getter(lazy = true, onMethod = @__({@SuppressWarnings("unchecked")}))
         private final List<ValueInterceptor<Entity, Entity>> responseValueInterceptors = initializeValueInterceptors();
+        private long keepAliveTimeNanos = DEFAULT_SERVER_KEEPALIVE_TIME_NANOS;
+        private long keepAliveTimeOutNanos = DEFAULT_SERVER_KEEPALIVE_TIMEOUT_NANOS;
+        private boolean keepAliveWithoutCalls = false;
+        private boolean permitKeepAliveWithoutCalls = false;
+        private long permitKeepAliveTimeNanos = DEFAULT_PERMIT_KEEP_ALIVE_TIME_NANOS;
 
         private List<ValueInterceptor<Entity, Entity>> initializeValueInterceptors() {
-            return isEnableValueTracing() ? linkedListOf(new LoggingValueInterceptor<>()) : linkedListOf();
+            return linkedListOf(new LoggingValueInterceptor<>(this::isEnableValueTracing));
         }
 
         private List<ServerInterceptor> initializeInterceptors() {
-            return isEnableRawDataTracing() ? linkedListOf(new GrpcServerLoggingInterceptor()) : linkedListOf();
+            return linkedListOf(new GrpcServerLoggingInterceptor());
         }
     }
 }

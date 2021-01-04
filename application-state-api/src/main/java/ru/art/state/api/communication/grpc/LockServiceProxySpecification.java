@@ -23,6 +23,7 @@ import lombok.experimental.*;
 import ru.art.grpc.client.communicator.*;
 import ru.art.grpc.client.specification.*;
 import ru.art.service.exception.*;
+import static lombok.AccessLevel.PRIVATE;
 import static ru.art.core.caster.Caster.*;
 import static ru.art.grpc.client.communicator.GrpcCommunicator.*;
 import static ru.art.state.api.constants.StateApiConstants.LockServiceConstants.*;
@@ -42,14 +43,14 @@ public class LockServiceProxySpecification implements GrpcCommunicationSpecifica
         this.port = port;
     }
 
-    @Getter(lazy = true)
+    @Getter(lazy = true, value = PRIVATE)
     @Accessors(fluent = true)
     private final GrpcCommunicator lock = grpcCommunicator(host, port, path)
             .serviceId(LOCK_SERVICE_ID)
             .methodId(LOCK)
             .requestMapper(fromLockRequest);
 
-    @Getter(lazy = true)
+    @Getter(lazy = true, value = PRIVATE)
     @Accessors(fluent = true)
     private final GrpcCommunicator unlock = grpcCommunicator(host, port, path)
             .serviceId(LOCK_SERVICE_ID)

@@ -20,11 +20,9 @@ package ru.art.config.extensions.logging;
 
 import lombok.experimental.*;
 import ru.art.config.*;
-import ru.art.core.annotation.*;
 import static ru.art.config.extensions.ConfigExtensions.*;
 import static ru.art.config.extensions.logging.LoggingConfigKeys.*;
 
-@PublicApi
 @UtilityClass
 public class LoggingConfigProvider {
     public static Config loggingConfig() {

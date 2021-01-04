@@ -41,6 +41,8 @@ public interface HttpMimeTypes {
     MimeType APPLICATION_XML = mimeType("application", "xml");
     MimeType IMAGE_GIF = mimeType("image", "gif");
     MimeType IMAGE_JPEG = mimeType("image", "jpeg");
+    MimeType IMAGE_JPG = mimeType("image", "jpg");
+    MimeType IMAGE_ICO = mimeType("image", "ico");
     MimeType IMAGE_PNG = mimeType("image", "png");
     MimeType IMAGE_WEBP = mimeType("image", "webp");
     MimeType IMAGE_SVG = mimeType("image", "svg");
@@ -56,6 +58,7 @@ public interface HttpMimeTypes {
     MimeType TEXT_XML_WIN_1251 = mimeType("text", "xml", forName("windows-1251"));
     MimeType TEXT_CSV = mimeType("text", "csv");
     MimeType TEXT_CSV_UTF_8 = mimeType("text", "csv", UTF_8);
+    MimeType TEXT_CSV_WIN_1251 = mimeType("text", "csv", forName("windows-1251"));
     MimeType TEXT_XML_UTF_8 = mimeType("text", "xml", UTF_8);
     MimeType TEXT_CSS = mimeType("text", "css");
     MimeType TEXT_JS = mimeType("text", "javascript");

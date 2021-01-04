@@ -37,9 +37,9 @@ public interface TarantoolModuleConfiguration extends ModuleConfiguration {
 
     TarantoolLocalConfiguration getLocalConfiguration();
 
-    long getProbeConnectionTimeout();
+    long getProbeConnectionTimeoutMillis();
 
-    long getConnectionTimeout();
+    long getConnectionTimeoutMillis();
 
     boolean isEnableTracing();
 
@@ -50,18 +50,15 @@ public interface TarantoolModuleConfiguration extends ModuleConfiguration {
     @Getter
     class TarantoolModuleDefaultConfiguration implements TarantoolModuleConfiguration {
         private final Map<String, TarantoolConfiguration> tarantoolConfigurations = mapOf();
-        private final long connectionTimeout = DEFAULT_TARANTOOL_CONNECTION_TIMEOUT;
-        private final long probeConnectionTimeout = DEFAULT_TARANTOOL_PROBE_CONNECTION_TIMEOUT;
+        private final long connectionTimeoutMillis = DEFAULT_TARANTOOL_CONNECTION_TIMEOUT;
+        private final long probeConnectionTimeoutMillis = DEFAULT_TARANTOOL_PROBE_CONNECTION_TIMEOUT;
         private final boolean enableTracing = false;
         private final TarantoolLocalConfiguration localConfiguration = TarantoolLocalConfiguration.builder().build();
-        private final TarantoolInitializationMode initializationMode = ON_MODULE_LOAD;
+        private final TarantoolInitializationMode initializationMode = BOOTSTRAP;
     }
 
     static TarantoolEntityFieldsMapping fieldMapping(String instanceId, String entityName) {
-        TarantoolConfiguration tarantoolConfiguration = tarantoolModule().getTarantoolConfigurations().get(instanceId);
-        if (isNull(tarantoolConfiguration)) {
-            throw new TarantoolConnectionException(format(CONFIGURATION_IS_NULL, instanceId));
-        }
+        TarantoolConfiguration tarantoolConfiguration = getTarantoolConfiguration(instanceId, tarantoolModule().getTarantoolConfigurations());
         TarantoolEntityFieldsMapping entityFieldsMapping = tarantoolConfiguration
                 .getEntityFieldsMappings()
                 .get(entityName);

@@ -56,11 +56,21 @@ public interface GrpcCommunicator {
 
     GrpcCommunicator deadlineTimeout(long timeout);
 
+    GrpcCommunicator waitForReady();
+
     GrpcCommunicator addInterceptor(ClientInterceptor interceptor);
 
     GrpcCommunicator executor(Executor executor);
 
     GrpcCommunicator secured();
+
+    GrpcCommunicator keepAliveTimeNanos(long time);
+
+    GrpcCommunicator keepAliveTimeOutNanos(long timeOut);
+
+    GrpcCommunicator keepAliveWithoutCalls(boolean keepAliveWithoutCalls);
+
+    void shutdownChannel();
 
     GrpcAsynchronousCommunicator asynchronous();
 

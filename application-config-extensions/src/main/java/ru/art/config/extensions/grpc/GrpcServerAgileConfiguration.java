@@ -22,11 +22,13 @@ import lombok.*;
 import ru.art.grpc.server.*;
 import ru.art.grpc.server.configuration.GrpcServerModuleConfiguration.*;
 import static java.util.Objects.*;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static ru.art.config.extensions.ConfigExtensions.*;
 import static ru.art.config.extensions.common.CommonConfigKeys.*;
 import static ru.art.config.extensions.grpc.GrpcConfigKeys.*;
 import static ru.art.core.constants.ThreadConstants.*;
 import static ru.art.core.context.Context.*;
+import static ru.art.core.extension.ExceptionExtensions.*;
 import static ru.art.grpc.server.constants.GrpcServerModuleConstants.*;
 import static ru.art.grpc.server.module.GrpcServerModule.*;
 import java.util.concurrent.*;
@@ -39,6 +41,11 @@ public class GrpcServerAgileConfiguration extends GrpcServerModuleDefaultConfigu
     private Executor overridingExecutor;
     private boolean enableRawDataTracing;
     private boolean enableValueTracing;
+    private long keepAliveTimeNanos;
+    private long keepAliveTimeOutNanos;
+    private boolean keepAliveWithoutCalls;
+    private boolean permitKeepAliveWithoutCalls;
+    private long permitKeepAliveTimeNanos;
 
     public GrpcServerAgileConfiguration() {
         refresh();
@@ -52,6 +59,21 @@ public class GrpcServerAgileConfiguration extends GrpcServerModuleDefaultConfigu
         int newHandshakeTimeout = configInt(GRPC_SERVER_CONFIG_SECTION_ID, HANDSHAKE_TIMEOUT, super.getHandshakeTimeout());
         restart |= handshakeTimeout != newHandshakeTimeout;
         handshakeTimeout = newHandshakeTimeout;
+        long newKeepAliveTimeNanos = ifException(() -> MILLISECONDS.toNanos(configLong(GRPC_SERVER_CONFIG_SECTION_ID, KEEP_ALIVE_TIME_MILLIS)), super.getKeepAliveTimeNanos());
+        restart |= keepAliveTimeNanos != newKeepAliveTimeNanos;
+        keepAliveTimeNanos = newKeepAliveTimeNanos;
+        long newKeepAliveTimeOutNanos = ifException(() -> MILLISECONDS.toNanos(configLong(GRPC_SERVER_CONFIG_SECTION_ID, KEEP_ALIVE_TIME_OUT_MILLIS)), super.getKeepAliveTimeOutNanos());
+        restart |= keepAliveTimeOutNanos != newKeepAliveTimeOutNanos;
+        keepAliveTimeOutNanos = newKeepAliveTimeOutNanos;
+        boolean newKeepAliveWithoutCalls = configBoolean(GRPC_SERVER_CONFIG_SECTION_ID, KEEP_ALIVE_WITHOUT_CALLS, super.isKeepAliveWithoutCalls());
+        restart |= keepAliveWithoutCalls != newKeepAliveWithoutCalls;
+        keepAliveWithoutCalls = newKeepAliveWithoutCalls;
+        boolean newPermitKeepAliveWithoutCalls = configBoolean(GRPC_SERVER_CONFIG_SECTION_ID, PERMIT_KEEP_ALIVE_WITHOUT_CALLS, super.isPermitKeepAliveWithoutCalls());
+        restart |= permitKeepAliveWithoutCalls != newPermitKeepAliveWithoutCalls;
+        permitKeepAliveWithoutCalls = newPermitKeepAliveWithoutCalls;
+        long newPermitKeepAliveTimeNanos = ifException(() -> MILLISECONDS.toNanos(configLong(GRPC_SERVER_CONFIG_SECTION_ID, PERMIT_KEEP_ALIVE_TIME_MILLIS)), super.getPermitKeepAliveTimeNanos());
+        restart |= permitKeepAliveTimeNanos != newPermitKeepAliveTimeNanos;
+        permitKeepAliveTimeNanos = newPermitKeepAliveTimeNanos;
         String newPath = configString(GRPC_SERVER_CONFIG_SECTION_ID, PATH, super.getPath());
         restart |= !newPath.equals(path);
         path = newPath;

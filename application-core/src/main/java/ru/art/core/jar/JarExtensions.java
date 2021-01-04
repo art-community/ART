@@ -21,7 +21,6 @@ package ru.art.core.jar;
 import ru.art.core.exception.*;
 import static java.nio.file.Files.*;
 import static java.nio.file.StandardCopyOption.*;
-import static java.util.Objects.*;
 import static java.util.Optional.*;
 import static java.util.regex.Pattern.*;
 import static java.util.stream.Collectors.*;
@@ -73,10 +72,8 @@ public class JarExtensions {
     }
 
     public static void extractJar(String jarPath, String directory) {
-        ZipFile jarArchive = null;
-        try {
+        try (ZipFile jarArchive = new ZipFile(jarPath)) {
             createDirectories(Paths.get(directory));
-            jarArchive = new ZipFile(jarPath);
             for (ZipEntry entry : jarArchive.stream().collect(toList())) {
                 Path entryDestination = Paths.get(directory).resolve(entry.getName());
                 if (entry.isDirectory() && !exists(entryDestination)) {
@@ -87,14 +84,6 @@ public class JarExtensions {
             }
         } catch (IOException ioException) {
             throw new InternalRuntimeException(ioException);
-        } finally {
-            if (nonNull(jarArchive)) {
-                try {
-                    jarArchive.close();
-                } catch (IOException ignored) {
-                    // Ignore cause unnecessary to handle this exception
-                }
-            }
         }
     }
 
@@ -125,10 +114,8 @@ public class JarExtensions {
     }
 
     public static void extractJarEntry(String jarPath, String entryRegex, String directory) {
-        ZipFile jarArchive = null;
-        try {
+        try (ZipFile jarArchive = new ZipFile(jarPath)) {
             createDirectories(Paths.get(directory));
-            jarArchive = new ZipFile(jarPath);
             List<? extends ZipEntry> entries = jarArchive
                     .stream()
                     .filter(entry -> compile(entryRegex).matcher(entry.getName()).matches())
@@ -144,14 +131,6 @@ public class JarExtensions {
             }
         } catch (IOException ioException) {
             throw new InternalRuntimeException(ioException);
-        } finally {
-            if (nonNull(jarArchive)) {
-                try {
-                    jarArchive.close();
-                } catch (IOException ioException) {
-                    ioException.printStackTrace();
-                }
-            }
         }
     }
 }

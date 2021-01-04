@@ -18,7 +18,7 @@ version = "1.0-SNAPSHOT"
 ### Wait until gradle finish configuring and change build file to
 ```kotlin
 plugins {
-    id("io.github.art.project") version "1.0.68" // apply ART plugin for simplify project Gradle configuring
+    id("io.github.art.project") version "1.0.113" // apply ART plugin for simplify project Gradle configuring
 }
 
 repositories {

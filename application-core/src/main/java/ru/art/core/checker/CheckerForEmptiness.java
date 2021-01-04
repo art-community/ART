@@ -22,6 +22,7 @@ import lombok.experimental.*;
 import static java.util.Objects.*;
 import static ru.art.core.constants.StringConstants.*;
 import java.util.*;
+import java.util.stream.Stream;
 
 @UtilityClass
 public class CheckerForEmptiness {
@@ -80,6 +81,14 @@ public class CheckerForEmptiness {
 
     public static boolean isEmpty(Collection<?> collection) {
         return isNull(collection) || collection.isEmpty();
+    }
+
+    public static boolean isEmpty(Stream<?> stream) {
+        return isNull(stream) || stream.count() == 0;
+    }
+
+    public static boolean isNotEmpty(Stream<?> stream) {
+        return !isEmpty(stream);
     }
 
     public static <T> T ifEmpty(T val, T ifEmpty) {

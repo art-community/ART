@@ -25,6 +25,7 @@ import org.apache.logging.log4j.core.*;
 @Builder
 public class SocketAppenderConfiguration {
     private final String host;
+    private final String protocol;
     private final int port;
     private final Layout<?> layout;
 }

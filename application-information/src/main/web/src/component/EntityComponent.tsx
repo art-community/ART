@@ -16,15 +16,8 @@
  * limitations under the License.
  */
 
-import React from "react";
-import {
-    Chip,
-    ExpansionPanel,
-    ExpansionPanelDetails,
-    ExpansionPanelSummary,
-    Typography,
-    useTheme
-} from "@material-ui/core";
+import React, {useMemo} from "react";
+import {Chip, ExpansionPanel, ExpansionPanelDetails, ExpansionPanelSummary, Typography, useTheme} from "@material-ui/core";
 import ExpandMore from "@material-ui/icons/ExpandMore";
 import ReactJson from "react-json-view";
 
@@ -40,24 +33,24 @@ export enum EntityType {
 
 export const EntityComponent = (props: EntityComponentProps) => {
     const theme = useTheme();
-    const getEntity =() => {
+    const entity = useMemo(() => {
         const entityJson = JSON.parse(props.entity);
         if (typeof entityJson != "object") {
             return props.entity
         }
         return <ReactJson style={{fontSize: theme.typography.h6.fontSize}}
-                   displayObjectSize={false}
-                   displayDataTypes={false}
-                   name={props.type == EntityType.REQUEST ? "request" : "response"}
-                   src={entityJson}/>
-    };
+                          displayObjectSize={false}
+                          displayDataTypes={false}
+                          name={props.type == EntityType.REQUEST ? "request" : "response"}
+                          src={entityJson}/>
+    }, [props.entity]);
     return <ExpansionPanel>
         <ExpansionPanelSummary expandIcon={<ExpandMore/>}>
             <Chip color={"primary"}
                   label={<Typography>{props.type == EntityType.REQUEST ? "Пример запроса" : "Пример ответа"}</Typography>}/>
         </ExpansionPanelSummary>
         <ExpansionPanelDetails>
-            {getEntity()}
+            {entity}
         </ExpansionPanelDetails>
     </ExpansionPanel>;
 };

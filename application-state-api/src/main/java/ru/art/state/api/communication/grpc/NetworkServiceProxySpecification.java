@@ -23,6 +23,7 @@ import lombok.experimental.*;
 import ru.art.grpc.client.communicator.*;
 import ru.art.grpc.client.specification.*;
 import ru.art.service.exception.*;
+import static lombok.AccessLevel.PRIVATE;
 import static ru.art.core.caster.Caster.*;
 import static ru.art.entity.PrimitiveMapping.*;
 import static ru.art.grpc.client.communicator.GrpcCommunicator.*;
@@ -40,7 +41,7 @@ public class NetworkServiceProxySpecification implements GrpcCommunicationSpecif
     private final String host;
     private final Integer port;
 
-    @Getter(lazy = true)
+    @Getter(lazy = true, value = PRIVATE)
     @Accessors(fluent = true)
     private final GrpcCommunicator getClusterProfile = grpcCommunicator(host, port, path)
             .serviceId(NETWORK_SERVICE_ID)
@@ -48,28 +49,28 @@ public class NetworkServiceProxySpecification implements GrpcCommunicationSpecif
             .requestMapper(fromClusterProfileRequest)
             .responseMapper(toClusterProfileResponse);
 
-    @Getter(lazy = true)
+    @Getter(lazy = true, value = PRIVATE)
     @Accessors(fluent = true)
     private final GrpcCommunicator connect = grpcCommunicator(host, port, path)
             .serviceId(NETWORK_SERVICE_ID)
             .requestMapper(fromModuleConnectionRequest)
             .methodId(CONNECT);
 
-    @Getter(lazy = true)
+    @Getter(lazy = true, value = PRIVATE)
     @Accessors(fluent = true)
     private final GrpcCommunicator incrementSession = grpcCommunicator(host, port, path)
             .serviceId(NETWORK_SERVICE_ID)
             .methodId(INCREMENT_SESSION)
             .requestMapper(fromModuleConnectionRequest);
 
-    @Getter(lazy = true)
+    @Getter(lazy = true, value = PRIVATE)
     @Accessors(fluent = true)
     private final GrpcCommunicator decrementSession = grpcCommunicator(host, port, path)
             .serviceId(NETWORK_SERVICE_ID)
             .methodId(DECREMENT_SESSION)
             .requestMapper(fromModuleConnectionRequest);
 
-    @Getter(lazy = true)
+    @Getter(lazy = true, value = PRIVATE)
     @Accessors(fluent = true)
     private final GrpcCommunicator getSessions = grpcCommunicator(host, port, path)
             .serviceId(NETWORK_SERVICE_ID)

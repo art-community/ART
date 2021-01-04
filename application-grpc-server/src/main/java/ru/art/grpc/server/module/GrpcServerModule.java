@@ -19,11 +19,14 @@
 package ru.art.grpc.server.module;
 
 import lombok.*;
+import ru.art.core.extension.*;
 import ru.art.core.module.Module;
+import ru.art.grpc.server.*;
 import ru.art.grpc.server.configuration.*;
 import ru.art.grpc.server.state.*;
 import static lombok.AccessLevel.*;
 import static ru.art.core.context.Context.*;
+import static ru.art.core.extension.NullCheckingExtensions.*;
 import static ru.art.grpc.server.configuration.GrpcServerModuleConfiguration.*;
 import static ru.art.grpc.server.constants.GrpcServerModuleConstants.*;
 
@@ -46,5 +49,10 @@ public class GrpcServerModule implements Module<GrpcServerModuleConfiguration, G
 
     public static GrpcServerModuleState grpcServerModuleState() {
         return getGrpcServerModuleState();
+    }
+
+    @Override
+    public void onUnload() {
+        doIfNotNull(grpcServerModuleState().getServer(), GrpcServer::stop);
     }
 }

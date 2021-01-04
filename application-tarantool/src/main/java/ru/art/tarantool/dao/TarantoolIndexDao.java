@@ -18,7 +18,6 @@
 
 package ru.art.tarantool.dao;
 
-import org.tarantool.*;
 import ru.art.entity.*;
 import ru.art.tarantool.model.*;
 import static java.util.Arrays.*;
@@ -33,7 +32,6 @@ import static ru.art.entity.tuple.PlainTupleReader.*;
 import static ru.art.entity.tuple.schema.ValueSchema.*;
 import static ru.art.tarantool.caller.TarantoolFunctionCaller.*;
 import static ru.art.tarantool.constants.TarantoolModuleConstants.Functions.*;
-import static ru.art.tarantool.module.TarantoolModule.*;
 import static ru.art.tarantool.service.TarantoolScriptService.*;
 import java.util.*;
 
@@ -44,8 +42,8 @@ public final class TarantoolIndexDao extends TarantoolCommonDao {
     }
 
     public Optional<Entity> getByIndex(String spaceName, String indexName, Collection<?> keys) {
-        evaluateValueScript(instanceId, spaceName, indexName);
-        TarantoolClient client = tarantoolModuleState().getClient(instanceId);
+        evaluateValueIndexScript(clusterIds, spaceName, indexName);
+
         List<?> result = callTarantoolFunction(client, GET + spaceName + VALUE_POSTFIX + BY + indexName, keys);
         if (isEmpty(result) || (isEmpty(result = cast(result.get(0)))) || result.size() == 1) {
             return empty();
@@ -61,8 +59,8 @@ public final class TarantoolIndexDao extends TarantoolCommonDao {
 
 
     public List<Entity> selectByIndex(String spaceName, String indexName, Collection<?> keys) {
-        evaluateValueScript(instanceId, spaceName, indexName);
-        TarantoolClient client = tarantoolModuleState().getClient(instanceId);
+        evaluateValueIndexScript(clusterIds, spaceName, indexName);
+
         List<List<?>> result = cast(callTarantoolFunction(client, SELECT + spaceName + VALUES_POSTFIX + BY + indexName, keys));
         if (isEmpty(result) || (isEmpty(result = cast(result.get(0)))) || result.size() == 1) {
             return emptyList();
@@ -82,8 +80,8 @@ public final class TarantoolIndexDao extends TarantoolCommonDao {
 
 
     public Optional<Entity> deleteByIndex(String spaceName, String indexName, Collection<?> keys) {
-        evaluateValueScript(instanceId, spaceName, indexName);
-        TarantoolClient client = tarantoolModuleState().getClient(instanceId);
+        evaluateValueIndexScript(clusterIds, spaceName, indexName);
+
         List<List<?>> result = cast(callTarantoolFunction(client, DELETE + spaceName + VALUES_POSTFIX + BY + indexName, keys));
         if (isEmpty(result) || (isEmpty(result = cast(result.get(0)))) || result.size() == 1) {
             return empty();
@@ -95,8 +93,8 @@ public final class TarantoolIndexDao extends TarantoolCommonDao {
 
 
     public long countByIndex(String spaceName, String indexName, Collection<?> keys) {
-        evaluateValueScript(instanceId, spaceName, indexName);
-        TarantoolClient client = tarantoolModuleState().getClient(instanceId);
+        evaluateValueIndexScript(clusterIds, spaceName, indexName);
+
         List<?> result = callTarantoolFunction(client, COUNT + spaceName + VALUES_POSTFIX + BY + indexName, keys);
         if (isEmpty(result)) {
             return 0L;
@@ -109,8 +107,8 @@ public final class TarantoolIndexDao extends TarantoolCommonDao {
     }
 
     public long lenByIndex(String spaceName, String indexName) {
-        evaluateValueScript(instanceId, spaceName, indexName);
-        TarantoolClient client = tarantoolModuleState().getClient(instanceId);
+        evaluateValueIndexScript(clusterIds, spaceName, indexName);
+
         List<?> result = callTarantoolFunction(client, LEN + spaceName + VALUES_POSTFIX + BY + indexName);
         if (isEmpty(result)) {
             return 0L;
@@ -136,8 +134,8 @@ public final class TarantoolIndexDao extends TarantoolCommonDao {
     }
 
     private Optional<Entity> updateWithSchema(String spaceName, String indexName, Collection<?> keys, List<TarantoolUpdateFieldOperation> operations) {
-        evaluateValueScript(instanceId, spaceName, indexName);
-        TarantoolClient client = tarantoolModuleState().getClient(instanceId);
+        evaluateValueIndexScript(clusterIds, spaceName, indexName);
+
         String functionName = UPDATE + spaceName + VALUE_POSTFIX + WITH_SCHEMA_POSTFIX + BY + indexName;
         List<?> valueOperations = operations
                 .stream()
@@ -158,8 +156,8 @@ public final class TarantoolIndexDao extends TarantoolCommonDao {
     }
 
     private Optional<Entity> updateWithoutSchema(String spaceName, String indexName, Collection<?> keys, List<TarantoolUpdateFieldOperation> operations) {
-        evaluateValueScript(instanceId, spaceName, indexName);
-        TarantoolClient client = tarantoolModuleState().getClient(instanceId);
+        evaluateValueIndexScript(clusterIds, spaceName, indexName);
+
         String functionName = UPDATE + spaceName + VALUE_POSTFIX + BY + indexName;
         List<List<?>> result = cast(callTarantoolFunction(client, functionName, fixedArrayOf(fixedArrayOf(keys), operations
                 .stream()

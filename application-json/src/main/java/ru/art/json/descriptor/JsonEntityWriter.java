@@ -22,7 +22,7 @@ import com.fasterxml.jackson.core.*;
 import lombok.experimental.*;
 import ru.art.core.checker.*;
 import ru.art.entity.*;
-import ru.art.entity.constants.ValueType;
+import ru.art.entity.constants.*;
 import ru.art.entity.constants.ValueType.*;
 import ru.art.json.exception.*;
 import static java.util.Objects.*;
@@ -32,10 +32,8 @@ import static ru.art.core.context.Context.*;
 import static ru.art.core.extension.FileExtensions.*;
 import static ru.art.core.extension.StringExtensions.*;
 import static ru.art.entity.Value.*;
-import static ru.art.json.constants.JsonLoggingMessages.*;
 import static ru.art.json.constants.JsonMappingExceptionMessages.*;
 import static ru.art.json.module.JsonModule.*;
-import static ru.art.logging.LoggingModule.*;
 import java.io.*;
 import java.nio.file.*;
 import java.util.*;
@@ -77,9 +75,7 @@ public class JsonEntityWriter {
             return BRACES;
         }
         StringWriter stringWriter = new StringWriter();
-        JsonGenerator generator = null;
-        try {
-            generator = jsonFactory.createGenerator(stringWriter);
+        try (JsonGenerator generator = jsonFactory.createGenerator(stringWriter)) {
             if (prettyOutput) {
                 generator.useDefaultPrettyPrinter();
             }
@@ -112,15 +108,6 @@ public class JsonEntityWriter {
             }
         } catch (IOException ioException) {
             throw new JsonMappingException(ioException);
-        } finally {
-            if (nonNull(generator)) {
-                try {
-                    generator.flush();
-                    generator.close();
-                } catch (IOException ioException) {
-                    loggingModule().getLogger(JsonEntityWriter.class).error(JSON_GENERATOR_CLOSING_ERROR, ioException);
-                }
-            }
         }
         return stringWriter.toString();
     }

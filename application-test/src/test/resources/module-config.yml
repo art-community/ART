@@ -1,3 +1,5 @@
+test:
+  value: "from file"
 kafka:
   broker:
     port: 19092
@@ -23,23 +25,32 @@ kafka:
 grpc:
   server:
     enableRawDataTracing: true
+    enableValueTracing: true
   communication:
     enableRawDataTracing: true
+    enableValueTracing: true
 http:
   server:
     consumesMimeType: application/json
     producesMimeType: application/json
     enableRawDataTracing: true
+    enableValueTracing: true
   communication:
-    enableRawDataTracing: true
     consumesMimeType: application/json
     producesMimeType: application/json
+    enableRawDataTracing: true
+    enableValueTracing: true
 rsocket:
   enableRawDataTracing: true
+  enableValueTracing: true
 tarantool:
   enableTracing: true
-  configurations:
-    T:
+  instances:
+    t-master-1:
+      replicas:
+        - "t-master-2"
+      initial:
+        readOnly: false
       connection:
         host: localhost
         port: 3301
@@ -50,6 +61,31 @@ tarantool:
           fields:
             Data: 2
             Entity: 3
+    t-master-2:
+      replicas:
+        - "t-master-1"
+      initial:
+        readOnly: false
+      connection:
+        host: localhost
+        port: 3302
+        username: username
+        password: password
+      entities:
+        DataEntity:
+          fields:
+            Data: 2
+            Entity: 3
+sql:
+  db:
+    instances:
+      embedded:
+        enableMetrics: true
+        enableTracing: true
+        provider: hsqldb
+        url: jdbc:hsqldb:mem:db
+        userName: sa
+        password: ""
 logging:
   colored: true
   asynchronous: true

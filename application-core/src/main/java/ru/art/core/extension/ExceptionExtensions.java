@@ -99,4 +99,16 @@ public class ExceptionExtensions {
             ifException.accept(throwable);
         }
     }
+
+
+    public static <T> T doIfExceptionOrEmpty(ExceptionCallable<T> operation, Supplier<T> ifEmpty, Function<Throwable, T> ifException) {
+        requireNonNull(operation);
+        try {
+            T result = operation.call();
+            if (isEmpty(result)) return ifEmpty.get();
+            return result;
+        } catch (Throwable throwable) {
+            return ifException.apply(throwable);
+        }
+    }
 }

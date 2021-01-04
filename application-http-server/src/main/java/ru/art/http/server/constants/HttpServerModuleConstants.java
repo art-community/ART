@@ -46,10 +46,9 @@ public interface HttpServerModuleConstants {
     }
 
     interface HttpResourceServiceConstants {
-        String HTTP_RESOURCE_SERVICE = "HTTP_RESOURCE_SERVICE";
         int DEFAULT_BUFFER_SIZE = 4096;
         String INDEX_HTML = "index.html";
-        String HTTP_RESOURCE = "<http-resource>";
+        String HTTP_RESOURCE_BODY_REPLACEMENT = "<http-resource>";
         String ACCESS_CONTROL_ALLOW_ORIGIN_KEY = "Access-Control-Allow-Origin";
         String ACCESS_CONTROL_ALLOW_METHODS_KEY = "Access-Control-Allow-Methods";
         String ACCESS_CONTROL_ALLOW_HEADERS_KEY = "Access-Control-Allow-Headers";
@@ -61,15 +60,19 @@ public interface HttpServerModuleConstants {
         String ACCESS_CONTROL_ALLOW_CREDENTIALS_VALUE = "true";
 
         interface ResourceExtensions {
-            String WEBP = ".webp";
-            String JPEG = ".jpeg";
-            String PNG = ".png";
-            String SVG = ".svg";
-            String CSS = ".css";
-            String MAP = ".map";
-            String JS = ".js";
-            String HTML = ".html";
-            String WSDL = ".wsdl";
+            String DOT_WEBP = ".webp";
+            String DOT_JPG = ".jpg";
+            String DOT_ICO = ".ico";
+            String DOT_JPEG = ".jpeg";
+            String DOT_PNG = ".png";
+            String DOT_SVG = ".svg";
+            String DOT_CSS = ".css";
+            String DOT_MAP = ".map";
+            String DOT_JS = ".js";
+            String DOT_HTML = ".html";
+            String DOT_WSDL = ".wsdl";
+            String DOT_XML = ".xml";
+            String DOT_TXT = ".txt";
         }
 
         interface Methods {

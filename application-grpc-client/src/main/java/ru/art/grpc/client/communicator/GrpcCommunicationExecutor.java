@@ -42,29 +42,17 @@ import static ru.art.service.factory.ServiceRequestFactory.*;
 import static ru.art.service.factory.ServiceResponseFactory.*;
 import static ru.art.service.mapping.ServiceRequestMapping.*;
 import static ru.art.service.mapping.ServiceResponseMapping.*;
+import javax.annotation.*;
 import java.util.*;
 import java.util.concurrent.*;
 
 @NoArgsConstructor(access = PRIVATE)
 class GrpcCommunicationExecutor {
     @SuppressWarnings("Duplicates")
-    static <ResponseType> ServiceResponse<ResponseType> execute(GrpcCommunicationConfiguration configuration) {
-        ManagedChannelBuilder<?> channelBuilder = forTarget(configuration.getUrl()).usePlaintext();
-        if (configuration.isUseSecuredTransport()) {
-            channelBuilder.useTransportSecurity();
-        }
-        long deadlineTimeout = configuration.getDeadlineTimeout();
-        GrpcServletBlockingStub stub = new GrpcServlet().newBlockingStub(channelBuilder.build(), emptyIfNull(configuration.getPath()))
-                .withDeadlineAfter(deadlineTimeout > 0L ? deadlineTimeout : grpcClientModule().getTimeout(), MILLISECONDS)
-                .withInterceptors(configuration.getInterceptors().toArray(new ClientInterceptor[0]));
-        Executor executor;
-        if (nonNull(executor = configuration.getOverrideExecutor()) || nonNull(executor = grpcClientModule().getOverridingExecutor())) {
-            stub = stub.withExecutor(executor);
-        }
+    static <RequestType, ResponseType> ServiceResponse<ResponseType> execute(ManagedChannel channel, GrpcCommunicationConfiguration configuration, @Nullable RequestType request) {
         ServiceMethodCommand command = new ServiceMethodCommand(configuration.getServiceId(), configuration.getMethodId());
         ValueFromModelMapper<?, ? extends Value> requestMapper = null;
-        Object request;
-        ServiceRequest<Object> serviceRequest = isNull(request = configuration.getRequest())
+        ServiceRequest<Object> serviceRequest = isNull(request)
                 || isNull(requestMapper = configuration.getRequestMapper())
                 ? newServiceRequest(command)
                 : newServiceRequest(command, request);
@@ -83,7 +71,7 @@ class GrpcCommunicationExecutor {
                 return okResponse(command);
             }
         }
-        Entity responseValue = asEntity(readProtobuf(stub.executeService(writeProtobuf(requestValue))));
+        Entity responseValue = asEntity(readProtobuf(createBlockingStub(channel, configuration).executeService(writeProtobuf(requestValue))));
         List<ValueInterceptor<Entity, Entity>> responseValueInterceptors = configuration.getResponseValueInterceptors();
         for (ValueInterceptor<Entity, Entity> responseValueInterceptor : responseValueInterceptors) {
             ValueInterceptionResult<Entity, Entity> result = responseValueInterceptor.intercept(responseValue);
@@ -99,5 +87,20 @@ class GrpcCommunicationExecutor {
             }
         }
         return cast(toServiceResponse(cast(configuration.getResponseMapper())).map(responseValue));
+    }
+
+    private static GrpcServletBlockingStub createBlockingStub(ManagedChannel channel, GrpcCommunicationConfiguration configuration) {
+        long deadlineTimeout = configuration.getDeadlineTimeout();
+        GrpcServletBlockingStub stub = new GrpcServlet().newBlockingStub(channel, emptyIfNull(configuration.getPath()))
+                .withDeadlineAfter(deadlineTimeout > 0L ? deadlineTimeout : grpcClientModule().getTimeout(), MILLISECONDS)
+                .withInterceptors(configuration.getInterceptors().toArray(new ClientInterceptor[0]));
+        if (configuration.isWaitForReady()) {
+            stub = stub.withWaitForReady();
+        }
+        Executor executor;
+        if (nonNull(executor = configuration.getOverrideExecutor()) || nonNull(executor = grpcClientModule().getOverridingExecutor())) {
+            stub = stub.withExecutor(executor);
+        }
+        return stub;
     }
 }

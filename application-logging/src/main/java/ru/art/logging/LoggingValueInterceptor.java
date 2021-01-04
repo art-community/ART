@@ -18,24 +18,42 @@
 
 package ru.art.logging;
 
-import ru.art.entity.*;
+import lombok.*;
+import org.apache.logging.log4j.*;
+import ru.art.entity.Value;
 import ru.art.entity.interceptor.*;
 import static java.text.MessageFormat.*;
+import static java.util.Collections.*;
 import static org.apache.logging.log4j.ThreadContext.*;
 import static ru.art.core.caster.Caster.*;
+import static ru.art.core.constants.StringConstants.*;
+import static ru.art.entity.Value.*;
 import static ru.art.entity.interceptor.ValueInterceptionResult.*;
 import static ru.art.logging.LoggingModule.*;
 import static ru.art.logging.LoggingModuleConstants.LoggingParameters.*;
 import static ru.art.logging.LoggingModuleConstants.*;
 import static ru.art.logging.ThreadContextExtensions.*;
+import java.util.*;
+import java.util.function.*;
 
+@AllArgsConstructor
 public class LoggingValueInterceptor<InValue extends Value, OutValue extends Value> implements ValueInterceptor<InValue, OutValue> {
+    private final Supplier<Boolean> enableTracing;
+
     @Override
     public ValueInterceptionResult<InValue, OutValue> intercept(Value value) {
         putIfNotNull(REQUEST_VALUE_KEY, value);
-        loggingModule()
-                .getLogger(LoggingValueInterceptor.class)
-                .info(format(VALUE_LOG_MESSAGE, value));
+        if (enableTracing.get()) {
+            Map<String, String> dump = emptyMap();
+            if (isEntity(value)) {
+                dump = asEntity(value).dump();
+                dump.forEach((key, field) -> putIfNotNull(REQUEST_VALUE_KEY + DOT + key, field));
+            }
+            loggingModule()
+                    .getLogger(LoggingValueInterceptor.class)
+                    .info(format(VALUE_LOG_MESSAGE, value));
+            dump.keySet().forEach(ThreadContext::remove);
+        }
         remove(REQUEST_VALUE_KEY);
         return cast(nextInterceptor(value));
     }

@@ -42,5 +42,6 @@ dependencies {
                 .exclude("commons-logging")
         embedded("org.apache.logging.log4j", "log4j-web", log4jVersion)
                 .exclude("org.apache.logging.log4j")
+        embedded("org.javastack","tomcat-juli-log4j2", "1.0.0")
     }
 }

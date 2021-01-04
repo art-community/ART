@@ -21,10 +21,16 @@ package ru.art.rsocket.state;
 import io.rsocket.*;
 import lombok.*;
 import ru.art.core.module.*;
+import ru.art.rsocket.constants.RsocketModuleConstants.*;
 import ru.art.rsocket.server.*;
+import static ru.art.core.factory.CollectionsFactory.*;
+import java.util.*;
 
 public class RsocketModuleState implements ModuleState {
-    private final ThreadLocal<CurrentRsocketState> currentClientSocket = new ThreadLocal<>();
+    private final ThreadLocal<CurrentRsocketState> currentState = new ThreadLocal<>();
+    @Getter
+    private final List<RSocket> clients = linkedListOf();
+
     @Getter
     @Setter
     private RsocketServer tcpServer;
@@ -33,20 +39,30 @@ public class RsocketModuleState implements ModuleState {
     @Setter
     private RsocketServer webSocketServer;
 
-    public RsocketModuleState currentRocketState(CurrentRsocketState state) {
-        currentClientSocket.set(state);
+    public RsocketModuleState setCurrentRocketState(CurrentRsocketState state) {
+        currentState.set(state);
         return this;
     }
 
-    public CurrentRsocketState currentRocketState() {
-        return currentClientSocket.get();
+    public CurrentRsocketState getCurrentRocketState() {
+        return currentState.get();
+    }
+
+    public void clearCurrentRocketState() {
+        currentState.remove();
+    }
+
+    public RSocket registerRsocket(RSocket rsocket) {
+        clients.add(rsocket);
+        return rsocket;
     }
 
     @Getter
-    @AllArgsConstructor
+    @Builder
     public static class CurrentRsocketState {
         private final String dataMimeType;
         private final String metadataMimeType;
+        private final RsocketDataFormat dataFormat;
         private final RSocket rsocket;
     }
 }

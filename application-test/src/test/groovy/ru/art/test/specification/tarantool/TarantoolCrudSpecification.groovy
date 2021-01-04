@@ -20,10 +20,8 @@ package ru.art.test.specification.tarantool
 
 import ru.art.entity.Entity
 import ru.art.tarantool.configuration.lua.TarantoolIndexConfiguration
-import spock.lang.IgnoreIf
 import spock.lang.Specification
 
-import static java.lang.System.getenv
 import static java.util.Optional.empty
 import static ru.art.config.extensions.activator.AgileConfigurationsActivator.useAgileConfigurations
 import static ru.art.core.constants.StringConstants.EMPTY_STRING
@@ -40,10 +38,10 @@ import static ru.art.tarantool.service.TarantoolIndexService.dropIndex
 import static ru.art.tarantool.service.TarantoolSequenceService.dropSequence
 import static ru.art.tarantool.service.TarantoolSpaceService.dropSpace
 
-@IgnoreIf({ getenv('TRAVIS') as boolean })
 class TarantoolCrudSpecification extends Specification {
     def spaceName = "DataEntity"
-    def instanceId = "T"
+    def masterId = "t-master-1"
+    def replicaId = "t-master-2"
     def secondaryIndex = "SecondaryIndex"
     def secondaryIndexId = 1
     def sequence = "DataEntitySequence"
@@ -52,20 +50,22 @@ class TarantoolCrudSpecification extends Specification {
     def idField = "id"
     def dataValue = "Тест"
     def entity = entityBuilder().stringField(fieldName, dataValue).build()
-    def dao = tarantool(instanceId)
+    def dao
     def newValue = "Мяу"
 
     def "should run CRUD operations with tarantool with preparation steps"() {
         setup:
         useAgileConfigurations()
+        dao = tarantool(masterId).clustered()
+        def replicaDao = tarantool(replicaId)
         tarantoolModuleState().loadedCommonScripts.clear()
         tarantoolModuleState().loadedValueScripts.clear()
-        createIndex(instanceId, TarantoolIndexConfiguration.builder()
+        createIndex(masterId, TarantoolIndexConfiguration.builder()
                 .spaceName(spaceName)
                 .indexName(secondaryIndex)
                 .id(secondaryIndexId)
                 .part(TarantoolIndexConfiguration.Part.builder()
-                        .fieldNumber(fieldMapping(instanceId, spaceName).map(fieldName))
+                        .fieldNumber(fieldMapping(masterId, spaceName).map(fieldName))
                         .type(STRING)
                         .build())
                 .build())
@@ -74,34 +74,35 @@ class TarantoolCrudSpecification extends Specification {
         entity = dao.put(spaceName, entity)
 
         then:
-        dao.selectByIndex(spaceName, secondaryIndex, setOf(entity.getString(fieldName)))
+        replicaDao.selectByIndex(spaceName, secondaryIndex, setOf(entity.getString(fieldName)))
                 .first()
                 .getString(fieldName) == entity.getString(fieldName)
 
         when:
         def newEntity = dao.update(spaceName, setOf(entity.getInt(idField)) as Set<Integer>,
-                assigment(fieldMapping(instanceId, spaceName).map(fieldName), fieldName, stringPrimitive(newValue)))
+                assigment(fieldMapping(masterId, spaceName).map(fieldName), fieldName, stringPrimitive(newValue)))
 
         then:
-        dao.getByIndex(spaceName, secondaryIndex, setOf(newValue)) == newEntity
+        replicaDao.getByIndex(spaceName, secondaryIndex, setOf(newValue)) == newEntity
 
         when:
         dao.deleteByIndex(spaceName, secondaryIndex, setOf(newValue))
 
         then:
-        dao.getByIndex(spaceName, secondaryIndex, setOf(entity.getString(fieldName))) == empty()
-        dao.len(spaceName) == 0L
+        replicaDao.getByIndex(spaceName, secondaryIndex, setOf(entity.getString(fieldName))) == empty()
+        replicaDao.len(spaceName) == 0L
 
         cleanup:
-        dropSpace(instanceId, spaceName)
-        dropIndex(instanceId, spaceName, primaryIndex)
-        dropIndex(instanceId, spaceName, secondaryIndex)
-        dropSequence(instanceId, sequence)
+        dropSpace(masterId, spaceName)
+        dropIndex(masterId, spaceName, primaryIndex)
+        dropIndex(masterId, spaceName, secondaryIndex)
+        dropSequence(masterId, sequence)
     }
 
     def "should run CRUD operations with tarantool without preparation steps"() {
         setup:
         useAgileConfigurations()
+        dao = tarantool(masterId)
         tarantoolModuleState().loadedCommonScripts.clear()
         tarantoolModuleState().loadedValueScripts.clear()
 
@@ -121,12 +122,12 @@ class TarantoolCrudSpecification extends Specification {
         0L == dao.len(spaceName)
 
         when:
-        dao.upsert(spaceName, entity, assigment(fieldMapping(instanceId, spaceName).map(fieldName), fieldName, stringPrimitive(newValue)))
-        createIndex(instanceId, TarantoolIndexConfiguration.builder()
+        dao.upsert(spaceName, entity, assigment(fieldMapping(masterId, spaceName).map(fieldName), fieldName, stringPrimitive(newValue)))
+        createIndex(masterId, TarantoolIndexConfiguration.builder()
                 .spaceName(spaceName)
                 .indexName(secondaryIndex)
                 .part(TarantoolIndexConfiguration.Part.builder()
-                        .fieldNumber(fieldMapping(instanceId, spaceName).map(fieldName))
+                        .fieldNumber(fieldMapping(masterId, spaceName).map(fieldName))
                         .type(STRING)
                         .build())
                 .build())
@@ -135,14 +136,14 @@ class TarantoolCrudSpecification extends Specification {
         dao.getByIndex(spaceName, secondaryIndex, setOf(entity.getString(fieldName))).isPresent()
 
         when:
-        dao.upsert(spaceName, entity, assigment(fieldMapping(instanceId, spaceName).map(fieldName), fieldName, stringPrimitive("Гав")))
+        dao.upsert(spaceName, entity, assigment(fieldMapping(masterId, spaceName).map(fieldName), fieldName, stringPrimitive("Гав")))
 
         then:
         dao.getByIndex(spaceName, secondaryIndex, setOf("Гав")).isPresent()
 
         when:
         dao.update(spaceName, setOf(entity.getInt(idField)) as Set<Integer>,
-                assigment(fieldMapping(instanceId, spaceName).map(fieldName), fieldName, stringPrimitive(newValue)))
+                assigment(fieldMapping(masterId, spaceName).map(fieldName), fieldName, stringPrimitive(newValue)))
 
         then:
         dao.getByIndex(spaceName, secondaryIndex, setOf(newValue)).isPresent()
@@ -152,8 +153,8 @@ class TarantoolCrudSpecification extends Specification {
                 .longField("Long", 1L)
                 .build()
         dao.updateByIndex(spaceName, secondaryIndex, setOf(newValue) as Set<String>,
-                insertion(fieldMapping(instanceId, spaceName).map("Entity"), "Entity", insertedEntity),
-                assigment(fieldMapping(instanceId, spaceName).map(fieldName), fieldName, stringPrimitive("$newValue,$newValue")))
+                insertion(fieldMapping(masterId, spaceName).map("Entity"), "Entity", insertedEntity),
+                assigment(fieldMapping(masterId, spaceName).map(fieldName), fieldName, stringPrimitive("$newValue,$newValue")))
 
         then:
         dao.getByIndex(spaceName, secondaryIndex, setOf("$newValue,$newValue".toString())).isPresent()
@@ -163,17 +164,17 @@ class TarantoolCrudSpecification extends Specification {
 
         when:
         dao.updateByIndex(spaceName, secondaryIndex, setOf("$newValue,$newValue".toString()) as Set<String>,
-                deletion(fieldMapping(instanceId, spaceName).map("Entity"), 1),
-                assigment(fieldMapping(instanceId, spaceName).map(fieldName), fieldName, stringPrimitive(newValue)))
+                deletion(fieldMapping(masterId, spaceName).map("Entity"), 1),
+                assigment(fieldMapping(masterId, spaceName).map(fieldName), fieldName, stringPrimitive(newValue)))
 
         then:
         dao.getByIndex(spaceName, secondaryIndex, setOf(newValue)).isPresent()
         !dao.getByIndex(spaceName, secondaryIndex, setOf(newValue)).map { it.getEntity("Entity") }.isPresent()
 
         cleanup:
-        dropSpace(instanceId, spaceName)
-        dropIndex(instanceId, spaceName, primaryIndex)
-        dropIndex(instanceId, spaceName, secondaryIndex)
-        dropSequence(instanceId, sequence)
+        dropSpace(masterId, spaceName)
+        dropIndex(masterId, spaceName, primaryIndex)
+        dropIndex(masterId, spaceName, secondaryIndex)
+        dropSequence(masterId, sequence)
     }
 }

@@ -50,6 +50,7 @@ import static ru.art.logging.LoggingParametersManager.*;
 import static ru.art.protobuf.descriptor.ProtobufEntityReader.*;
 import static ru.art.protobuf.descriptor.ProtobufEntityWriter.*;
 import static ru.art.service.ServiceController.*;
+import static ru.art.service.ServiceModule.serviceModuleState;
 import static ru.art.service.constants.RequestValidationPolicy.*;
 import static ru.art.service.factory.ServiceRequestFactory.*;
 import static ru.art.service.factory.ServiceResponseFactory.*;
@@ -85,7 +86,8 @@ public class GrpcServletContainer extends GrpcServlet {
                     .serviceId(serviceId)
                     .serviceMethodId(serviceMethodId)
                     .serviceMethodCommand(serviceMethodId + DOT + getOrElse(get(REQUEST_ID_KEY), DEFAULT_REQUEST_ID))
-                    .loggingEventType(GRPC_LOGGING_EVENT)
+                    .logEventType(GRPC_LOGGING_EVENT)
+                    .loadedServices(serviceModuleState().getServiceRegistry().getServices().keySet())
                     .build());
             try {
                 executeServiceChecked(grpcRequest, command, responseObserver);

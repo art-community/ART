@@ -41,6 +41,7 @@ public interface FromModelConstants {
 
     String ENUM_FILED = ".stringField($N, $T.$N(model.$L()))";
     String ENTITY_FIELD = ".entityField($N, model.$L(), $T.$N)";
+    String ENTITY_FIELD_FROM_ENTITY = ".entityField($N, model.$L())";
     String ENTITY_COLLECTION_FIELD = ".entityCollectionField($N, model.$L(), $T.$N)";
 
     String STRING_COLLECTION_FIELD = ".stringCollectionField($N, model.$L())";

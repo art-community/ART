@@ -19,39 +19,39 @@
 package ru.art.config.extensions.activator;
 
 import lombok.experimental.*;
+import org.apache.logging.log4j.*;
 import ru.art.config.extensions.provider.*;
-import ru.art.config.remote.provider.*;
-import ru.art.core.annotation.*;
 import ru.art.core.configuration.ContextInitialConfiguration.*;
 import ru.art.core.context.*;
 import static java.text.MessageFormat.*;
+import static ru.art.config.ConfigProvider.*;
 import static ru.art.config.module.ConfigModule.*;
 import static ru.art.config.remote.constants.RemoteConfigLoaderConstants.*;
+import static ru.art.config.remote.provider.RemoteConfigProvider.*;
+import static ru.art.core.checker.CheckerForEmptiness.*;
 import static ru.art.core.constants.ContextConstants.*;
 import static ru.art.core.context.Context.*;
-import static ru.art.core.wrapper.ExceptionWrapper.*;
 import static ru.art.logging.LoggingModule.*;
 
-@PublicApi
 @UtilityClass
 public class AgileConfigurationsActivator {
     public static Context useAgileConfigurations(String mainModuleId) {
         ApplicationContextConfiguration configuration = new ApplicationContextConfiguration(mainModuleId, new AgileConfigurationProvider());
         Context context = initContext(configuration);
-        ignoreException(RemoteConfigProvider::useRemoteConfigurations);
-        loggingModule()
-                .getLogger(AgileConfigurationsActivator.class)
-                .info(format(CONFIGURATION_MODE, configModuleState().configurationMode()));
+        useRemoteConfigurations();
+        Logger logger = loggingModule().getLogger(AgileConfigurationsActivator.class);
+        logger.info(format(CONFIGURATION_MODE, configModuleState().configurationMode()));
         switch (configModuleState().configurationMode()) {
             case FILE:
-                loggingModule()
-                        .getLogger(AgileConfigurationsActivator.class)
-                        .info(format(CONFIGURATION_FILE_URL, configModuleState().localConfigUrl()));
+                String configUrl = configUrl();
+                if (isEmpty(configUrl)) {
+                    logger.warn(CONFIGURATION_FILE_NOT_EXISTS);
+                    return context;
+                }
+                logger.info(format(CONFIGURATION_FILE_URL, configUrl));
                 return context;
             case REMOTE:
-                loggingModule()
-                        .getLogger(AgileConfigurationsActivator.class)
-                        .info(format(REMOTE_CONFIGURATION_PROPERTIES, configModuleState().remoteConfigProperties()));
+                logger.info(format(REMOTE_CONFIGURATION_PROPERTIES, configModuleState().remoteConfigProperties()));
                 return context;
         }
         return context;

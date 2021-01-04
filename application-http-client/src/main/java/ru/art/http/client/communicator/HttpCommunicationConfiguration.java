@@ -26,12 +26,14 @@ import org.apache.http.impl.nio.client.*;
 import ru.art.entity.Value;
 import ru.art.entity.interceptor.*;
 import ru.art.entity.mapper.*;
+import ru.art.http.client.constants.HttpClientModuleConstants.*;
 import ru.art.http.client.handler.*;
 import ru.art.http.client.interceptor.*;
 import ru.art.http.constants.*;
 import static lombok.AccessLevel.*;
 import static ru.art.core.context.Context.*;
 import static ru.art.core.factory.CollectionsFactory.*;
+import static ru.art.http.client.constants.HttpClientModuleConstants.ConnectionClosingPolicy.CLOSE_AFTER_RESPONSE;
 import static ru.art.http.client.module.HttpClientModule.*;
 import static ru.art.http.constants.HttpMethodType.*;
 import java.nio.charset.*;
@@ -52,7 +54,6 @@ class HttpCommunicationConfiguration {
     private HttpCommunicationResponseHandler<?, ?> completionHandler;
     private HttpCommunicationExceptionHandler<?> exceptionHandler;
     private HttpCommunicationCancellationHandler<?> cancellationHandler;
-    private Object request;
     private boolean chunkedBody;
     private boolean gzipCompressedBody;
     private RequestConfig requestConfig = httpClientModule().getRequestConfig();
@@ -66,4 +67,6 @@ class HttpCommunicationConfiguration {
     private CloseableHttpAsyncClient asynchronousClient;
     private List<ValueInterceptor<Value, Value>> requestValueInterceptors = linkedListOf(httpClientModule().getRequestValueInterceptors());
     private List<ValueInterceptor<Value, Value>> responseValueInterceptors = linkedListOf(httpClientModule().getResponseValueInterceptors());
+    private ConnectionClosingPolicy connectionClosingPolicy = CLOSE_AFTER_RESPONSE;
+    private boolean enableKeepAlive;
 }

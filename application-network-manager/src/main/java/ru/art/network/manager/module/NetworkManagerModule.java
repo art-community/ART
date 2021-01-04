@@ -27,6 +27,7 @@ import ru.art.network.manager.state.*;
 import ru.art.state.api.communication.grpc.*;
 import static java.time.Duration.*;
 import static java.time.temporal.ChronoUnit.*;
+import static lombok.AccessLevel.PRIVATE;
 import static ru.art.core.context.Context.*;
 import static ru.art.network.manager.configuration.NetworkManagerModuleConfiguration.*;
 import static ru.art.network.manager.constants.NetworkManagerModuleConstants.*;
@@ -36,9 +37,9 @@ import static ru.art.task.deferred.executor.TaskFactory.*;
 
 @Getter
 public class NetworkManagerModule implements Module<NetworkManagerModuleConfiguration, NetworkManagerModuleState> {
-    @Getter(lazy = true)
+    @Getter(lazy = true, value = PRIVATE)
     private static final NetworkManagerModuleConfiguration networkManagerModule = context().getModule(NETWORK_MANAGER_MODULE_ID, NetworkManagerModule::new);
-    @Getter(lazy = true)
+    @Getter(lazy = true, value = PRIVATE)
     private static final NetworkManagerModuleState networkManagerModuleState = context().getModuleState(NETWORK_MANAGER_MODULE_ID, NetworkManagerModule::new);
     private final String id = NETWORK_MANAGER_MODULE_ID;
     private final NetworkManagerModuleConfiguration defaultConfiguration = NetworkManagerModuleDefaultConfiguration.DEFAULT_CONFIGURATION;

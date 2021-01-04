@@ -25,7 +25,7 @@ import org.apache.http.impl.nio.reactor.*;
 import static ru.art.http.client.module.HttpClientModule.*;
 
 @Getter
-@Builder
+@Builder(toBuilder = true)
 public class HttpClientConfiguration {
     @Builder.Default
     private final RequestConfig requestConfig = httpClientModule().getRequestConfig();
@@ -47,4 +47,10 @@ public class HttpClientConfiguration {
     private final String sslKeyStorePassword = httpClientModule().getSslKeyStorePassword();
     @Builder.Default
     private final boolean enableRawDataTracing = httpClientModule().isEnableRawDataTracing();
+    @Builder.Default
+    private final int maxConnectionsPerRoute = httpClientModule().getMaxConnectionsPerRoute();
+    @Builder.Default
+    private final int maxConnectionsTotal = httpClientModule().getMaxConnectionsTotal();
+    @Builder.Default
+    private final int validateAfterInactivityMillis = httpClientModule().getValidateAfterInactivityMillis();
 }

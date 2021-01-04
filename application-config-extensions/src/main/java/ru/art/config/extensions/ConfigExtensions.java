@@ -18,12 +18,13 @@
 
 package ru.art.config.extensions;
 
+import lombok.*;
 import lombok.experimental.*;
+import org.apache.logging.log4j.*;
 import ru.art.config.*;
 import ru.art.config.exception.*;
-import ru.art.core.annotation.*;
 import static java.util.Collections.*;
-import static java.util.Objects.isNull;
+import static java.util.Objects.*;
 import static java.util.function.Function.*;
 import static java.util.stream.Collectors.*;
 import static ru.art.config.ConfigProvider.*;
@@ -32,13 +33,16 @@ import static ru.art.config.remote.provider.RemoteConfigProvider.*;
 import static ru.art.core.checker.CheckerForEmptiness.*;
 import static ru.art.core.constants.StringConstants.*;
 import static ru.art.core.extension.ExceptionExtensions.*;
-import static ru.art.core.factory.CollectionsFactory.setOf;
+import static ru.art.core.factory.CollectionsFactory.*;
+import static ru.art.logging.LoggingModule.*;
 import java.util.*;
 import java.util.function.*;
 
-@PublicApi
 @UtilityClass
 public class ConfigExtensions {
+    @Getter
+    private static final Logger logger = loggingModule().getLogger(ConfigExtensions.class);
+
     public static String configString(String sectionId, String path) {
         if (isEmpty(sectionId)) throw new ConfigException(SECTION_ID_IS_EMPTY);
         Config remoteConfig = remoteConfig(sectionId);
@@ -318,15 +322,24 @@ public class ConfigExtensions {
 
 
     public static <T> Map<String, T> configInnerMap(String path, Function<Config, T> configMapper, Map<String, T> defaultValues) {
-        return ifExceptionOrEmpty(() -> configInnerMap(path, configMapper), defaultValues);
+        return doIfExceptionOrEmpty(() -> configInnerMap(path, configMapper), () -> defaultValues, exception -> {
+            logger.error(exception.getMessage(), exception);
+            return defaultValues;
+        });
     }
 
     public static <T> Map<String, T> configInnerMap(String path, BiFunction<String, Config, T> configMapper, Map<String, T> defaultValues) {
-        return ifExceptionOrEmpty(() -> configInnerMap(path, configMapper), defaultValues);
+        return doIfExceptionOrEmpty(() -> configInnerMap(path, configMapper), () -> defaultValues, exception -> {
+            logger.error(exception.getMessage(), exception);
+            return defaultValues;
+        });
     }
 
     public static <T> Map<String, T> configInnerMap(String sectionId, String path, Function<Config, T> configMapper, Map<String, T> defaultValues) {
-        return ifExceptionOrEmpty(() -> configInnerMap(sectionId, path, configMapper), defaultValues);
+        return doIfExceptionOrEmpty(() -> configInnerMap(sectionId, path, configMapper), () -> defaultValues, exception -> {
+            logger.error(exception.getMessage(), exception);
+            return defaultValues;
+        });
     }
 
     public static <T> Map<String, T> configMap(String path, BiFunction<String, Config, T> configMapper) {

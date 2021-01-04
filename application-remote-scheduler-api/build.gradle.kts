@@ -21,5 +21,6 @@ art {
         applicationCore()
         applicationEntity()
         applicationService()
+        applicationGrpcClient()
     }
 }

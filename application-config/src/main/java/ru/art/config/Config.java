@@ -29,10 +29,13 @@ import static com.fasterxml.jackson.databind.node.JsonNodeType.*;
 import static java.text.MessageFormat.*;
 import static java.util.Collections.*;
 import static java.util.Objects.*;
+import static java.util.Spliterator.*;
+import static java.util.Spliterators.*;
 import static java.util.function.Function.*;
 import static java.util.stream.Collectors.*;
 import static java.util.stream.StreamSupport.*;
 import static ru.art.config.constants.ConfigExceptionMessages.*;
+import static ru.art.core.constants.ArrayConstants.EMPTY_ARRAY_INDEX;
 import static ru.art.core.constants.StringConstants.*;
 import java.util.*;
 
@@ -90,7 +93,7 @@ public class Config {
             case HOCON:
                 return new Config(asTypesafeConfig().getConfig(sectionId), configType);
             case YAML:
-                return new Config(asYamlConfig().at(SLASH + sectionId.replace(DOT, SLASH)), configType);
+                return new Config(getYamlConfigNode(sectionId), configType);
             case REMOTE_ENTITY_CONFIG:
                 return new Config(asEntityConfig().find(sectionId), configType);
             default:
@@ -111,7 +114,7 @@ public class Config {
             case HOCON:
                 return asTypesafeConfig().getString(path);
             case YAML:
-                return asYamlConfig().at(SLASH + path.replace(DOT, SLASH)).asText();
+                return getYamlConfigNode(path).asText();
             default:
                 throw new ConfigException(format(UNKNOWN_CONFIG_TYPE, configType));
         }
@@ -129,7 +132,7 @@ public class Config {
             case HOCON:
                 return asTypesafeConfig().getInt(path);
             case YAML:
-                return asYamlConfig().at(SLASH + path.replace(DOT, SLASH)).asInt();
+                return getYamlConfigNode(path).asInt();
             default:
                 throw new ConfigException(format(UNKNOWN_CONFIG_TYPE, configType));
         }
@@ -147,7 +150,7 @@ public class Config {
             case HOCON:
                 return asTypesafeConfig().getLong(path);
             case YAML:
-                return asYamlConfig().at(SLASH + path.replace(DOT, SLASH)).asLong();
+                return getYamlConfigNode(path).asLong();
             default:
                 throw new ConfigException(format(UNKNOWN_CONFIG_TYPE, configType));
         }
@@ -165,7 +168,7 @@ public class Config {
             case HOCON:
                 return asTypesafeConfig().getDouble(path);
             case YAML:
-                return asYamlConfig().at(SLASH + path.replace(DOT, SLASH)).asDouble();
+                return getYamlConfigNode(path).asDouble();
             default:
                 throw new ConfigException(format(UNKNOWN_CONFIG_TYPE, configType));
         }
@@ -183,11 +186,12 @@ public class Config {
             case HOCON:
                 return asTypesafeConfig().getBoolean(path);
             case YAML:
-                return asYamlConfig().at(SLASH + path.replace(DOT, SLASH)).asBoolean();
+                return getYamlConfigNode(path).asBoolean();
             default:
                 throw new ConfigException(format(UNKNOWN_CONFIG_TYPE, configType));
         }
     }
+
 
     public List<Config> getConfigList(String path) {
         if (isEmpty(this)) return emptyList();
@@ -202,8 +206,8 @@ public class Config {
             case HOCON:
                 return asTypesafeConfig().getConfigList(path).stream().map(configObject -> new Config(configObject, configType)).collect(toList());
             case YAML:
-                return stream(((Iterable<Map.Entry<String, JsonNode>>) () -> asYamlConfig().at(SLASH + path.replace(DOT, SLASH)).fields()).spliterator(), false)
-                        .map(configObject -> new Config(configObject.getValue(), configType))
+                return stream(spliteratorUnknownSize(getYamlConfigNode(path).iterator(), ORDERED), false)
+                        .map(configObject -> new Config(configObject, configType))
                         .collect(toList());
             default:
                 throw new ConfigException(format(UNKNOWN_CONFIG_TYPE, configType));
@@ -222,7 +226,7 @@ public class Config {
             case HOCON:
                 return asTypesafeConfig().getStringList(path);
             case YAML:
-                return stream(((Iterable<JsonNode>) () -> asYamlConfig().at(SLASH + path.replace(DOT, SLASH)).iterator()).spliterator(), false)
+                return stream(((Iterable<JsonNode>) () -> getYamlConfigNode(path).iterator()).spliterator(), false)
                         .map(JsonNode::asText)
                         .collect(toList());
             default:
@@ -242,7 +246,7 @@ public class Config {
             case HOCON:
                 return asTypesafeConfig().getIntList(path);
             case YAML:
-                return stream(((Iterable<JsonNode>) () -> asYamlConfig().at(SLASH + path.replace(DOT, SLASH)).iterator()).spliterator(), false)
+                return stream(((Iterable<JsonNode>) () -> getYamlConfigNode(path).iterator()).spliterator(), false)
                         .map(JsonNode::asInt)
                         .collect(toList());
             default:
@@ -262,7 +266,7 @@ public class Config {
             case HOCON:
                 return asTypesafeConfig().getDoubleList(path);
             case YAML:
-                return stream(((Iterable<JsonNode>) () -> asYamlConfig().at(SLASH + path.replace(DOT, SLASH)).iterator()).spliterator(), false)
+                return stream(((Iterable<JsonNode>) () -> getYamlConfigNode(path).iterator()).spliterator(), false)
                         .map(JsonNode::asDouble)
                         .collect(toList());
             default:
@@ -282,7 +286,7 @@ public class Config {
             case HOCON:
                 return asTypesafeConfig().getLongList(path);
             case YAML:
-                return stream(((Iterable<JsonNode>) () -> asYamlConfig().at(SLASH + path.replace(DOT, SLASH)).iterator()).spliterator(), false)
+                return stream(((Iterable<JsonNode>) () -> getYamlConfigNode(path).iterator()).spliterator(), false)
                         .map(JsonNode::asLong)
                         .collect(toList());
             default:
@@ -302,7 +306,7 @@ public class Config {
             case HOCON:
                 return asTypesafeConfig().getBooleanList(path);
             case YAML:
-                return stream(((Iterable<JsonNode>) () -> asYamlConfig().at(SLASH + path.replace(DOT, SLASH)).iterator()).spliterator(), false)
+                return stream(((Iterable<JsonNode>) () -> getYamlConfigNode(path).iterator()).spliterator(), false)
                         .map(JsonNode::asBoolean)
                         .collect(toList());
             default:
@@ -310,15 +314,15 @@ public class Config {
         }
     }
 
+
     public Set<String> getKeys(String path) {
-        Map<String, ?> config;
         switch (configType) {
             case PROPERTIES:
             case JSON:
             case HOCON:
                 return asTypesafeConfig().getObject(path).keySet();
             case YAML:
-                return stream(((Iterable<String>) () -> asYamlConfig().at(SLASH + path.replace(DOT, SLASH)).fieldNames()).spliterator(), false).collect(toSet());
+                return stream(((Iterable<String>) () -> getYamlConfigNode(path).fieldNames()).spliterator(), false).collect(toSet());
             case REMOTE_ENTITY_CONFIG:
                 return asEntityConfig().findEntity(path).getFieldNames();
             default:
@@ -354,7 +358,7 @@ public class Config {
             case HOCON:
                 return asTypesafeConfig().hasPath(path);
             case YAML:
-                JsonNodeType nodeType = asYamlConfig().at(SLASH + path.replace(DOT, SLASH)).getNodeType();
+                JsonNodeType nodeType = getYamlConfigNode(path).getNodeType();
                 return nodeType != NULL && nodeType != MISSING;
             default:
                 throw new ConfigException(format(UNKNOWN_CONFIG_TYPE, configType));
@@ -365,9 +369,47 @@ public class Config {
         if (!hasPath(path)) {
             return new Properties();
         }
-        Properties additionalProperties = new Properties();
-        additionalProperties.putAll(getKeys(path).stream()
-                .collect(toMap(identity(), this::getString)));
-        return additionalProperties;
+        Properties properties = new Properties();
+        properties.putAll(getKeys(path).stream().collect(toMap(identity(), key -> getString(path + DOT + key))));
+        return properties;
+    }
+
+
+    private JsonNode getYamlConfigNode(String path) {
+        JsonNode yamlConfig = asYamlConfig();
+        JsonNode node = yamlConfig.path(path);
+        JsonNodeType nodeType = node.getNodeType();
+        if (nodeType != NULL && nodeType != MISSING) {
+            return node;
+        }
+        int dotIndex = path.indexOf(DOT);
+        if (dotIndex == EMPTY_ARRAY_INDEX) {
+            return MissingNode.getInstance();
+        }
+        node = yamlConfig.path(path.substring(0, dotIndex));
+        path = path.substring(dotIndex + 1);
+        while (true) {
+            JsonNode valueNode = node.path(path);
+            JsonNodeType valueNodeType = valueNode.getNodeType();
+            switch (valueNodeType) {
+                case OBJECT:
+                case BINARY:
+                case BOOLEAN:
+                case NUMBER:
+                case ARRAY:
+                case STRING:
+                    return valueNode;
+                case MISSING:
+                case POJO:
+                case NULL:
+                    break;
+            }
+            dotIndex = path.indexOf(DOT);
+            if (dotIndex == EMPTY_ARRAY_INDEX) {
+                return MissingNode.getInstance();
+            }
+            node = node.path(path.substring(0, dotIndex));
+            path = path.substring(dotIndex + 1);
+        }
     }
 }

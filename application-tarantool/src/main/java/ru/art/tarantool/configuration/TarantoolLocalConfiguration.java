@@ -22,6 +22,7 @@ import lombok.*;
 import static java.io.File.*;
 import static java.nio.file.Paths.*;
 import static ru.art.core.constants.StringConstants.*;
+import static ru.art.core.determinant.SystemDeterminant.isMac;
 import static ru.art.tarantool.constants.TarantoolModuleConstants.*;
 
 @Getter
@@ -30,9 +31,13 @@ public class TarantoolLocalConfiguration {
     @Builder.Default
     private final String executable = DEFAULT_TARANTOOL_EXECUTABLE;
     @Builder.Default
-    private final int startupTimeoutMillis = DEFAULT_STARTUP_TIMEOUT;
+    private final int processStartupTimeoutMillis = DEFAULT_PROCESS_STARTUP_TIMEOUT;
+    @Builder.Default
+    private final int processStartupCheckIntervalMillis = DEFAULT_PROCESS_CHECK_INTERVAL;
     @Builder.Default
     private final String workingDirectory = get(EMPTY_STRING).toAbsolutePath().toString()
             + separator
             + TARANTOOL;
+    @Builder.Default
+    private final String executableFilePath = DEFAULT_TARANTOOL_EXECUTABLE_FILE_PATH;
 }

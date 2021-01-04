@@ -22,6 +22,19 @@ public interface SqlModuleConstants {
     String SQL_MODULE_ID = "SQL_MODULE";
 
     interface ConfigurationDefaults {
-        String DEFAULT_CONNECTION_TEST_QUERY = "select 1 from dual";
+        String HIKARI_POOL_PREFIX = "hikari-db-pool-";
+        String TOMCAT_POOL_PREFIX = "tomcat-db-pool-";
+    }
+
+    interface LoggingMessages {
+        String CLOSING_POOL = "Closing DB connection pool: {0}";
+        String STARING_POOL = "Starting connection pool to DataSource: {0}";
+        String EXECUTING_QUERY = "Executing SQL query: {0}";
+        String EXECUTING_BATCH_QUERY = "Executing batch SQL query: {0}";
+        String EXECUTING_ROUTINE = "Executing SQL routine: {0}";
+    }
+
+    interface ExceptionMessages {
+        String SQL_DB_CONFIGURATION_NOT_FOUND = "SQL DB configuration for instance ''{0}'' was not found";
     }
 }

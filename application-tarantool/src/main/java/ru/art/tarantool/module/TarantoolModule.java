@@ -19,17 +19,25 @@
 package ru.art.tarantool.module;
 
 import lombok.*;
+import org.apache.logging.log4j.*;
+import org.tarantool.*;
 import ru.art.core.module.Module;
 import ru.art.tarantool.configuration.*;
-import ru.art.tarantool.initializer.*;
+import ru.art.tarantool.exception.*;
 import ru.art.tarantool.state.*;
-import static java.util.Map.*;
+import static java.text.MessageFormat.*;
 import static java.util.Objects.*;
 import static lombok.AccessLevel.*;
 import static ru.art.core.context.Context.*;
+import static ru.art.core.wrapper.ExceptionWrapper.*;
+import static ru.art.logging.LoggingModule.*;
 import static ru.art.tarantool.configuration.TarantoolModuleConfiguration.*;
+import static ru.art.tarantool.constants.TarantoolModuleConstants.ExceptionMessages.*;
+import static ru.art.tarantool.constants.TarantoolModuleConstants.LoggingMessages.*;
 import static ru.art.tarantool.constants.TarantoolModuleConstants.*;
 import static ru.art.tarantool.constants.TarantoolModuleConstants.TarantoolInitializationMode.*;
+import static ru.art.tarantool.initializer.TarantoolInitializer.*;
+import java.util.*;
 
 @Getter
 public class TarantoolModule implements Module<TarantoolModuleConfiguration, TarantoolModuleState> {
@@ -40,18 +48,15 @@ public class TarantoolModule implements Module<TarantoolModuleConfiguration, Tar
     private final String id = TARANTOOL_MODULE_ID;
     private final TarantoolModuleConfiguration defaultConfiguration = DEFAULT_CONFIGURATION;
     private final TarantoolModuleState state = new TarantoolModuleState();
+    @Getter(lazy = true, value = PRIVATE)
+    private final static Logger logger = loggingModule().getLogger(TarantoolModule.class);
 
     @Override
     public void onLoad() {
-        if (tarantoolModule().getInitializationMode() != ON_MODULE_LOAD) {
+        if (tarantoolModule().getInitializationMode() != BOOTSTRAP) {
             return;
         }
-        tarantoolModule().getTarantoolConfigurations()
-                .entrySet()
-                .stream()
-                .filter(entry -> nonNull(entry) && nonNull(entry.getKey()) && nonNull(entry.getValue()))
-                .map(Entry::getKey)
-                .forEach(TarantoolInitializer::initializeTarantool);
+        initializeTarantools();
     }
 
     public static TarantoolModuleConfiguration tarantoolModule() {
@@ -63,5 +68,27 @@ public class TarantoolModule implements Module<TarantoolModuleConfiguration, Tar
 
     public static TarantoolModuleState tarantoolModuleState() {
         return getTarantoolModuleState();
+    }
+
+
+    public static TarantoolConfiguration getTarantoolConfiguration(String instanceId, Map<String, TarantoolConfiguration> configurations) {
+        TarantoolConfiguration configuration = configurations.get(instanceId);
+        if (isNull(configuration)) {
+            throw new TarantoolConnectionException(format(CONFIGURATION_IS_NULL, instanceId));
+        }
+        return configuration;
+    }
+
+    @Override
+    public void onUnload() {
+        tarantoolModuleState().getClients().entrySet().stream().filter(client -> !client.getValue().isClosed()).forEach(this::closeTarantoolClient);
+        tarantoolModuleState().getClusterClients().entrySet().stream().filter(client -> !client.getValue().isClosed()).forEach(this::closeTarantoolClient);
+    }
+
+    private void closeTarantoolClient(Map.Entry<String, TarantoolClient> entry) {
+        ignoreException(() -> {
+            entry.getValue().close();
+            getLogger().info(format(TARANTOOL_CLIENT_CLOSED, entry.getKey()));
+        }, getLogger()::error);
     }
 }

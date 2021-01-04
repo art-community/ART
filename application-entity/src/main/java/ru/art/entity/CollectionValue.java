@@ -339,7 +339,7 @@ public class CollectionValue<T> implements Value {
                     }
                     return list;
                 }
-                return cast(elements);
+                return cast(fixedArrayOf(elements));
             }
             case DOUBLE: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
@@ -529,7 +529,10 @@ public class CollectionValue<T> implements Value {
                     }
                     return list;
                 }
-                return cast(elements);
+                return elements.stream()
+                        .filter(Objects::nonNull)
+                        .map(element -> ((Number) element).intValue())
+                        .collect(toList());
             }
             case BYTE: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
@@ -616,7 +619,10 @@ public class CollectionValue<T> implements Value {
                     }
                     return list;
                 }
-                return cast(elements);
+                return elements.stream()
+                        .filter(Objects::nonNull)
+                        .map(element -> ((Number) element).byteValue())
+                        .collect(toList());
             }
         }
         throw new ValueMappingException(format(REQUEST_LIST_ELEMENTS_TYPE_INVALID, BYTE.toString(), elementsType.toString()));
@@ -655,7 +661,10 @@ public class CollectionValue<T> implements Value {
                     }
                     return list;
                 }
-                return cast(elements);
+                return elements.stream()
+                        .filter(Objects::nonNull)
+                        .map(element -> ((Number) element).doubleValue())
+                        .collect(toList());
             }
             case FLOAT: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
@@ -742,7 +751,10 @@ public class CollectionValue<T> implements Value {
                     }
                     return list;
                 }
-                return cast(elements);
+                return elements.stream()
+                        .filter(Objects::nonNull)
+                        .map(element -> ((Number) element).floatValue())
+                        .collect(toList());
             }
             case INT: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
@@ -775,7 +787,7 @@ public class CollectionValue<T> implements Value {
 
     public Set<Value> getValueSet() {
         if (isEmpty()) return emptySet();
-        Set<Value> Set = setOf();
+        Set<Value> set = setOf();
         switch (elementsType) {
             case STRING:
                 return elements
@@ -786,9 +798,9 @@ public class CollectionValue<T> implements Value {
             case LONG: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (long element : longElements) {
-                        Set.add(longPrimitive(element));
+                        set.add(longPrimitive(element));
                     }
-                    return Set;
+                    return set;
                 }
                 return elements.stream()
                         .filter(Objects::nonNull)
@@ -798,9 +810,9 @@ public class CollectionValue<T> implements Value {
             case DOUBLE: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (double element : doubleElements) {
-                        Set.add(doublePrimitive(element));
+                        set.add(doublePrimitive(element));
                     }
-                    return Set;
+                    return set;
                 }
                 return elements.stream()
                         .filter(Objects::nonNull)
@@ -810,9 +822,9 @@ public class CollectionValue<T> implements Value {
             case FLOAT: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (float element : floatElements) {
-                        Set.add(floatPrimitive(element));
+                        set.add(floatPrimitive(element));
                     }
-                    return Set;
+                    return set;
                 }
                 return elements.stream()
                         .filter(Objects::nonNull)
@@ -822,9 +834,9 @@ public class CollectionValue<T> implements Value {
             case INT: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (int element : intElements) {
-                        Set.add(intPrimitive(element));
+                        set.add(intPrimitive(element));
                     }
-                    return Set;
+                    return set;
                 }
                 return elements.stream()
                         .filter(Objects::nonNull)
@@ -834,9 +846,9 @@ public class CollectionValue<T> implements Value {
             case BOOL: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (boolean element : boolElements) {
-                        Set.add(boolPrimitive(element));
+                        set.add(boolPrimitive(element));
                     }
-                    return Set;
+                    return set;
                 }
                 return elements.stream()
                         .filter(Objects::nonNull)
@@ -846,9 +858,9 @@ public class CollectionValue<T> implements Value {
             case BYTE: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (byte element : byteElements) {
-                        Set.add(bytePrimitive(element));
+                        set.add(bytePrimitive(element));
                     }
-                    return Set;
+                    return set;
                 }
                 return elements.stream()
                         .filter(Objects::nonNull)
@@ -903,7 +915,7 @@ public class CollectionValue<T> implements Value {
 
     public Set<Long> getLongSet() {
         if (isEmpty()) return emptySet();
-        Set<Long> Set = setOf();
+        Set<Long> set = setOf();
         switch (elementsType) {
             case VALUE:
                 return elements.stream()
@@ -918,18 +930,21 @@ public class CollectionValue<T> implements Value {
             case LONG: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (long element : longElements) {
-                        Set.add(element);
+                        set.add(element);
                     }
-                    return Set;
+                    return set;
                 }
-                return cast(elements);
+                return elements.stream()
+                        .filter(Objects::nonNull)
+                        .map(element -> ((Number) element).longValue())
+                        .collect(toSet());
             }
             case DOUBLE: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (double element : doubleElements) {
-                        Set.add((long) element);
+                        set.add((long) element);
                     }
-                    return Set;
+                    return set;
                 }
                 return elements.stream()
                         .filter(Objects::nonNull)
@@ -939,9 +954,9 @@ public class CollectionValue<T> implements Value {
             case FLOAT: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (float element : floatElements) {
-                        Set.add((long) element);
+                        set.add((long) element);
                     }
-                    return Set;
+                    return set;
                 }
                 return elements.stream()
                         .filter(Objects::nonNull)
@@ -951,9 +966,9 @@ public class CollectionValue<T> implements Value {
             case INT: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (int element : intElements) {
-                        Set.add((long) element);
+                        set.add((long) element);
                     }
-                    return Set;
+                    return set;
                 }
                 return elements.stream()
                         .filter(Objects::nonNull)
@@ -963,9 +978,9 @@ public class CollectionValue<T> implements Value {
             case BYTE: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (byte element : byteElements) {
-                        Set.add((long) element);
+                        set.add((long) element);
                     }
-                    return Set;
+                    return set;
                 }
                 return elements.stream()
                         .filter(Objects::nonNull)
@@ -978,44 +993,44 @@ public class CollectionValue<T> implements Value {
 
     public Set<String> getStringSet() {
         if (isEmpty()) return emptySet();
-        Set<String> Set = setOf();
+        Set<String> set = setOf();
         if (collectionMode == PRIMITIVE_ARRAY) {
             switch (elementsType) {
                 case LONG: {
                     for (long element : longElements) {
-                        Set.add(EMPTY_STRING + element);
+                        set.add(EMPTY_STRING + element);
                     }
-                    return Set;
+                    return set;
                 }
                 case DOUBLE: {
                     for (double element : doubleElements) {
-                        Set.add(EMPTY_STRING + element);
+                        set.add(EMPTY_STRING + element);
                     }
-                    return Set;
+                    return set;
                 }
                 case FLOAT: {
                     for (float element : floatElements) {
-                        Set.add(EMPTY_STRING + element);
+                        set.add(EMPTY_STRING + element);
                     }
-                    return Set;
+                    return set;
                 }
                 case INT: {
                     for (int element : intElements) {
-                        Set.add(EMPTY_STRING + element);
+                        set.add(EMPTY_STRING + element);
                     }
-                    return Set;
+                    return set;
                 }
                 case BOOL: {
                     for (boolean element : boolElements) {
-                        Set.add(EMPTY_STRING + element);
+                        set.add(EMPTY_STRING + element);
                     }
-                    return Set;
+                    return set;
                 }
                 case BYTE: {
                     for (byte element : byteElements) {
-                        Set.add(EMPTY_STRING + element);
+                        set.add(EMPTY_STRING + element);
                     }
-                    return Set;
+                    return set;
                 }
             }
         }
@@ -1031,11 +1046,11 @@ public class CollectionValue<T> implements Value {
             if (elementsType != BOOL) {
                 throw new ValueMappingException(format(REQUEST_SET_ELEMENTS_TYPE_INVALID, BOOL.toString(), elementsType.toString()));
             }
-            Set<Boolean> Set = setOf();
+            Set<Boolean> set = setOf();
             for (boolean element : boolElements) {
-                Set.add(element);
+                set.add(element);
             }
-            return Set;
+            return set;
         }
         switch (elementsType) {
             case VALUE:
@@ -1057,7 +1072,7 @@ public class CollectionValue<T> implements Value {
 
     public Set<Integer> getIntSet() {
         if (isEmpty()) return emptySet();
-        Set<Integer> Set = setOf();
+        Set<Integer> set = setOf();
         switch (elementsType) {
             case VALUE:
                 return elements.stream()
@@ -1072,9 +1087,9 @@ public class CollectionValue<T> implements Value {
             case LONG: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (long element : longElements) {
-                        Set.add((int) element);
+                        set.add((int) element);
                     }
-                    return Set;
+                    return set;
                 }
                 return elements.stream()
                         .filter(Objects::nonNull)
@@ -1084,9 +1099,9 @@ public class CollectionValue<T> implements Value {
             case DOUBLE: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (double element : doubleElements) {
-                        Set.add((int) element);
+                        set.add((int) element);
                     }
-                    return Set;
+                    return set;
                 }
                 return elements.stream()
                         .filter(Objects::nonNull)
@@ -1096,9 +1111,9 @@ public class CollectionValue<T> implements Value {
             case FLOAT: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (float element : floatElements) {
-                        Set.add((int) element);
+                        set.add((int) element);
                     }
-                    return Set;
+                    return set;
                 }
                 return elements.stream()
                         .filter(Objects::nonNull)
@@ -1108,18 +1123,21 @@ public class CollectionValue<T> implements Value {
             case INT: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (int element : intElements) {
-                        Set.add(element);
+                        set.add(element);
                     }
-                    return Set;
+                    return set;
                 }
-                return cast(elements);
+                return elements.stream()
+                        .filter(Objects::nonNull)
+                        .map(element -> ((Number) element).intValue())
+                        .collect(toSet());
             }
             case BYTE: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (byte element : byteElements) {
-                        Set.add((int) element);
+                        set.add((int) element);
                     }
-                    return Set;
+                    return set;
                 }
                 return elements.stream()
                         .filter(Objects::nonNull)
@@ -1132,7 +1150,7 @@ public class CollectionValue<T> implements Value {
 
     public Set<Byte> getByteSet() {
         if (isEmpty()) return emptySet();
-        Set<Byte> Set = setOf();
+        Set<Byte> set = setOf();
         switch (elementsType) {
             case VALUE:
                 return elements.stream()
@@ -1147,9 +1165,9 @@ public class CollectionValue<T> implements Value {
             case LONG: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (long element : longElements) {
-                        Set.add((byte) element);
+                        set.add((byte) element);
                     }
-                    return Set;
+                    return set;
                 }
                 return elements.stream()
                         .filter(Objects::nonNull)
@@ -1159,9 +1177,9 @@ public class CollectionValue<T> implements Value {
             case DOUBLE: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (double element : doubleElements) {
-                        Set.add((byte) element);
+                        set.add((byte) element);
                     }
-                    return Set;
+                    return set;
                 }
                 return elements.stream()
                         .filter(Objects::nonNull)
@@ -1171,9 +1189,9 @@ public class CollectionValue<T> implements Value {
             case FLOAT: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (float element : floatElements) {
-                        Set.add((byte) element);
+                        set.add((byte) element);
                     }
-                    return Set;
+                    return set;
                 }
                 return elements.stream()
                         .filter(Objects::nonNull)
@@ -1183,9 +1201,9 @@ public class CollectionValue<T> implements Value {
             case INT: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (int element : intElements) {
-                        Set.add((byte) element);
+                        set.add((byte) element);
                     }
-                    return Set;
+                    return set;
                 }
                 return elements.stream()
                         .filter(Objects::nonNull)
@@ -1195,11 +1213,14 @@ public class CollectionValue<T> implements Value {
             case BYTE: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (byte element : byteElements) {
-                        Set.add(element);
+                        set.add(element);
                     }
-                    return Set;
+                    return set;
                 }
-                return cast(elements);
+                return elements.stream()
+                        .filter(Objects::nonNull)
+                        .map(element -> ((Number) element).byteValue())
+                        .collect(toSet());
             }
         }
         throw new ValueMappingException(format(REQUEST_SET_ELEMENTS_TYPE_INVALID, BYTE.toString(), elementsType.toString()));
@@ -1207,7 +1228,7 @@ public class CollectionValue<T> implements Value {
 
     public Set<Double> getDoubleSet() {
         if (isEmpty()) return emptySet();
-        Set<Double> Set = setOf();
+        Set<Double> set = setOf();
         switch (elementsType) {
             case VALUE:
                 return elements.stream()
@@ -1222,9 +1243,9 @@ public class CollectionValue<T> implements Value {
             case LONG: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (long element : longElements) {
-                        Set.add((double) element);
+                        set.add((double) element);
                     }
-                    return Set;
+                    return set;
                 }
                 return elements.stream()
                         .filter(Objects::nonNull)
@@ -1234,18 +1255,21 @@ public class CollectionValue<T> implements Value {
             case DOUBLE: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (double element : doubleElements) {
-                        Set.add(element);
+                        set.add(element);
                     }
-                    return Set;
+                    return set;
                 }
-                return cast(elements);
+                return elements.stream()
+                        .filter(Objects::nonNull)
+                        .map(element -> ((Number) element).doubleValue())
+                        .collect(toSet());
             }
             case FLOAT: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (float element : floatElements) {
-                        Set.add((double) element);
+                        set.add((double) element);
                     }
-                    return Set;
+                    return set;
                 }
                 return elements.stream()
                         .filter(Objects::nonNull)
@@ -1255,9 +1279,9 @@ public class CollectionValue<T> implements Value {
             case INT: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (int element : intElements) {
-                        Set.add((double) element);
+                        set.add((double) element);
                     }
-                    return Set;
+                    return set;
                 }
                 return elements.stream()
                         .filter(Objects::nonNull)
@@ -1267,9 +1291,9 @@ public class CollectionValue<T> implements Value {
             case BYTE: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (byte element : byteElements) {
-                        Set.add((double) element);
+                        set.add((double) element);
                     }
-                    return Set;
+                    return set;
                 }
                 return elements.stream()
                         .filter(Objects::nonNull)
@@ -1282,7 +1306,7 @@ public class CollectionValue<T> implements Value {
 
     public Set<Float> getFloatSet() {
         if (isEmpty()) return emptySet();
-        Set<Float> Set = setOf();
+        Set<Float> set = setOf();
         switch (elementsType) {
             case VALUE:
                 return elements.stream()
@@ -1297,9 +1321,9 @@ public class CollectionValue<T> implements Value {
             case LONG: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (long element : longElements) {
-                        Set.add((float) element);
+                        set.add((float) element);
                     }
-                    return Set;
+                    return set;
                 }
                 return elements.stream()
                         .filter(Objects::nonNull)
@@ -1309,9 +1333,9 @@ public class CollectionValue<T> implements Value {
             case DOUBLE: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (double element : doubleElements) {
-                        Set.add((float) element);
+                        set.add((float) element);
                     }
-                    return Set;
+                    return set;
                 }
                 return elements.stream()
                         .filter(Objects::nonNull)
@@ -1321,18 +1345,21 @@ public class CollectionValue<T> implements Value {
             case FLOAT: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (float element : floatElements) {
-                        Set.add(element);
+                        set.add(element);
                     }
-                    return Set;
+                    return set;
                 }
-                return cast(elements);
+                return elements.stream()
+                        .filter(Objects::nonNull)
+                        .map(element -> ((Number) element).floatValue())
+                        .collect(toSet());
             }
             case INT: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (int element : intElements) {
-                        Set.add((float) element);
+                        set.add((float) element);
                     }
-                    return Set;
+                    return set;
                 }
                 return elements.stream()
                         .filter(Objects::nonNull)
@@ -1342,9 +1369,9 @@ public class CollectionValue<T> implements Value {
             case BYTE: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (byte element : byteElements) {
-                        Set.add((float) element);
+                        set.add((float) element);
                     }
-                    return Set;
+                    return set;
                 }
                 return elements.stream()
                         .filter(Objects::nonNull)
@@ -1358,7 +1385,7 @@ public class CollectionValue<T> implements Value {
 
     public Queue<Value> getValueQueue() {
         if (isEmpty()) return queueOf();
-        Queue<Value> Queue = queueOf();
+        Queue<Value> queue = queueOf();
         switch (elementsType) {
             case STRING:
                 return elements
@@ -1369,9 +1396,9 @@ public class CollectionValue<T> implements Value {
             case LONG: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (long element : longElements) {
-                        Queue.add(longPrimitive(element));
+                        queue.add(longPrimitive(element));
                     }
-                    return Queue;
+                    return queue;
                 }
                 return elements.stream()
                         .filter(Objects::nonNull)
@@ -1381,9 +1408,9 @@ public class CollectionValue<T> implements Value {
             case DOUBLE: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (double element : doubleElements) {
-                        Queue.add(doublePrimitive(element));
+                        queue.add(doublePrimitive(element));
                     }
-                    return Queue;
+                    return queue;
                 }
                 return elements.stream()
                         .filter(Objects::nonNull)
@@ -1393,9 +1420,9 @@ public class CollectionValue<T> implements Value {
             case FLOAT: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (float element : floatElements) {
-                        Queue.add(floatPrimitive(element));
+                        queue.add(floatPrimitive(element));
                     }
-                    return Queue;
+                    return queue;
                 }
                 return elements.stream()
                         .filter(Objects::nonNull)
@@ -1405,9 +1432,9 @@ public class CollectionValue<T> implements Value {
             case INT: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (int element : intElements) {
-                        Queue.add(intPrimitive(element));
+                        queue.add(intPrimitive(element));
                     }
-                    return Queue;
+                    return queue;
                 }
                 return elements.stream()
                         .filter(Objects::nonNull)
@@ -1417,9 +1444,9 @@ public class CollectionValue<T> implements Value {
             case BOOL: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (boolean element : boolElements) {
-                        Queue.add(boolPrimitive(element));
+                        queue.add(boolPrimitive(element));
                     }
-                    return Queue;
+                    return queue;
                 }
                 return elements.stream()
                         .filter(Objects::nonNull)
@@ -1429,9 +1456,9 @@ public class CollectionValue<T> implements Value {
             case BYTE: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (byte element : byteElements) {
-                        Queue.add(bytePrimitive(element));
+                        queue.add(bytePrimitive(element));
                     }
-                    return Queue;
+                    return queue;
                 }
                 return elements.stream()
                         .filter(Objects::nonNull)
@@ -1486,7 +1513,7 @@ public class CollectionValue<T> implements Value {
 
     public Queue<Long> getLongQueue() {
         if (isEmpty()) return queueOf();
-        Queue<Long> Queue = queueOf();
+        Queue<Long> queue = queueOf();
         switch (elementsType) {
             case VALUE:
                 return elements.stream()
@@ -1501,18 +1528,21 @@ public class CollectionValue<T> implements Value {
             case LONG: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (long element : longElements) {
-                        Queue.add(element);
+                        queue.add(element);
                     }
-                    return Queue;
+                    return queue;
                 }
-                return cast(elements);
+                return elements.stream()
+                        .filter(Objects::nonNull)
+                        .map(element -> ((Number) element).longValue())
+                        .collect(toCollection(CollectionsFactory::queueOf));
             }
             case DOUBLE: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (double element : doubleElements) {
-                        Queue.add((long) element);
+                        queue.add((long) element);
                     }
-                    return Queue;
+                    return queue;
                 }
                 return elements.stream()
                         .filter(Objects::nonNull)
@@ -1522,9 +1552,9 @@ public class CollectionValue<T> implements Value {
             case FLOAT: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (float element : floatElements) {
-                        Queue.add((long) element);
+                        queue.add((long) element);
                     }
-                    return Queue;
+                    return queue;
                 }
                 return elements.stream()
                         .filter(Objects::nonNull)
@@ -1534,9 +1564,9 @@ public class CollectionValue<T> implements Value {
             case INT: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (int element : intElements) {
-                        Queue.add((long) element);
+                        queue.add((long) element);
                     }
-                    return Queue;
+                    return queue;
                 }
                 return elements.stream()
                         .filter(Objects::nonNull)
@@ -1546,9 +1576,9 @@ public class CollectionValue<T> implements Value {
             case BYTE: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (byte element : byteElements) {
-                        Queue.add((long) element);
+                        queue.add((long) element);
                     }
-                    return Queue;
+                    return queue;
                 }
                 return elements.stream()
                         .filter(Objects::nonNull)
@@ -1561,44 +1591,44 @@ public class CollectionValue<T> implements Value {
 
     public Queue<String> getStringQueue() {
         if (isEmpty()) return queueOf();
-        Queue<String> Queue = queueOf();
+        Queue<String> queue = queueOf();
         if (collectionMode == PRIMITIVE_ARRAY) {
             switch (elementsType) {
                 case LONG: {
                     for (long element : longElements) {
-                        Queue.add(EMPTY_STRING + element);
+                        queue.add(EMPTY_STRING + element);
                     }
-                    return Queue;
+                    return queue;
                 }
                 case DOUBLE: {
                     for (double element : doubleElements) {
-                        Queue.add(EMPTY_STRING + element);
+                        queue.add(EMPTY_STRING + element);
                     }
-                    return Queue;
+                    return queue;
                 }
                 case FLOAT: {
                     for (float element : floatElements) {
-                        Queue.add(EMPTY_STRING + element);
+                        queue.add(EMPTY_STRING + element);
                     }
-                    return Queue;
+                    return queue;
                 }
                 case INT: {
                     for (int element : intElements) {
-                        Queue.add(EMPTY_STRING + element);
+                        queue.add(EMPTY_STRING + element);
                     }
-                    return Queue;
+                    return queue;
                 }
                 case BOOL: {
                     for (boolean element : boolElements) {
-                        Queue.add(EMPTY_STRING + element);
+                        queue.add(EMPTY_STRING + element);
                     }
-                    return Queue;
+                    return queue;
                 }
                 case BYTE: {
                     for (byte element : byteElements) {
-                        Queue.add(EMPTY_STRING + element);
+                        queue.add(EMPTY_STRING + element);
                     }
-                    return Queue;
+                    return queue;
                 }
             }
         }
@@ -1614,11 +1644,11 @@ public class CollectionValue<T> implements Value {
             if (elementsType != BOOL) {
                 throw new ValueMappingException(format(REQUEST_QUEUE_ELEMENTS_TYPE_INVALID, BOOL.toString(), elementsType.toString()));
             }
-            Queue<Boolean> Queue = queueOf();
+            Queue<Boolean> queue = queueOf();
             for (boolean element : boolElements) {
-                Queue.add(element);
+                queue.add(element);
             }
-            return Queue;
+            return queue;
         }
         switch (elementsType) {
             case VALUE:
@@ -1640,7 +1670,7 @@ public class CollectionValue<T> implements Value {
 
     public Queue<Integer> getIntQueue() {
         if (isEmpty()) return queueOf();
-        Queue<Integer> Queue = queueOf();
+        Queue<Integer> queue = queueOf();
         switch (elementsType) {
             case VALUE:
                 return elements.stream()
@@ -1655,9 +1685,9 @@ public class CollectionValue<T> implements Value {
             case LONG: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (long element : longElements) {
-                        Queue.add((int) element);
+                        queue.add((int) element);
                     }
-                    return Queue;
+                    return queue;
                 }
                 return elements.stream()
                         .filter(Objects::nonNull)
@@ -1667,9 +1697,9 @@ public class CollectionValue<T> implements Value {
             case DOUBLE: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (double element : doubleElements) {
-                        Queue.add((int) element);
+                        queue.add((int) element);
                     }
-                    return Queue;
+                    return queue;
                 }
                 return elements.stream()
                         .filter(Objects::nonNull)
@@ -1679,9 +1709,9 @@ public class CollectionValue<T> implements Value {
             case FLOAT: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (float element : floatElements) {
-                        Queue.add((int) element);
+                        queue.add((int) element);
                     }
-                    return Queue;
+                    return queue;
                 }
                 return elements.stream()
                         .filter(Objects::nonNull)
@@ -1691,18 +1721,21 @@ public class CollectionValue<T> implements Value {
             case INT: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (int element : intElements) {
-                        Queue.add(element);
+                        queue.add(element);
                     }
-                    return Queue;
+                    return queue;
                 }
-                return cast(elements);
+                return elements.stream()
+                        .filter(Objects::nonNull)
+                        .map(element -> ((Number) element).intValue())
+                        .collect(toCollection(CollectionsFactory::queueOf));
             }
             case BYTE: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (byte element : byteElements) {
-                        Queue.add((int) element);
+                        queue.add((int) element);
                     }
-                    return Queue;
+                    return queue;
                 }
                 return elements.stream()
                         .filter(Objects::nonNull)
@@ -1715,7 +1748,7 @@ public class CollectionValue<T> implements Value {
 
     public Queue<Byte> getByteQueue() {
         if (isEmpty()) return queueOf();
-        Queue<Byte> Queue = queueOf();
+        Queue<Byte> queue = queueOf();
         switch (elementsType) {
             case VALUE:
                 return elements.stream()
@@ -1730,9 +1763,9 @@ public class CollectionValue<T> implements Value {
             case LONG: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (long element : longElements) {
-                        Queue.add((byte) element);
+                        queue.add((byte) element);
                     }
-                    return Queue;
+                    return queue;
                 }
                 return elements.stream()
                         .filter(Objects::nonNull)
@@ -1742,9 +1775,9 @@ public class CollectionValue<T> implements Value {
             case DOUBLE: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (double element : doubleElements) {
-                        Queue.add((byte) element);
+                        queue.add((byte) element);
                     }
-                    return Queue;
+                    return queue;
                 }
                 return elements.stream()
                         .filter(Objects::nonNull)
@@ -1754,9 +1787,9 @@ public class CollectionValue<T> implements Value {
             case FLOAT: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (float element : floatElements) {
-                        Queue.add((byte) element);
+                        queue.add((byte) element);
                     }
-                    return Queue;
+                    return queue;
                 }
                 return elements.stream()
                         .filter(Objects::nonNull)
@@ -1766,9 +1799,9 @@ public class CollectionValue<T> implements Value {
             case INT: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (int element : intElements) {
-                        Queue.add((byte) element);
+                        queue.add((byte) element);
                     }
-                    return Queue;
+                    return queue;
                 }
                 return elements.stream()
                         .filter(Objects::nonNull)
@@ -1778,11 +1811,14 @@ public class CollectionValue<T> implements Value {
             case BYTE: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (byte element : byteElements) {
-                        Queue.add(element);
+                        queue.add(element);
                     }
-                    return Queue;
+                    return queue;
                 }
-                return cast(elements);
+                return elements.stream()
+                        .filter(Objects::nonNull)
+                        .map(element -> ((Number) element).byteValue())
+                        .collect(toCollection(CollectionsFactory::queueOf));
             }
         }
         throw new ValueMappingException(format(REQUEST_QUEUE_ELEMENTS_TYPE_INVALID, BYTE.toString(), elementsType.toString()));
@@ -1790,7 +1826,7 @@ public class CollectionValue<T> implements Value {
 
     public Queue<Double> getDoubleQueue() {
         if (isEmpty()) return queueOf();
-        Queue<Double> Queue = queueOf();
+        Queue<Double> queue = queueOf();
         switch (elementsType) {
             case VALUE:
                 return elements.stream()
@@ -1805,9 +1841,9 @@ public class CollectionValue<T> implements Value {
             case LONG: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (long element : longElements) {
-                        Queue.add((double) element);
+                        queue.add((double) element);
                     }
-                    return Queue;
+                    return queue;
                 }
                 return elements.stream()
                         .filter(Objects::nonNull)
@@ -1817,18 +1853,21 @@ public class CollectionValue<T> implements Value {
             case DOUBLE: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (double element : doubleElements) {
-                        Queue.add(element);
+                        queue.add(element);
                     }
-                    return Queue;
+                    return queue;
                 }
-                return cast(elements);
+                return elements.stream()
+                        .filter(Objects::nonNull)
+                        .map(element -> ((Number) element).doubleValue())
+                        .collect(toCollection(CollectionsFactory::queueOf));
             }
             case FLOAT: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (float element : floatElements) {
-                        Queue.add((double) element);
+                        queue.add((double) element);
                     }
-                    return Queue;
+                    return queue;
                 }
                 return elements.stream()
                         .filter(Objects::nonNull)
@@ -1838,9 +1877,9 @@ public class CollectionValue<T> implements Value {
             case INT: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (int element : intElements) {
-                        Queue.add((double) element);
+                        queue.add((double) element);
                     }
-                    return Queue;
+                    return queue;
                 }
                 return elements.stream()
                         .filter(Objects::nonNull)
@@ -1850,9 +1889,9 @@ public class CollectionValue<T> implements Value {
             case BYTE: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (byte element : byteElements) {
-                        Queue.add((double) element);
+                        queue.add((double) element);
                     }
-                    return Queue;
+                    return queue;
                 }
                 return elements.stream()
                         .filter(Objects::nonNull)
@@ -1865,7 +1904,7 @@ public class CollectionValue<T> implements Value {
 
     public Queue<Float> getFloatQueue() {
         if (isEmpty()) return queueOf();
-        Queue<Float> Queue = queueOf();
+        Queue<Float> queue = queueOf();
         switch (elementsType) {
             case VALUE:
                 return elements.stream()
@@ -1880,9 +1919,9 @@ public class CollectionValue<T> implements Value {
             case LONG: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (long element : longElements) {
-                        Queue.add((float) element);
+                        queue.add((float) element);
                     }
-                    return Queue;
+                    return queue;
                 }
                 return elements.stream()
                         .filter(Objects::nonNull)
@@ -1892,9 +1931,9 @@ public class CollectionValue<T> implements Value {
             case DOUBLE: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (double element : doubleElements) {
-                        Queue.add((float) element);
+                        queue.add((float) element);
                     }
-                    return Queue;
+                    return queue;
                 }
                 return elements.stream()
                         .filter(Objects::nonNull)
@@ -1904,18 +1943,21 @@ public class CollectionValue<T> implements Value {
             case FLOAT: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (float element : floatElements) {
-                        Queue.add(element);
+                        queue.add(element);
                     }
-                    return Queue;
+                    return queue;
                 }
-                return cast(elements);
+                return elements.stream()
+                        .filter(Objects::nonNull)
+                        .map(element -> ((Number) element).floatValue())
+                        .collect(toCollection(CollectionsFactory::queueOf));
             }
             case INT: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (int element : intElements) {
-                        Queue.add((float) element);
+                        queue.add((float) element);
                     }
-                    return Queue;
+                    return queue;
                 }
                 return elements.stream()
                         .filter(Objects::nonNull)
@@ -1925,9 +1967,9 @@ public class CollectionValue<T> implements Value {
             case BYTE: {
                 if (collectionMode == PRIMITIVE_ARRAY) {
                     for (byte element : byteElements) {
-                        Queue.add((float) element);
+                        queue.add((float) element);
                     }
-                    return Queue;
+                    return queue;
                 }
                 return elements.stream()
                         .filter(Objects::nonNull)
@@ -2316,6 +2358,30 @@ public class CollectionValue<T> implements Value {
         return copyOf(values, i);
     }
 
+    public Map<String, String> dump() {
+        if (isEmpty()) {
+            return emptyMap();
+        }
+        Map<String, String> dump = mapOf();
+        List<Value> valueList = getValueList();
+        for (int i = 0; i < valueList.size(); i++) {
+            Value value = valueList.get(i);
+            if (isPrimitive(value)) {
+                dump.put(OPENING_SQUARE_BRACES + i + CLOSING_SQUARE_BRACES, value.toString());
+                continue;
+            }
+            if (isEntity(value)) {
+                int index = i;
+                asEntity(value).dump().forEach((innerKey, innerField) -> dump.put(OPENING_SQUARE_BRACES + index + CLOSING_SQUARE_BRACES + DOT + innerKey, innerField));
+                continue;
+            }
+            if (isCollection(value)) {
+                int index = i;
+                asCollection(value).dump().forEach((innerKey, innerField) -> dump.put(OPENING_SQUARE_BRACES + index + CLOSING_SQUARE_BRACES + innerKey, innerField));
+            }
+        }
+        return dump;
+    }
 
     @Override
     public String toString() {

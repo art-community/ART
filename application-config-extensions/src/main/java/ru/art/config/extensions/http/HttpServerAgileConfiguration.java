@@ -39,7 +39,6 @@ import static ru.art.core.context.Context.*;
 import static ru.art.core.extension.NullCheckingExtensions.*;
 import static ru.art.http.server.HttpServerModuleConfiguration.*;
 import static ru.art.http.server.constants.HttpServerModuleConstants.*;
-import static ru.art.http.server.constants.HttpServerModuleConstants.HttpResourceServiceConstants.*;
 import static ru.art.http.server.module.HttpServerModule.*;
 import static ru.art.information.constants.InformationModuleConstants.*;
 import static ru.art.information.specification.InformationServiceSpecification.*;
@@ -51,7 +50,7 @@ import java.util.*;
 @Getter
 public class HttpServerAgileConfiguration extends HttpServerModuleDefaultConfiguration {
     private final Map<MimeType, HttpContentMapper> contentMappers = configureHttpContentMappers(super.getContentMappers());
-    private final Logbook logbook = logbookWithoutResourceLogs(logbookWithoutMetricsLogs()).build();
+    private final Logbook logbook = logbookWithoutResourceLogs(logbookWithoutMetricsLogs(this::isEnableRawDataTracing), this::isEnableRawDataTracing).build();
     private int port;
     private String path;
     private int maxThreadsCount;
@@ -111,13 +110,13 @@ public class HttpServerAgileConfiguration extends HttpServerModuleDefaultConfigu
     }
 
     private void registerServices() {
-        if (web && !serviceModuleState().getServiceRegistry().getServices().containsKey(HTTP_RESOURCE_SERVICE)) {
-            serviceModuleState().getServiceRegistry().registerService(new HttpResourceServiceSpecification(path));
+        if (web && serviceModuleState().getServiceRegistry().getServices().keySet().stream().noneMatch(id -> id.contains(path))) {
+            serviceModuleState().getServiceRegistry().registerService(new HttpResourceServiceSpecification(path, getResourceConfiguration()));
         }
         if (enableMetrics && !serviceModuleState().getServiceRegistry().getServices().containsKey(METRICS_SERVICE_ID)) {
             serviceModuleState().getServiceRegistry().registerService(new MetricServiceSpecification(path));
         }
-        if (serviceModuleState().getServiceRegistry().getServices().keySet().stream().noneMatch(service -> service.contains(INFORMATION_PATH))) {
+        if (serviceModuleState().getServiceRegistry().getServices().keySet().stream().noneMatch(id -> id.contains(INFORMATION_PATH))) {
             registerInformationService(path);
         }
     }

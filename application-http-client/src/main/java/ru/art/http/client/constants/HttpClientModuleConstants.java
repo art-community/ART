@@ -19,9 +19,22 @@
 package ru.art.http.client.constants;
 
 public interface HttpClientModuleConstants {
+    String HTTP_CLIENT_CLOSED = "HTTP client closed";
     String HTTP_COMMUNICATION_SERVICE_TYPE = "HTTP_COMMUNICATION";
     String HTTP_CLIENT_MODULE_ID = "HTTP_CLIENT_MODULE";
     String TRACE_ID_HEADER = "X-Trace-Id";
-    int DEFAULT_TIMEOUT = 10000;
+    String PROFILE_HEADER = "X-Profile";
+    int DEFAULT_HTTP_CLIENT_TIMEOUT = 10000;
     int RESPONSE_BUFFER_DEFAULT_SIZE = 4096;
+    int DEFAULT_MAX_CONNECTIONS_PER_ROUTE = 2;
+    int DEFAULT_MAX_CONNECTIONS_TOTAL = 20;
+    int DEFAULT_VALIDATE_AFTER_INACTIVITY_MILLIS = 4000;
+    String HTTP_HEADER_CONNECTION_CLOSE = "Close";
+    String HTTP_HEADER_CONNECTION_KEEP_ALIVE = "Keep-Alive";
+
+    enum ConnectionClosingPolicy {
+        CLOSE_AFTER_RESPONSE,
+        CLOSE_IF_NOT_KEEP_ALIVE_HEADER_PRESENTS,
+        ALWAYS_KEEP_OPEN_AFTER_RESPONSE
+    }
 }

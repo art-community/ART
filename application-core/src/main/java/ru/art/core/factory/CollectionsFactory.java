@@ -24,6 +24,7 @@ import lombok.experimental.*;
 import ru.art.core.model.*;
 import static java.util.Arrays.*;
 import static java.util.Collections.*;
+import static java.util.stream.Collectors.*;
 import static ru.art.core.caster.Caster.*;
 import static ru.art.core.checker.CheckerForEmptiness.*;
 import java.util.ArrayList;
@@ -152,6 +153,10 @@ public class CollectionsFactory {
     @SafeVarargs
     public static <T> List<T> dynamicArrayOf(T... elements) {
         return isEmpty(elements) ? new ArrayList<>() : new ArrayList<>(asList(elements));
+    }
+
+    public static <T> List<T> dynamicArrayOf(Stream<T> stream) {
+        return isEmpty(stream) ? emptyList() : stream.collect(toList());
     }
 
     public static <T> List<T> dynamicArrayOf(Collection<T> elements) {

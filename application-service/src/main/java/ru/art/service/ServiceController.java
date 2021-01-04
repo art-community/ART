@@ -32,7 +32,7 @@ import static ru.art.logging.LoggingModuleConstants.LoggingParameters.*;
 import static ru.art.logging.ThreadContextExtensions.*;
 import static ru.art.service.ServiceModule.*;
 import static ru.art.service.ServiceResponseDataExtractor.*;
-import static ru.art.service.constants.RequestValidationPolicy.VALIDATABLE;
+import static ru.art.service.constants.RequestValidationPolicy.*;
 import static ru.art.service.constants.ServiceErrorCodes.*;
 import static ru.art.service.constants.ServiceExceptionsMessages.*;
 import static ru.art.service.factory.ServiceRequestFactory.*;
@@ -75,9 +75,7 @@ public class ServiceController {
     public static <RequestType, ResponseType> ServiceResponse<ResponseType> executeServiceMethodUnchecked(ServiceRequest<RequestType> request) {
         Date startTime = new Date();
         putIfNotNull(REQUEST_START_TIME_KEY, YYYY_MM_DD_HH_MM_SS_24H_Z_DOT_FORMAT.get().format(startTime));
-        Specification service = serviceModuleState()
-                    .getServiceRegistry()
-                .getService(request.getServiceMethodCommand().getServiceId());
+        Specification service = serviceModuleState().getServiceRegistry().getService(request.getServiceMethodCommand().getServiceId());
         if (isNull(service)) {
             String errorMessage = format(SERVICE_WITH_ID_NOT_EXISTS, request.getServiceMethodCommand().getServiceId());
             return errorResponse(request.getServiceMethodCommand(), INTERNAL_ERROR, errorMessage);

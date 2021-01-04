@@ -19,6 +19,7 @@ package ru.art.test.specification.configuration
 import org.apache.logging.log4j.Level
 import org.junit.Ignore
 import ru.art.config.module.ConfigModule
+import ru.art.core.configurator.ModuleConfigurator
 import ru.art.http.constants.MimeToContentTypeMapper
 import ru.art.http.server.module.HttpServerModule
 import ru.art.logging.LoggingModule
@@ -46,7 +47,7 @@ import static ru.art.test.specification.configuration.ModuleConfigGenerator.writ
 
 @Ignore
 class ConfigurationSpecification extends Specification {
-    static LOCK = new ReentrantLock()
+    static lock = new ReentrantLock()
     def expectedLoggingConfiguration = new LoggingModuleDefaultConfiguration() {
         Level level = TRACE
     }
@@ -68,14 +69,14 @@ class ConfigurationSpecification extends Specification {
     @Unroll
     "Should read configuration from #type and compare it with expected"() {
         setup:
-        LOCK.lock()
+        lock.lock()
         writeModuleConfig(type)
         def configuration = new ConfigModuleConfiguration(configType: type)
         context().with {
-            loadModule new ConfigModule(), configuration
+            loadModule new ConfigModule(), { configuration } as ModuleConfigurator
             (configModule() as ConfigModuleConfiguration).configType = type
-            loadModule new LoggingModule(), lazyLoggingAgileConfiguration()
-            loadModule new HttpServerModule(), lazyHttpServerAgileConfiguration()
+            loadModule new LoggingModule(), { lazyLoggingAgileConfiguration() } as ModuleConfigurator
+            loadModule new HttpServerModule(), { lazyHttpServerAgileConfiguration() } as ModuleConfigurator
             refreshModule LOGGING_MODULE_ID
             refreshModule HTTP_SERVER_MODULE_ID
         }
@@ -99,7 +100,7 @@ class ConfigurationSpecification extends Specification {
 
         cleanup:
         restoreConfig()
-        LOCK.unlock()
+        lock.unlock()
 
         where:
         type       || _

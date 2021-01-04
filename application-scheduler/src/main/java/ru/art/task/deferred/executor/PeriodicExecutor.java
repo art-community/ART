@@ -75,7 +75,15 @@ public class PeriodicExecutor {
 
     public void clear() {
         executingTasks.clear();
-        deferredExecutor.clear();
+        if (nonNull(deferredExecutor)) {
+            deferredExecutor.clear();
+        }
+    }
+
+    public void shutdown() {
+        if (nonNull(deferredExecutor)) {
+            deferredExecutor.shutdown();
+        }
     }
 
     private <EventResultType> Future<? extends EventResultType> submit(CallableTask<EventResultType> task, LocalDateTime startTime, Duration duration) {

@@ -35,7 +35,7 @@ import java.nio.charset.*;
 import java.util.*;
 import java.util.function.*;
 
-@Builder
+@Builder(toBuilder = true)
 public class CookieInterceptor implements HttpServerInterception {
     private final Predicate<String> pathFilter;
     @Singular("cookieValidator")

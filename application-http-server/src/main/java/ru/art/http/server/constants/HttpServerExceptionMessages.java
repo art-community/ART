@@ -26,9 +26,10 @@ public interface HttpServerExceptionMessages {
     String PRODUCES_CONTENT_TYPE_NOT_SUPPORTED = "Produces content type ''{0}'' not supported";
     String UNKNOWN_HTTP_REQUEST_DATA_SOURCE = "Unknown http request data source: ''{0}''";
     String TOMCAT_INITIALIZATION_FAILED = "Tomcat initialization failed";
-    String TOMCAT_RESTART_FAILED = "Tomcat restart failed";
-    String REQUEST_BODY_READING_EXCEPTION = "Request request reading exception";
-    String REQUEST_BODY_WRITING_EXCEPTION = "Request request writing exception";
+    String TOMCAT_RESTARTING_FAILED = "Tomcat restarting failed";
+    String TOMCAT_STOPPING_FAILED = "Tomcat stopping failed";
+    String REQUEST_BODY_READING_EXCEPTION = "Request reading exception";
+    String REQUEST_BODY_WRITING_EXCEPTION = "Request writing exception";
     String HTTP_METHOD_NOT_ALLOWED = "Http method ''{0}'' not allowed";
     String HTTP_METHOD_LISTENING_PATH_IS_EMPTY = "Http method listening path is empty";
     String HTTP_SERVICE_LISTENING_PATH_IS_EMPTY = "Http service listening path is empty";

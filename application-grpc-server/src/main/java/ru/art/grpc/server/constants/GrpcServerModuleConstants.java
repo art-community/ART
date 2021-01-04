@@ -18,6 +18,8 @@
 
 package ru.art.grpc.server.constants;
 
+import java.util.concurrent.*;
+
 public interface GrpcServerModuleConstants {
     String GRPC_SERVER_MODULE_ID = "GRPC_SERVER_MODULE";
     String GRPC_FUNCTION_SERVICE = "GRPC_FUNCTION_SERVICE";
@@ -30,4 +32,5 @@ public interface GrpcServerModuleConstants {
     String GRPC_SERVER_THREAD = "grpc-server-bootstrap-thread";
     int DEFAULT_MAX_INBOUND_MESSAGE_SIZE = 8 * 1024 * 1024;
     int DEFAULT_HANDSHAKE_TIMEOUT = 60;
+    long DEFAULT_PERMIT_KEEP_ALIVE_TIME_NANOS = TimeUnit.MINUTES.toNanos(5);
 }

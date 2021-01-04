@@ -28,6 +28,7 @@ import ru.art.kafka.consumer.exception.*;
 import ru.art.kafka.consumer.model.*;
 import static java.lang.String.*;
 import static java.text.MessageFormat.format;
+import static lombok.AccessLevel.PRIVATE;
 import static org.apache.kafka.streams.StreamsConfig.*;
 import static org.apache.logging.log4j.ThreadContext.*;
 import static ru.art.core.checker.CheckerForEmptiness.isEmpty;
@@ -45,6 +46,7 @@ import java.util.function.*;
 @Getter
 public class KafkaStreamsRegistry {
     private final Map<String, ManagedKafkaStream> streams = concurrentHashMap();
+    @Getter(lazy = true, value = PRIVATE)
     private static final Logger logger = loggingModule().getLogger(KafkaStreamsRegistry.class);
 
     public static <Key, Value> KStream<Key, Value> withTracing(KStream<Key, Value> stream) {
@@ -57,7 +59,7 @@ public class KafkaStreamsRegistry {
         }
         putIfNotNull(KAFKA_KEY, key);
         putIfNotNull(KAFKA_VALUE, value);
-        logger.info(format(KAFKA_TRACE_MESSAGE, key, value));
+        getLogger().info(format(KAFKA_TRACE_MESSAGE, key, value));
         remove(KAFKA_KEY);
         remove(KAFKA_VALUE);
     }

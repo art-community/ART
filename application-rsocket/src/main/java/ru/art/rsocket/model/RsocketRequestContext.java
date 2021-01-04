@@ -20,6 +20,7 @@ package ru.art.rsocket.model;
 
 import io.rsocket.*;
 import lombok.*;
+import org.apache.logging.log4j.*;
 import ru.art.entity.Value;
 import ru.art.entity.*;
 import ru.art.entity.interceptor.*;
@@ -29,6 +30,7 @@ import ru.art.rsocket.constants.RsocketModuleConstants.*;
 import ru.art.service.model.*;
 import static java.text.MessageFormat.*;
 import static java.util.Objects.*;
+import static lombok.AccessLevel.PRIVATE;
 import static reactor.core.publisher.Flux.*;
 import static ru.art.core.caster.Caster.*;
 import static ru.art.core.checker.CheckerForEmptiness.isEmpty;
@@ -48,6 +50,8 @@ import java.util.*;
 @Getter
 @Builder
 public class RsocketRequestContext {
+    @Getter(lazy = true, value = PRIVATE)
+    private static final Logger logger = loggingModule().getLogger(RsocketRequestContext.class);
     private final ServiceRequest<?> request;
     private final RsocketReactiveMethods rsocketReactiveMethods;
     @Builder.Default
@@ -62,7 +66,7 @@ public class RsocketRequestContext {
             payload.release(payload.refCnt());
         } catch (Throwable throwable) {
             if (rsocketModule().isEnableRawDataTracing()) {
-                loggingModule().getLogger(RsocketRequestContext.class).error(format(FAILED_TO_READ_PAYLOAD, throwable.getMessage(), throwable));
+                getLogger().error(format(FAILED_TO_READ_PAYLOAD, throwable.getMessage(), throwable));
             }
             return RsocketRequestContext.builder().stopHandling(true).build();
         }

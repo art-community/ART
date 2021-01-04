@@ -26,15 +26,19 @@ import static ru.art.core.checker.CheckerForEmptiness.*;
 import static ru.art.grpc.client.constants.GrpcClientModuleConstants.*;
 import static ru.art.logging.LoggingModuleConstants.LoggingParameters.*;
 
-public class GrpcClientTracingInterceptor implements ClientInterceptor {
+public class GrpcClientTracingIdentifiersInterceptor implements ClientInterceptor {
     @Override
     public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(MethodDescriptor<ReqT, RespT> methodDescriptor, CallOptions callOptions, Channel channel) {
         return new ForwardingClientCall.SimpleForwardingClientCall<ReqT, RespT>(channel.newCall(methodDescriptor, callOptions)) {
             @Override
             public void start(Listener<RespT> responseListener, Metadata headers) {
                 String traceId = get(TRACE_ID_KEY);
+                String profile = get(PROFILE_KEY);
                 if (isNotEmpty(traceId)) {
                     headers.put(of(TRACE_ID_HEADER, ASCII_STRING_MARSHALLER), traceId);
+                }
+                if (isNotEmpty(profile)) {
+                    headers.put(of(PROFILE_HEADER, ASCII_STRING_MARSHALLER), traceId);
                 }
                 super.start(responseListener, headers);
             }

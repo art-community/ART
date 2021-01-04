@@ -21,9 +21,9 @@ package ru.art.config;
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.dataformat.yaml.*;
 import static java.lang.System.*;
-import static java.util.Objects.*;
+import static java.util.Objects.isNull;
 import static ru.art.config.YamlConfigLoaderConstants.*;
-import static ru.art.config.YamlLoadingExceptionMessages.*;
+import static ru.art.config.YamlLoadingExceptionMessages.CONFIG_FILE_WAS_NOT_FOUND;
 import static ru.art.core.checker.CheckerForEmptiness.*;
 import static ru.art.core.constants.StringConstants.*;
 import static ru.art.core.constants.SystemProperties.*;
@@ -43,11 +43,7 @@ public class YamlConfigLoader {
         String configFilePath = getProperty(CONFIG_FILE_PATH_PROPERTY);
         File configFile;
         if (isEmpty(configFilePath) || !(configFile = new File(configFilePath)).exists()) {
-            URL configFileUrl = YamlConfigLoader.class.getClassLoader().getResource(DEFAULT_YAML_CONFIG_FILE_NAME);
-            if (isNull(configFileUrl)) {
-                throw new YamlLoadingException(CONFIG_FILE_WAS_NOT_FOUND);
-            }
-            return configFileUrl;
+            return YamlConfigLoader.class.getClassLoader().getResource(DEFAULT_YAML_CONFIG_FILE_NAME);
         }
         try {
             return configFile.toURI().toURL();
@@ -57,6 +53,11 @@ public class YamlConfigLoader {
     }
 
     private static JsonNode loadYaml() throws IOException {
-        return YAML_MAPPER.readTree(loadYamlConfigUrl());
+        URL url = loadYamlConfigUrl();
+        if (isNull(url)) {
+            throw new YamlLoadingException(CONFIG_FILE_WAS_NOT_FOUND);
+        }
+
+        return YAML_MAPPER.readTree(url);
     }
 }

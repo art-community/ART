@@ -27,6 +27,6 @@ public class ServiceCallLoggingParameters {
     private final String serviceId;
     private final String serviceMethodId;
     private final String serviceMethodCommand;
-    private final String loggingEventType;
+    private final String logEventType;
     private final Set<String> loadedServices;
 }

@@ -33,14 +33,14 @@ import {
 import ExpandMore from "@material-ui/icons/ExpandMore";
 import {GRPC_CHIP_STYLE} from "../constants/Constants";
 import {GrpcMethodComponent} from "./GrpcMethodComponent";
-import {GrpcInformation, GrpcServiceInformation} from "../model/Models";
+import {GrpcInformation, GrpcServiceInformation, GrpcServiceMethodInformation} from "../model/Models";
 
 interface GrpcServiceComponentProps {
     information: GrpcInformation,
     serviceInformation: GrpcServiceInformation
 }
 
-const useStyles = makeStyles((theme: Theme) => createStyles({
+const useStyles = makeStyles(() => createStyles({
     chip: GRPC_CHIP_STYLE
 }));
 

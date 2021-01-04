@@ -1,27 +1,25 @@
 package ru.art.test.specification.core
 
-import ru.art.core.extension.FileExtensions
-import spock.lang.IgnoreIf
+
 import spock.lang.Specification
 
-import static java.lang.System.getenv
+import static ru.art.core.extension.FileExtensions.readFileBytes
 import static ru.art.core.extension.InputStreamExtensions.toByteArray
 
-@IgnoreIf({ getenv('TRAVIS') as boolean })
-class InputStreamExtensionsSpecification  extends Specification {
+class InputStreamExtensionsSpecification extends Specification {
     def "should read file with size more than buffer size"() {
         setup:
-        def buffer = 8 * 1024 * 1024
-        def stream = "http://www.ovh.net/files/10Mio.dat".toURI().toURL().content as InputStream
+        def buffer = 512 * 1024
+        def stream = "http://www.ovh.net/files/1Mio.dat".toURI().toURL().content as InputStream
         def file = new File("temp.bin")
         new FileOutputStream(file).with {
-            it.write(stream.readAllBytes())
+            it.write((stream.newReader().readLines().sum() as String).bytes)
             it.flush()
             it.close()
         }
 
         when:
-        def array = FileExtensions.readFileBytes(file.absolutePath, buffer)
+        def array = readFileBytes(file.absolutePath, buffer)
 
         then:
         array.size() > buffer
@@ -30,10 +28,10 @@ class InputStreamExtensionsSpecification  extends Specification {
         file.delete()
     }
 
-    def "should read input stream with size more than buffer"() {
+    def "should read input stream with size more than buffer size"() {
         setup:
-        def buffer = 8 * 1024 * 1024
-        def stream = "http://www.ovh.net/files/10Mio.dat".toURI().toURL().content as InputStream
+        def buffer = 512 * 1024
+        def stream = "http://www.ovh.net/files/1Mio.dat".toURI().toURL().content as InputStream
 
         when:
         def array = toByteArray(stream, buffer)

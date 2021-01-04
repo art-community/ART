@@ -147,8 +147,8 @@ class HttpServerRequestHandler {
                 if (isEmpty(submittedFileName)) {
                     continue;
                 }
-                InputStream is = part.getInputStream();
-                byte[] value = toByteArraySafety(is);
+                InputStream inputStream = part.getInputStream();
+                byte[] value = toByteArray(inputStream);
                 if (!isEmpty(value)) {
                     entityBuilder.byteArrayField(submittedFileName, value);
                 }

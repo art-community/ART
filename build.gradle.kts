@@ -27,7 +27,7 @@ import ru.art.gradle.logging.LogMessageColor.*
 
 plugins {
     `maven-publish`
-    id("io.github.art.project") version "1.0.102"
+    id("io.github.art.project") version "1.0.113"
     id("com.jfrog.bintray") version "1.8.4"
     id("com.jfrog.artifactory") version "4.10.0"
 }
@@ -178,8 +178,6 @@ task("showExternalDependenciesDuplicates") {
                 "application-state",
                 "application-module-executor",
                 "application-remote-scheduler",
-                "agent",
-                "management-panel",
                 "application-kafka-broker")
 
         subprojects.filter { subproject -> subproject.name !in exclusions }

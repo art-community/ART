@@ -30,6 +30,8 @@ import java.util.*;
 
 public interface HttpContentMappersConfigurator {
     static Map<MimeType, HttpContentMapper> configureHttpContentMappers(Map<MimeType, HttpContentMapper> parentMappers) {
+        MapBuilder<MimeType, HttpContentMapper> mappers = mapOf();
+        mappers.putAll(parentMappers);
         HttpTextPlainMapper textPlainMapper = new HttpTextPlainMapper();
         HttpJsonMapper jsonMapper = new HttpJsonMapper();
         HttpXmlMapper xmlMapper = new HttpXmlMapper();
@@ -38,10 +40,12 @@ public interface HttpContentMappersConfigurator {
         HttpContentMapper textContentMapper = new HttpContentMapper(textPlainMapper, textPlainMapper);
         HttpContentMapper jsonContentMapper = new HttpContentMapper(jsonMapper, jsonMapper);
         HttpContentMapper xmlContentMapper = new HttpContentMapper(xmlMapper, xmlMapper);
-        MapBuilder<MimeType, HttpContentMapper> mappers = mapOf(TEXT_HTML, textContentMapper)
+        mappers.add(TEXT_HTML, textContentMapper)
                 .add(TEXT_HTML_UTF_8, textContentMapper)
                 .add(TEXT_HTML_WIN_1251, textContentMapper)
                 .add(IMAGE_JPEG, bytesContentMapper)
+                .add(IMAGE_JPG, bytesContentMapper)
+                .add(IMAGE_ICO, bytesContentMapper)
                 .add(IMAGE_PNG, bytesContentMapper)
                 .add(IMAGE_WEBP, bytesContentMapper)
                 .add(IMAGE_SVG, bytesContentMapper)
@@ -50,6 +54,8 @@ public interface HttpContentMappersConfigurator {
                 .add(TEXT_CSS, textContentMapper)
                 .add(TEXT_JS, textContentMapper)
                 .add(TEXT_CSV, bytesContentMapper)
+                .add(TEXT_CSV_UTF_8, bytesContentMapper)
+                .add(TEXT_CSV_WIN_1251, bytesContentMapper)
                 .add(APPLICATION_OCTET_STREAM, bytesContentMapper)
                 .add(APPLICATION_JSON, jsonContentMapper)
                 .add(APPLICATION_JSON_UTF8, jsonContentMapper)
@@ -62,7 +68,6 @@ public interface HttpContentMappersConfigurator {
                 .add(APPLICATION_SOAP_XML, xmlContentMapper)
                 .add(METRICS_CONTENT_TYPE.getMimeType(), textContentMapper)
                 .add(ALL, textContentMapper);
-        mappers.putAll(parentMappers);
         return mappers;
     }
 }

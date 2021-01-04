@@ -50,12 +50,20 @@ public class GrpcCommunicationConfiguration {
     private ValueToModelMapper<?, ? extends Value> responseMapper;
     private GrpcCommunicationCompletionHandler<?, ?> completionHandler;
     private GrpcCommunicationExceptionHandler<?> exceptionHandler;
-    private List<ClientInterceptor> interceptors = grpcClientModule().getInterceptors();
+    private List<ClientInterceptor> interceptors = linkedListOf(grpcClientModule().getInterceptors());
     private Executor overrideExecutor;
     @ToString.Include
-    private Object request;
-    @ToString.Include
     private long deadlineTimeout;
+    @ToString.Include
+    private long keepAliveTimeNanos = grpcClientModule().getKeepAliveTimeNanos();
+    @ToString.Include
+    private long keepAliveTimeOutNanos = grpcClientModule().getKeepAliveTimeOutNanos();
+    @ToString.Include
+    private boolean keepAliveWithoutCalls = grpcClientModule().isKeepAliveWithoutCalls();
+    @ToString.Include
+    private long idleTimeOutNanos = grpcClientModule().getIdleTimeOutNanos();
+    @ToString.Include
+    private boolean waitForReady = grpcClientModule().isWaitForReady();
     @ToString.Include
     private boolean useSecuredTransport;
     private List<ValueInterceptor<Entity, Entity>> requestValueInterceptors = linkedListOf(grpcClientModule().getRequestValueInterceptors());

@@ -36,19 +36,20 @@ import java.net.*;
 
 class TypesafeConfigLoader {
     static ConfigObject loadTypeSafeConfig(String configId, ConfigSyntax configSyntax) {
-        Config config = parseReader(wrapException(() -> loadConfigReader(configSyntax), TypesafeConfigLoadingException::new), defaults().setSyntax(configSyntax));
+        Config config = parseReader(wrapException(() -> loadConfigReader(configSyntax),
+                TypesafeConfigLoadingException::new), defaults().setSyntax(configSyntax));
         return isEmpty(configId) ? config.root() : config.getObject(configId);
     }
 
     static URL loadTypeSafeConfigUrl(ConfigSyntax configSyntax) {
         String configFilePath = getProperty(CONFIG_FILE_PATH_PROPERTY);
         File configFile;
-        if (isEmpty(configFilePath) || !(configFile = new File(configFilePath)).exists() || isEmpty(readFile(get(configFile.getAbsolutePath())))) {
-            URL configFileUrl = TypesafeConfigLoader.class.getClassLoader().getResource(format(DEFAULT_TYPESAFE_CONFIG_FILE_NAME, configSyntax.toString().toLowerCase()));
-            if (isNull(configFileUrl)) {
-                throw new TypesafeConfigLoadingException(format(CONFIG_FILE_NOT_FOUND, configSyntax.toString().toLowerCase()));
-            }
-            return configFileUrl;
+        if (isEmpty(configFilePath) ||
+                !(configFile = new File(configFilePath)).exists() ||
+                isEmpty(readFile(get(configFile.getAbsolutePath())))) {
+            return TypesafeConfigLoader.class
+                    .getClassLoader()
+                    .getResource(format(DEFAULT_TYPESAFE_CONFIG_FILE_NAME, configSyntax.toString().toLowerCase()));
         }
         try {
             return configFile.toURI().toURL();
@@ -58,6 +59,10 @@ class TypesafeConfigLoader {
     }
 
     private static Reader loadConfigReader(ConfigSyntax configSyntax) throws IOException {
-        return new InputStreamReader(loadTypeSafeConfigUrl(configSyntax).openStream());
+        URL url = loadTypeSafeConfigUrl(configSyntax);
+        if (isNull(url)) {
+            throw new TypesafeConfigLoadingException(format(CONFIG_FILE_NOT_FOUND, configSyntax.toString().toLowerCase()));
+        }
+        return new InputStreamReader(url.openStream());
     }
 }

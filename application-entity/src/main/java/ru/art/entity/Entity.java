@@ -177,9 +177,12 @@ public class Entity implements Value {
         if (CheckerForEmptiness.isEmpty(key)) {
             return null;
         }
+        Value value;
+        if (nonNull(value = getValue(key))) {
+            return value;
+        }
         Queue<String> sections = queueOf(key.split(ESCAPED_DOT));
         Entity entity = this;
-        Value value = null;
         String section;
         while ((section = sections.poll()) != null) {
             value = entity.getValue(section);
@@ -588,6 +591,27 @@ public class Entity implements Value {
                 .build();
     }
 
+    public Map<String, String> dump() {
+        if (isEmpty()) {
+            return emptyMap();
+        }
+        Map<String, String> dump = mapOf();
+        fields.forEach((key, value) -> {
+            if (isPrimitive(value)) {
+                dump.put(key, value.toString());
+                return;
+            }
+            if (isEntity(value)) {
+                asEntity(value).dump().forEach((innerKey, innerField) -> dump.put(key + DOT + innerKey, innerField));
+                return;
+            }
+            if (isCollection(value)) {
+                asCollection(value).dump().forEach((innerKey, innerField) -> dump.put(key + innerKey, innerField));
+            }
+        });
+        return dump;
+    }
+
     @Override
     public boolean isEmpty() {
         return CheckerForEmptiness.isEmpty(fields);
@@ -771,12 +795,17 @@ public class Entity implements Value {
             return this;
         }
 
+        public EntityBuilder collectionValueField(String name, CollectionValue<?> value) {
+            fields.put(name, value);
+            return this;
+        }
+
         public EntityBuilder stringParametersCollectionField(String name, Collection<StringParametersMap> value) {
             fields.put(name, collectionValue(CollectionElementsType.STRING_PARAMETERS_MAP, value));
             return this;
         }
 
-        public EntityBuilder collectionValueCollectionField(String name, Collection<CollectionValue<?>> value) {
+        public EntityBuilder collectionValueCollectionField(String name, Collection<CollectionValue<Entity>> value) {
             fields.put(name, collectionValue(CollectionElementsType.COLLECTION, value));
             return this;
         }

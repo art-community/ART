@@ -30,7 +30,6 @@ import static ru.art.core.context.Context.*;
 import static ru.art.core.extension.FileExtensions.*;
 import static ru.art.logging.LoggingModule.*;
 import static ru.art.xml.constants.XmlDocumentConstants.*;
-import static ru.art.xml.constants.XmlLoggingMessages.*;
 import static ru.art.xml.constants.XmlMappingExceptionMessages.*;
 import static ru.art.xml.module.XmlModule.*;
 import javax.xml.stream.*;
@@ -67,25 +66,24 @@ public class XmlEntityWriter {
         if (isNull(xmlOutputFactory)) throw new XmlMappingException(XML_FACTORY_IS_NULL);
         if (isNull(xmlEntity)) return EMPTY_STRING;
         XMLStreamWriter xmlStreamWriter = null;
-        try {
-            OutputStream os = new ByteArrayOutputStream();
-            xmlStreamWriter = xmlOutputFactory.createXMLStreamWriter(os, UTF_8.name());
+        try (OutputStream outputStream = new ByteArrayOutputStream()) {
+            xmlStreamWriter = xmlOutputFactory.createXMLStreamWriter(outputStream, UTF_8.name());
             writeAllElements(xmlStreamWriter, xmlEntity);
-            return os.toString();
+            return outputStream.toString();
         } catch (Throwable throwable) {
             throw new XmlMappingException(throwable);
         } finally {
             if (nonNull(xmlStreamWriter)) {
                 try {
-                    xmlStreamWriter.flush();
                     xmlStreamWriter.close();
                 } catch (Throwable throwable) {
-                    loggingModule().getLogger(XmlEntityWriter.class).error(XML_GENERATOR_CLOSING_ERROR, throwable);
+                    loggingModule()
+                            .getLogger(XmlEntityWriter.class)
+                            .error(throwable.getMessage(), throwable);
                 }
             }
         }
     }
-
 
     private static void writeAllElements(XMLStreamWriter xmlStreamWriter, XmlEntity xmlEntity) throws XMLStreamException {
         writeStartDocument(xmlStreamWriter);
@@ -94,7 +92,6 @@ public class XmlEntityWriter {
     }
 
     private static void writeXmlEntity(XMLStreamWriter xmlStreamWriter, XmlEntity entity) throws XMLStreamException {
-        //gather all child elements
         List<XmlEntity> children = entity.getChildren();
 
         if (isEmpty(children) && isEmpty(entity.getValue())) return;
@@ -111,7 +108,6 @@ public class XmlEntityWriter {
         writeNamespaces(xmlStreamWriter, entity);
         writeAttributes(xmlStreamWriter, entity);
 
-        //gather elements sequence
         for (XmlEntity xmlEntity : children) {
             if (isEmpty(xmlEntity)) continue;
             writeXmlEntity(xmlStreamWriter, xmlEntity);

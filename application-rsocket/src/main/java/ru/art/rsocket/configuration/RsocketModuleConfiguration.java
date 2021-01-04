@@ -19,6 +19,7 @@
 package ru.art.rsocket.configuration;
 
 import io.rsocket.RSocketFactory.*;
+import io.rsocket.core.*;
 import io.rsocket.plugins.*;
 import io.rsocket.transport.netty.server.*;
 import lombok.*;
@@ -101,7 +102,7 @@ public interface RsocketModuleConfiguration extends ModuleConfiguration {
 
     Function<? extends TcpServerTransport, ? extends TcpServerTransport> getTcpServerTransportConfigurator();
 
-    Function<? extends ServerRSocketFactory, ? extends ServerRSocketFactory> getServerFactoryConfigurator();
+    Function<? extends RSocketServer, ? extends RSocketServer> getServerConfigurator();
 
     int getFragmentationMtu();
 
@@ -127,7 +128,7 @@ public interface RsocketModuleConfiguration extends ModuleConfiguration {
         private final Function<? extends TcpServer, ? extends TcpServer> tcpServerConfigurator = identity();
         private final Function<? extends WebsocketServerTransport, ? extends WebsocketServerTransport> webSocketServerTransportConfigurator = identity();
         private final Function<? extends TcpServerTransport, ? extends TcpServerTransport> tcpServerTransportConfigurator = identity();
-        private final Function<? extends ServerRSocketFactory, ? extends ServerRSocketFactory> serverFactoryConfigurator = identity();
+        private final Function<? extends RSocketServer, ? extends RSocketServer> serverConfigurator = identity();
         @Getter(lazy = true, onMethod = @__({@SuppressWarnings("unchecked")}))
         private final List<RSocketInterceptor> serverInterceptors = initializeInterceptors();
         @Getter(lazy = true, onMethod = @__({@SuppressWarnings("unchecked")}))
@@ -138,11 +139,11 @@ public interface RsocketModuleConfiguration extends ModuleConfiguration {
         private final List<ValueInterceptor<Entity, Entity>> responseValueInterceptors = initializeValueInterceptors();
 
         private List<RSocketInterceptor> initializeInterceptors() {
-            return linkedListOf(new RsocketLoggingInterceptor(this::isEnableRawDataTracing));
+            return linkedListOf(new RsocketLoggingInterceptor());
         }
 
         private List<ValueInterceptor<Entity, Entity>> initializeValueInterceptors() {
-            return isEnableValueTracing() ? linkedListOf(new LoggingValueInterceptor<>()) : linkedListOf();
+            return linkedListOf(new LoggingValueInterceptor<>(this::isEnableValueTracing));
         }
 
         private final Map<String, RsocketCommunicationTargetConfiguration> communicationTargets = mapOf();

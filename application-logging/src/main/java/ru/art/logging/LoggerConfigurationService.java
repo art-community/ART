@@ -23,6 +23,7 @@ import org.apache.logging.log4j.core.Logger;
 import org.apache.logging.log4j.core.*;
 import org.apache.logging.log4j.core.appender.*;
 import org.apache.logging.log4j.core.config.*;
+import org.apache.logging.log4j.core.net.*;
 import static java.lang.Integer.*;
 import static java.lang.System.*;
 import static java.util.Objects.*;
@@ -64,10 +65,12 @@ public interface LoggerConfigurationService {
         if (isNull(socketAppender)) return SocketAppenderConfiguration.builder().build();
         Map<String, String> contentFormat = socketAppender.getManager().getContentFormat();
         String host = contentFormat.get(ADDRESS);
+        String protocol = contentFormat.get(PROTOCOL);
         int port = parseInt(contentFormat.get(PORT));
         return SocketAppenderConfiguration.builder()
                 .host(host)
                 .port(port)
+                .protocol(protocol)
                 .layout(socketAppender.getLayout())
                 .build();
     }
@@ -90,7 +93,13 @@ public interface LoggerConfigurationService {
         return appenderRefs.stream()
                 .map(AppenderRef::getRef)
                 .filter(Objects::nonNull)
-                .map(ref -> ref.equalsIgnoreCase(SocketAppender.class.getSimpleName()) ? SOCKET : CONSOLE)
+                .map(ref -> ref.equalsIgnoreCase(SocketAppender.class.getSimpleName())
+                        ? SOCKET
+                        : ref.equalsIgnoreCase(FileAppender.class.getSimpleName())
+                        ? FILE
+                        : ref.equalsIgnoreCase(RollingFileAppender.class.getSimpleName())
+                        ? ROLLING_FILE
+                        : CONSOLE)
                 .collect(toSet());
     }
 
@@ -112,6 +121,7 @@ public interface LoggerConfigurationService {
                 .newBuilder()
                 .setName(SocketAppender.class.getSimpleName())
                 .withHost(host)
+                .withProtocol(isEmpty(socketAppenderConfiguration) ? Protocol.TCP : Protocol.valueOf(socketAppenderConfiguration.getProtocol().toUpperCase()))
                 .withPort(socketAppenderConfiguration.getPort())
                 .setLayout(socketAppenderConfiguration.getLayout())
                 .build();
@@ -136,13 +146,22 @@ public interface LoggerConfigurationService {
                     ConsoleAppender loadedConsoleAppender = createLoadedConsoleAppender();
                     loadedConsoleAppender.start();
                     rootLogger.getAppenders().values().forEach(rootLogger::removeAppender);
+                    rootLogger.getAppenders()
+                            .values()
+                            .stream()
+                            .filter(appender -> ConsoleAppender.class.getSimpleName().equals(appender.getName()))
+                            .forEach(rootLogger::removeAppender);
                     rootLogger.addAppender(loadedConsoleAppender);
                     context.updateLoggers();
                     break;
                 case SOCKET:
                     SocketAppender loadedSocketAppender = createLoadedSocketAppender();
                     loadedSocketAppender.start();
-                    rootLogger.getAppenders().values().forEach(rootLogger::removeAppender);
+                    rootLogger.getAppenders()
+                            .values()
+                            .stream()
+                            .filter(appender -> SocketAppender.class.getSimpleName().equals(appender.getName()))
+                            .forEach(rootLogger::removeAppender);
                     rootLogger.addAppender(loadedSocketAppender);
                     context.updateLoggers();
             }

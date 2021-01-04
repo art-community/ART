@@ -19,7 +19,7 @@
 package ru.art.config.remote.loader;
 
 import lombok.experimental.*;
-import ru.art.configurator.api.model.Configuration;
+import ru.art.configurator.api.model.*;
 import ru.art.entity.*;
 import ru.art.service.*;
 import static ru.art.config.remote.constants.RemoteConfigLoaderConstants.*;
@@ -32,10 +32,11 @@ import java.util.*;
 @UtilityClass
 public class RemoteConfigLoader {
     public static Entity loadRemoteConfig() {
-        Optional<Entity> configuration = ServiceController.<Configuration>executeServiceMethod(CONFIGURATOR_COMMUNICATION_SERVICE_ID, GET_PROTOBUF_CONFIG)
+        Optional<Entity> configuration = ServiceController.<Configuration>executeServiceMethod(CONFIGURATOR_COMMUNICATION_SERVICE_ID,
+                GET_PROTOBUF_CONFIG)
                 .map(Configuration::getConfiguration);
         if (!configuration.isPresent()) {
-            loggingModule().getLogger(RemoteConfigLoader.class).warn(CONFIGURATION_IS_EMPTY);
+            loggingModule().getLogger(RemoteConfigLoader.class).warn(REMOTE_CONFIGURATION_IS_EMPTY);
         }
         return configuration.orElse(entityBuilder().build());
     }

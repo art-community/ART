@@ -39,4 +39,14 @@ public class SchedulerModule implements Module<SchedulerModuleConfiguration, Mod
         }
         return getSchedulerModule();
     }
+
+    @Override
+    public void onUnload() {
+        DeferredExecutor deferredExecutor = schedulerModule().getDeferredExecutor();
+        PeriodicExecutor periodicExecutor = schedulerModule().getPeriodicExecutor();
+        deferredExecutor.clear();
+        deferredExecutor.shutdown();
+        periodicExecutor.clear();
+        periodicExecutor.shutdown();
+    }
 }

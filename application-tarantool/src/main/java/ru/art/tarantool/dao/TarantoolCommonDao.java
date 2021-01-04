@@ -18,29 +18,33 @@
 
 package ru.art.tarantool.dao;
 
-import org.tarantool.*;
-import static java.util.Collections.*;
-import static ru.art.core.checker.CheckerForEmptiness.*;
-import static ru.art.core.factory.CollectionsFactory.*;
-import static ru.art.tarantool.caller.TarantoolFunctionCaller.*;
+import org.tarantool.TarantoolClient;
+import static java.util.Collections.emptySet;
+import static ru.art.core.checker.CheckerForEmptiness.isEmpty;
+import static ru.art.core.factory.CollectionsFactory.setOf;
+import static ru.art.tarantool.caller.TarantoolFunctionCaller.callTarantoolFunction;
 import static ru.art.tarantool.constants.TarantoolModuleConstants.Functions.*;
-import static ru.art.tarantool.constants.TarantoolModuleConstants.*;
-import static ru.art.tarantool.constants.TarantoolModuleConstants.TarantoolIdCalculationMode.*;
-import static ru.art.tarantool.module.TarantoolModule.*;
-import static ru.art.tarantool.service.TarantoolScriptService.*;
-import java.util.*;
+import static ru.art.tarantool.constants.TarantoolModuleConstants.TarantoolIdCalculationMode;
+import static ru.art.tarantool.constants.TarantoolModuleConstants.TarantoolIdCalculationMode.SEQUENCE;
+import static ru.art.tarantool.module.TarantoolModule.tarantoolModuleState;
+import static ru.art.tarantool.service.TarantoolScriptService.evaluateCommonScript;
+import java.util.List;
+import java.util.Set;
 
 class TarantoolCommonDao {
+    final Set<String> clusterIds = setOf();
     final String instanceId;
+    TarantoolClient client;
     TarantoolIdCalculationMode idCalculationMode = SEQUENCE;
 
     TarantoolCommonDao(String instanceId) {
+        this.clusterIds.add(instanceId);
+        this.client = tarantoolModuleState().getClient(instanceId);
         this.instanceId = instanceId;
     }
 
     public long count(String spaceName, Set<?> keys) {
-        evaluateCommonScript(instanceId, spaceName);
-        TarantoolClient client = tarantoolModuleState().getClient(instanceId);
+        evaluateCommonScript(clusterIds, spaceName);
         List<?> result = callTarantoolFunction(client, COUNT + spaceName, keys);
         if (isEmpty(result)) {
             return 0L;
@@ -58,8 +62,8 @@ class TarantoolCommonDao {
 
 
     public long len(String spaceName) {
-        evaluateCommonScript(instanceId, spaceName);
-        TarantoolClient client = tarantoolModuleState().getClient(instanceId);
+        evaluateCommonScript(clusterIds, spaceName);
+
         List<?> result = callTarantoolFunction(client, LEN + spaceName);
         if (isEmpty(result)) {
             return 0L;
@@ -69,8 +73,8 @@ class TarantoolCommonDao {
 
 
     public void truncate(String spaceName) {
-        evaluateCommonScript(instanceId, spaceName);
-        TarantoolClient client = tarantoolModuleState().getClient(instanceId);
+        evaluateCommonScript(clusterIds, spaceName);
+
         callTarantoolFunction(client, TRUNCATE + spaceName);
     }
 }

@@ -35,7 +35,12 @@ public class ServiceModuleState implements ModuleState {
         return ofNullable(requestValue.get());
     }
 
-    public void setRequestValue(Value value) {
+    public Value setRequestValue(Value value) {
         requestValue.set(value);
+        return value;
+    }
+
+    public void clearRequestValue() {
+        requestValue.remove();
     }
 }

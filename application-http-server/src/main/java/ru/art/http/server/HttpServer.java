@@ -18,6 +18,7 @@
 
 package ru.art.http.server;
 
+import lombok.*;
 import org.apache.catalina.*;
 import org.apache.catalina.connector.*;
 import org.apache.catalina.core.*;
@@ -39,6 +40,7 @@ import static java.text.MessageFormat.*;
 import static java.util.Objects.*;
 import static java.util.logging.LogManager.*;
 import static java.util.stream.Collectors.*;
+import static lombok.AccessLevel.*;
 import static ru.art.core.checker.CheckerForEmptiness.*;
 import static ru.art.core.constants.InterceptionStrategy.*;
 import static ru.art.core.constants.NetworkConstants.*;
@@ -63,18 +65,18 @@ import java.util.*;
 
 @SuppressWarnings("Duplicates")
 public class HttpServer {
-    private final static ThreadLocal<InterceptionStrategy> lastRequestInterceptionResult = new ThreadLocal<>();
-    private final static ThreadLocal<InterceptionStrategy> lastResponseInterceptionResult = new ThreadLocal<>();
+    private final Map<String, InterceptionStrategy> requestInterceptionsResult = concurrentHashMap();
+    private final Map<String, InterceptionStrategy> responseInterceptionsResult = concurrentHashMap();
     private final Deque<HttpServerPathInterceptor> requestInterceptors;
     private final Deque<HttpServerPathInterceptor> responseInterceptors;
     private final Set<String> cancelablePaths = setOf();
     private final Tomcat tomcat;
-    private final Logger logger;
+    @Getter(lazy = true, value = PRIVATE)
+    private final static Logger logger = loggingModule().getLogger(HttpServer.class);
 
     private HttpServer(Tomcat tomcat) {
         this.tomcat = tomcat;
         tomcat.setBaseDir(getProperty(TEMP_DIR_KEY));
-        logger = loggingModule().getLogger(HttpServer.class);
         requestInterceptors = dequeOf();
         responseInterceptors = dequeOf();
         httpServerModuleState().setServer(this);
@@ -123,24 +125,34 @@ public class HttpServer {
         try {
             tomcat.stop();
             startHttpServer();
-            logger.info(format(TOMCAT_RESTARTED_MESSAGE, currentTimeMillis() - millis));
+            getLogger().info(format(TOMCAT_RESTARTED_MESSAGE, currentTimeMillis() - millis));
         } catch (Throwable throwable) {
-            logger.error(TOMCAT_RESTART_FAILED);
+            getLogger().error(TOMCAT_RESTARTING_FAILED);
+        }
+    }
+
+    public void stop() {
+        long millis = currentTimeMillis();
+        try {
+            tomcat.stop();
+            getLogger().info(format(TOMCAT_STOPPED_MESSAGE, currentTimeMillis() - millis));
+        } catch (Throwable throwable) {
+            getLogger().error(TOMCAT_STOPPING_FAILED);
         }
     }
 
     private Context createContext() {
-        StandardContext ctx = (StandardContext) tomcat.addContext(EMPTY_STRING, getProperty(TEMP_DIR_KEY));
-        ctx.setAllowCasualMultipartParsing(httpServerModule().isAllowCasualMultipartParsing());
+        StandardContext context = (StandardContext) tomcat.addContext(EMPTY_STRING, getProperty(TEMP_DIR_KEY));
+        context.setAllowCasualMultipartParsing(httpServerModule().isAllowCasualMultipartParsing());
         if (cancelablePaths.contains(SLASH)) {
-            logger.info(HTTP_SERVICES_CANCELED);
-            return ctx;
+            getLogger().info(HTTP_SERVICES_CANCELED);
+            return context;
         }
-        ctx.setClearReferencesObjectStreamClassCaches(false);
-        ctx.setClearReferencesRmiTargets(false);
-        ctx.setClearReferencesThreadLocals(false);
-        registerHttpServices(ctx);
-        return ctx;
+        context.setClearReferencesObjectStreamClassCaches(false);
+        context.setClearReferencesRmiTargets(false);
+        context.setClearReferencesThreadLocals(false);
+        registerHttpServices(context);
+        return context;
     }
 
     private void registerHttpServices(Context ctx) {
@@ -150,7 +162,7 @@ public class HttpServer {
     private void registerService(String serviceId, HttpServiceSpecification serviceSpec, Context ctx) {
         HttpService httpService = serviceSpec.getHttpService();
         if (cancelablePaths.contains(httpService.getPath())) {
-            logger.info(format(HTTP_SERVICE_CANCELED, serviceId, httpService.getPath()));
+            getLogger().info(format(HTTP_SERVICE_CANCELED, serviceId, httpService.getPath()));
             return;
         }
 
@@ -170,7 +182,7 @@ public class HttpServer {
             }
             HttpPath path = buildHttpPath(extractHttpServicePath(serviceSpec), method.getPath());
             if (cancelablePaths.contains(path.toString())) {
-                logger.info(format(HTTP_SERVICE_METHOD_CANCELED, serviceId, method.getMethodId(), httpService.getPath()));
+                getLogger().info(format(HTTP_SERVICE_METHOD_CANCELED, serviceId, method.getMethodId(), httpService.getPath()));
                 continue;
             }
             Wrapper defaultServlet = ctx.createWrapper();
@@ -201,7 +213,7 @@ public class HttpServer {
                     .scheme(HTTP_SCHEME)
                     .uri(path.toString())
                     .build();
-            logger.info(format(HTTP_SERVICE_REGISTERING_MESSAGE, buildUrl(urlInfo), serviceSpec.getServiceId(), methods.keySet()));
+            getLogger().info(format(HTTP_SERVICE_REGISTERING_MESSAGE, buildUrl(urlInfo), serviceSpec.getServiceId(), methods.keySet()));
         } catch (Throwable throwable) {
             throw new HttpServerException(throwable);
         }
@@ -237,7 +249,7 @@ public class HttpServer {
             bindHttpMetrics(context.getManager());
         }
         tomcat.start();
-        logger.info(format(TOMCAT_STARTED_MESSAGE, currentTimeMillis() - timestamp));
+        getLogger().info(format(TOMCAT_STARTED_MESSAGE, currentTimeMillis() - timestamp));
     }
 
     private void configureConnector() {
@@ -276,15 +288,11 @@ public class HttpServer {
             if (interceptor.getInterceptor().getStrategy() == PROCESS_HANDLING) break;
             if (interceptor.getInterceptor().getStrategy() == STOP_HANDLING) {
                 cancelablePaths.add(interceptor.getPath());
-                if (httpServerModule().isEnableRawDataTracing()) {
-                    addLoggingFilter(context);
-                }
+                addLoggingFilter(context);
                 return;
             }
         }
-        if (httpServerModule().isEnableRawDataTracing()) {
-            addLoggingFilter(context);
-        }
+        addLoggingFilter(context);
         order = 0;
         while (!responseInterceptors.isEmpty()) {
             HttpServerPathInterceptor interceptor = responseInterceptors.removeLast();
@@ -344,14 +352,14 @@ public class HttpServer {
 
     private void registerBeforeInterceptor(Context context, HttpServerPathInterceptor serverPathInterceptor, String filterName) {
         String urlPattern = ifNotEquals(serverPathInterceptor.getPath(), SLASH, serverPathInterceptor.getPath() + SLASH) + WILDCARD;
-        logger.info(format(REGISTERING_HTTP_INTERCEPTOR, filterName, urlPattern));
+        getLogger().info(format(REGISTERING_HTTP_INTERCEPTOR, filterName, urlPattern));
         FilterDef def = new FilterDef();
         def.setFilterName(filterName);
         Filter filter = (request, response, chain) -> {
-            InterceptionStrategy strategy = lastRequestInterceptionResult.get();
+            InterceptionStrategy strategy = requestInterceptionsResult.get(filterName);
             if (isNull(strategy) || strategy == NEXT_INTERCEPTOR) {
-                lastRequestInterceptionResult
-                        .set(serverPathInterceptor.getInterceptor().intercept((HttpServletRequest) request, (HttpServletResponse) response));
+                InterceptionStrategy nextInterceptionStrategy = serverPathInterceptor.getInterceptor().intercept((HttpServletRequest) request, (HttpServletResponse) response);
+                requestInterceptionsResult.put(filterName, nextInterceptionStrategy);
                 chain.doFilter(request, response);
                 return;
             }
@@ -369,15 +377,15 @@ public class HttpServer {
 
     private void registerAfterInterceptor(Context context, HttpServerPathInterceptor serverInterceptor, String filterName) {
         String urlPattern = ifNotEquals(serverInterceptor.getPath(), SLASH, serverInterceptor.getPath() + SLASH) + WILDCARD;
-        logger.info(format(REGISTERING_HTTP_INTERCEPTOR, filterName, urlPattern));
+        getLogger().info(format(REGISTERING_HTTP_INTERCEPTOR, filterName, urlPattern));
         FilterDef def = new FilterDef();
         def.setFilterName(filterName);
         def.setFilter((request, response, chain) -> {
-            InterceptionStrategy strategy = lastResponseInterceptionResult.get();
+            InterceptionStrategy strategy = responseInterceptionsResult.get(filterName);
             if (isNull(strategy) || strategy == NEXT_INTERCEPTOR) {
                 chain.doFilter(request, response);
-                lastResponseInterceptionResult
-                        .set(serverInterceptor.getInterceptor().intercept((HttpServletRequest) request, (HttpServletResponse) response));
+                InterceptionStrategy nextInterceptionStrategy = serverInterceptor.getInterceptor().intercept((HttpServletRequest) request, (HttpServletResponse) response);
+                responseInterceptionsResult.put(filterName,  nextInterceptionStrategy);
                 return;
             }
             if (strategy == PROCESS_HANDLING) {

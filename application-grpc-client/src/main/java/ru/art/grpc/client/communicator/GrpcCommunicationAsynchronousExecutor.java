@@ -27,9 +27,9 @@ import ru.art.entity.interceptor.*;
 import ru.art.entity.mapper.*;
 import ru.art.grpc.client.exception.*;
 import ru.art.grpc.servlet.*;
+import ru.art.grpc.servlet.GrpcServlet.*;
 import ru.art.service.model.*;
 import static com.google.common.util.concurrent.Futures.*;
-import static io.grpc.ManagedChannelBuilder.*;
 import static java.util.Objects.*;
 import static java.util.Optional.*;
 import static java.util.concurrent.CompletableFuture.*;
@@ -54,24 +54,14 @@ import java.util.concurrent.*;
 
 @NoArgsConstructor(access = PRIVATE)
 class GrpcCommunicationAsynchronousExecutor {
+
     @SuppressWarnings("Duplicates")
-    static <ResponseType> CompletableFuture<ServiceResponse<ResponseType>> execute(GrpcCommunicationConfiguration configuration) {
-        ManagedChannelBuilder<?> channelBuilder = forTarget(configuration.getUrl()).usePlaintext();
-        if (configuration.isUseSecuredTransport()) {
-            channelBuilder.useTransportSecurity();
-        }
-        long deadlineTimeout = configuration.getDeadlineTimeout();
-        GrpcServlet.GrpcServletFutureStub stub = new GrpcServlet().newFutureStub(channelBuilder.build(), emptyIfNull(configuration.getPath()))
-                .withDeadlineAfter(deadlineTimeout > 0L ? deadlineTimeout : grpcClientModule().getTimeout(), MILLISECONDS)
-                .withInterceptors(ifEmpty(configuration.getInterceptors(), grpcClientModule().getInterceptors()).toArray(new ClientInterceptor[0]));
-        Executor executor;
-        if (nonNull(executor = configuration.getOverrideExecutor()) || nonNull(executor = grpcClientModule().getOverridingExecutor())) {
-            stub = stub.withExecutor(executor);
-        }
+    static <RequestType, ResponseType> CompletableFuture<ServiceResponse<ResponseType>> execute(ManagedChannel channel,
+                                                                                                GrpcCommunicationConfiguration configuration,
+                                                                                                @Nullable RequestType request) {
         ServiceMethodCommand command = new ServiceMethodCommand(configuration.getServiceId(), configuration.getMethodId());
         ValueFromModelMapper<?, ? extends Value> requestMapper = null;
-        Object request;
-        ServiceRequest<Object> serviceRequest = isNull(request = configuration.getRequest())
+        ServiceRequest<Object> serviceRequest = isNull(request)
                 || isNull(requestMapper = configuration.getRequestMapper())
                 ? newServiceRequest(command)
                 : newServiceRequest(command, request);
@@ -90,13 +80,29 @@ class GrpcCommunicationAsynchronousExecutor {
                 return completedFuture(okResponse(command));
             }
         }
-        ListenableFuture<com.google.protobuf.Value> future = stub.executeService(writeProtobuf(requestValue));
+        ListenableFuture<com.google.protobuf.Value> future = createFutureStub(channel, configuration).executeService(writeProtobuf(requestValue));
         CompletableFuture<ServiceResponse<?>> completableFuture = new CompletableFuture<>();
-        addCallback(future, createFutureCallback(configuration, completableFuture), configuration.getAsynchronousFuturesExecutor());
+        addCallback(future, createFutureCallback(configuration, request, completableFuture), configuration.getAsynchronousFuturesExecutor());
         return cast(completableFuture);
     }
 
+    private static GrpcServletFutureStub createFutureStub(ManagedChannel channel, GrpcCommunicationConfiguration configuration) {
+        long deadlineTimeout = configuration.getDeadlineTimeout();
+        GrpcServlet.GrpcServletFutureStub stub = new GrpcServlet().newFutureStub(channel, emptyIfNull(configuration.getPath()))
+                .withDeadlineAfter(deadlineTimeout > 0L ? deadlineTimeout : grpcClientModule().getTimeout(), MILLISECONDS)
+                .withInterceptors(configuration.getInterceptors().toArray(new ClientInterceptor[0]));
+        if (configuration.isWaitForReady()) {
+            stub = stub.withWaitForReady();
+        }
+        Executor executor;
+        if (nonNull(executor = configuration.getOverrideExecutor()) || nonNull(executor = grpcClientModule().getOverridingExecutor())) {
+            stub = stub.withExecutor(executor);
+        }
+        return stub;
+    }
+
     private static FutureCallback<com.google.protobuf.Value> createFutureCallback(GrpcCommunicationConfiguration configuration,
+                                                                                  Object request,
                                                                                   CompletableFuture<ServiceResponse<?>> completableFuture) {
         return new FutureCallback<com.google.protobuf.Value>() {
             @Override
@@ -131,7 +137,7 @@ class GrpcCommunicationAsynchronousExecutor {
                     completableFuture.complete(serviceResponse);
                     return;
                 }
-                configuration.getCompletionHandler().onComplete(ofNullable(cast(configuration.getRequest())), cast(response));
+                configuration.getCompletionHandler().onComplete(ofNullable(cast(request)), cast(response));
                 completableFuture.complete(serviceResponse);
             }
 
@@ -141,7 +147,7 @@ class GrpcCommunicationAsynchronousExecutor {
                 if (isNull(configuration.getExceptionHandler())) {
                     return;
                 }
-                configuration.getExceptionHandler().failed(ofNullable(cast(configuration.getRequest())), exception);
+                configuration.getExceptionHandler().failed(ofNullable(cast(request)), exception);
                 completableFuture.completeExceptionally(exception);
             }
         };

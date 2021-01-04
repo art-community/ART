@@ -19,7 +19,6 @@
 package ru.art.logging;
 
 import static org.apache.logging.log4j.ThreadContext.*;
-import static ru.art.core.checker.CheckerForEmptiness.*;
 import static ru.art.core.constants.DateConstants.*;
 import static ru.art.core.context.Context.*;
 import static ru.art.logging.LoggingModuleConstants.LoggingParameters.*;
@@ -27,32 +26,21 @@ import static ru.art.logging.ThreadContextExtensions.*;
 import java.util.*;
 
 public interface LoggingParametersManager {
-    static void putApplicationLoggingParameters() {
-        putIfNotNull(APPLICATION_MODULE_ID_KEY, contextConfiguration().getMainModuleId());
+    static void putModuleLoggingParameters() {
+        putIfNotNull(LOG_TIMESTAMP, YYYY_MM_DD_T_HH_MM_SS_24H_SSS_DASH_FORMAT.get().format(new Date()));
+        putIfNotNull(MAIN_MODULE_ID_KEY, contextConfiguration().getMainModuleId());
         putIfNotNull(MODULES_KEY, context().getModuleNames());
-        putIfNotNull(APPLICATION_JAR_KEY, contextConfiguration().getModuleJarName());
+        putIfNotNull(MODULE_JAR_KEY, contextConfiguration().getModuleJarName());
     }
 
     static void putServiceCallLoggingParameters(ServiceCallLoggingParameters parameters) {
-        putApplicationLoggingParameters();
+        putModuleLoggingParameters();
         putIfNotNull(SERVICE_ID_KEY, parameters.getServiceId());
         putIfNotNull(SERVICE_METHOD_ID_KEY, parameters.getServiceMethodId());
         putIfNotNull(SERVICE_METHOD_COMMAND_KEY, parameters.getServiceMethodCommand());
-        putIfNotNull(SERVICE_EVENT_TYPE_KEY, parameters.getLoggingEventType());
+        putIfNotNull(LOG_EVENT_TYPE, parameters.getLogEventType());
         putIfNotNull(REQUEST_START_TIME_KEY, YYYY_MM_DD_HH_MM_SS_24H_DASH_FORMAT.get().format(new Date()));
         putIfNotNull(SERVICES_KEY, parameters.getLoadedServices());
-    }
-
-    static void putProtocolCallLoggingParameters(ProtocolCallLoggingParameters parameters) {
-        putApplicationLoggingParameters();
-        putIfNotNull(PROTOCOL_KEY, parameters.getProtocol());
-        putIfNotNull(TRACE_ID_KEY, parameters.getTraceId());
-        putIfNotNull(REQUEST_ID_KEY, parameters.getRequestId());
-        putIfNotNull(ENVIRONMENT_KEY, parameters.getEnvironment());
-        String profile = parameters.getProfile();
-        if (isNotEmpty(profile)) {
-            putIfNotNull(PROFILE_KEY, profile);
-        }
     }
 
     static void clearServiceCallLoggingParameters() {
@@ -67,7 +55,16 @@ public interface LoggingParametersManager {
         remove(EXECUTION_TIME_KEY);
         remove(SERVICE_EXCEPTION_KEY);
         remove(SERVICE_TYPES_KEY);
-        remove(SERVICE_EVENT_TYPE_KEY);
+        remove(LOG_EVENT_TYPE);
+    }
+
+    static void putProtocolCallLoggingParameters(ProtocolCallLoggingParameters parameters) {
+        putModuleLoggingParameters();
+        putIfNotNull(PROTOCOL_KEY, parameters.getProtocol());
+        putIfNotNull(TRACE_ID_KEY, parameters.getTraceId());
+        putIfNotNull(ENVIRONMENT_KEY, parameters.getEnvironment());
+        putIfNotNull(REQUEST_ID_KEY, parameters.getRequestId());
+        putIfNotEmpty(PROFILE_KEY, parameters.getProfile());
     }
 
     static void clearProtocolLoggingParameters() {
@@ -75,5 +72,6 @@ public interface LoggingParametersManager {
         remove(TRACE_ID_KEY);
         remove(ENVIRONMENT_KEY);
         remove(REQUEST_ID_KEY);
+        remove(PROFILE_KEY);
     }
 }

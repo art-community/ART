@@ -22,6 +22,5 @@ public enum ContextState {
     REFRESHING_MODULES,
     REFRESHING_AND_RELOADING_MODULES,
     READY,
-    UNLOADING_MODULES,
     EMPTY,
 }

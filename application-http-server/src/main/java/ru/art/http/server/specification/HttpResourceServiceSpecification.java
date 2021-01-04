@@ -28,17 +28,13 @@ import ru.art.service.*;
 import ru.art.service.exception.*;
 import ru.art.service.interceptor.ServiceExecutionInterceptor.*;
 import ru.art.service.model.*;
+import static lombok.AccessLevel.*;
 import static ru.art.core.caster.Caster.*;
-import static ru.art.core.checker.CheckerForEmptiness.*;
 import static ru.art.core.constants.StringConstants.*;
 import static ru.art.core.extension.NullCheckingExtensions.*;
 import static ru.art.core.factory.CollectionsFactory.*;
-import static ru.art.entity.CollectionValuesFactory.*;
-import static ru.art.entity.PrimitivesFactory.*;
-import static ru.art.http.server.HttpServerModuleConfiguration.HttpResourceConfiguration.*;
 import static ru.art.http.server.constants.HttpServerModuleConstants.HttpResourceServiceConstants.*;
 import static ru.art.http.server.constants.HttpServerModuleConstants.HttpResourceServiceConstants.HttpParameters.*;
-import static ru.art.http.server.constants.HttpServerModuleConstants.HttpResourceServiceConstants.HttpResourceType.*;
 import static ru.art.http.server.constants.HttpServerModuleConstants.HttpResourceServiceConstants.Methods.*;
 import static ru.art.http.server.extractor.HttpResponseContentTypeExtractor.*;
 import static ru.art.http.server.interceptor.HttpServerInterception.*;
@@ -56,15 +52,15 @@ import java.util.function.*;
 @RequiredArgsConstructor
 public class HttpResourceServiceSpecification implements HttpServiceSpecification {
     private final String resourcePath;
-    private HttpResourceConfiguration resourceConfiguration = httpServerModule().getResourceConfiguration();
+    private HttpResourceConfiguration resourceConfiguration;
     @Getter(lazy = true)
     private final String serviceId = resourcePath;
     @Getter(lazy = true)
     private final HttpService httpService = httpService()
-
             .get(GET_RESOURCE)
             .fromPathParameters(RESOURCE)
-            .requestMapper((StringParametersMapToModelMapper<String>) resource -> doIfNotNull(resource, (Function<StringParametersMap, String>) res -> resource.getParameter(RESOURCE)))
+            .requestMapper((StringParametersMapToModelMapper<String>) resource -> doIfNotNull(resource,
+                    (Function<StringParametersMap, String>) res -> resource.getParameter(RESOURCE)))
             .overrideResponseContentType()
             .responseMapper(Caster::cast)
             .addRequestInterceptor(intercept(interceptAndContinue(((request, response) -> response.setContentType(extractTypeByFile(request.getRequestURI()))))))
@@ -80,7 +76,7 @@ public class HttpResourceServiceSpecification implements HttpServiceSpecificatio
                 super.intercept(request, ServiceResponse.builder()
                         .command(response.getCommand())
                         .serviceException(response.getServiceException())
-                        .responseData(HTTP_RESOURCE)
+                        .responseData(HTTP_RESOURCE_BODY_REPLACEMENT)
                         .build());
                 return nextInterceptor(request, response);
             }
@@ -91,20 +87,7 @@ public class HttpResourceServiceSpecification implements HttpServiceSpecificatio
     @SuppressWarnings("All")
     public <P, R> R executeMethod(String methodId, P request) {
         if (GET_RESOURCE.equals(methodId)) {
-            String resourcePath = ifEmpty(cast(request), resourceConfiguration.getDefaultResource().getPath());
-            if (resourcePath.contains(DOT)) {
-                return cast(resourceConfiguration
-                        .getResourceExtensionTypeMappings()
-                        .get(resourcePath.substring(resourcePath.lastIndexOf(DOT)).toLowerCase()) == STRING
-                        ? stringPrimitive(getStringResource(resourcePath, resourceConfiguration))
-                        : byteCollection(getBinaryResource(resourcePath, resourceConfiguration)));
-            }
-            HttpResource resource = resourceConfiguration
-                    .getResourceMappings()
-                    .getOrDefault(request, resourceConfiguration.getDefaultResource());
-            return cast(resource.getType() == STRING
-                    ? stringPrimitive(getStringResource(resource.getPath(), resourceConfiguration))
-                    : byteCollection(getBinaryResource(resource.getPath(), resourceConfiguration)));
+            return cast(getHttpResource(cast(request), getOrElse(resourceConfiguration, resourceConfiguration = httpServerModule().getResourceConfiguration())));
         }
         throw new UnknownServiceMethodException(getServiceId(), methodId);
     }

@@ -23,17 +23,18 @@ import org.zalando.logbook.LogbookCreator.*;
 import ru.art.http.logger.*;
 import static org.zalando.logbook.Conditions.*;
 import static ru.art.metrics.constants.MetricsModuleConstants.*;
+import java.util.function.*;
 
 public interface MetricsHttpLogFilter {
-    static Builder logbookWithoutMetricsLogs(Builder builder) {
+    static Builder logbookWithoutMetricsLogs(Builder builder, Supplier<Boolean> enabled) {
         return builder
                 .condition(exclude(request -> request.getPath().contains(METRICS_PATH)))
-                .writer(new ZalangoLogbookLogWriter());
+                .writer(new ZalangoLogbookLogWriter(enabled));
     }
 
-    static Builder logbookWithoutMetricsLogs() {
+    static Builder logbookWithoutMetricsLogs(Supplier<Boolean> enabled) {
         return Logbook.builder()
                 .condition(exclude(request -> request.getPath().contains(METRICS_PATH)))
-                .writer(new ZalangoLogbookLogWriter());
+                .writer(new ZalangoLogbookLogWriter(enabled));
     }
 }

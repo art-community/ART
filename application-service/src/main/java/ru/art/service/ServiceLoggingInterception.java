@@ -26,8 +26,10 @@ import ru.art.service.interceptor.*;
 import ru.art.service.model.*;
 import static java.text.MessageFormat.*;
 import static java.util.Objects.*;
+import static lombok.AccessLevel.*;
 import static org.apache.logging.log4j.ThreadContext.*;
 import static ru.art.core.checker.CheckerForEmptiness.isEmpty;
+import static ru.art.core.checker.CheckerForEmptiness.isNotEmpty;
 import static ru.art.core.constants.StringConstants.*;
 import static ru.art.core.extension.NullCheckingExtensions.*;
 import static ru.art.core.factory.CollectionsFactory.*;
@@ -44,18 +46,8 @@ import java.util.*;
 
 public class ServiceLoggingInterception implements ServiceRequestInterception, ServiceResponseInterception {
     private final static ThreadLocal<Stack<ServiceCallLoggingParameters>> serviceLoggingParameters = new ThreadLocal<>();
-    @Getter(lazy = true)
-    private final Logger logger = loggingModule().getLogger(ServiceLoggingInterception.class);
-
-    private static void putRequestResponseMetrics(ServiceRequest<?> request, ServiceCallLoggingParameters parameters) {
-        putIfNotNull(REQUEST_KEY, request);
-        putServiceCallLoggingParameters(parameters);
-        List<String> serviceTypes = serviceModuleState()
-                .getServiceRegistry()
-                .getService(request.getServiceMethodCommand().getServiceId())
-                .getServiceTypes();
-        putIfNotNull(SERVICE_TYPES_KEY, serviceTypes);
-    }
+    @Getter(lazy = true, value = PRIVATE)
+    private static final Logger logger = loggingModule().getLogger(ServiceLoggingInterception.class);
 
     @Override
     public ServiceInterceptionResult intercept(ServiceRequest<?> request) {
@@ -66,25 +58,26 @@ public class ServiceLoggingInterception implements ServiceRequestInterception, S
                 .serviceId(request.getServiceMethodCommand().getServiceId())
                 .serviceMethodId(request.getServiceMethodCommand().toString())
                 .serviceMethodCommand(request.getServiceMethodCommand().toString() + DOT + getOrElse(get(REQUEST_ID_KEY), DEFAULT_REQUEST_ID))
+                .logEventType(REQUEST_EVENT)
+                .loadedServices(serviceModuleState().getServiceRegistry().getServices().keySet())
                 .build();
         serviceLoggingParameters.get().push(parameters);
-        putRequestResponseMetrics(request, parameters);
-        putIfNotNull(SERVICE_EVENT_TYPE_KEY, REQUEST_EVENT);
+        putRequestResponseParameters(request, parameters);
         getLogger().info(format(EXECUTION_SERVICE_MESSAGE, request.getServiceMethodCommand(), getOrElse(get(REQUEST_ID_KEY), DEFAULT_REQUEST_ID), request));
-        remove(SERVICE_EVENT_TYPE_KEY);
+        remove(LOG_EVENT_TYPE);
         return nextInterceptor(request);
     }
 
     @Override
     public ServiceInterceptionResult intercept(ServiceRequest<?> request, ServiceResponse<?> response) {
-        if (!isEmpty(serviceLoggingParameters.get())) {
-            putRequestResponseMetrics(request, serviceLoggingParameters.get().pop());
+        if (isNotEmpty(serviceLoggingParameters.get())) {
+            putRequestResponseParameters(request, serviceLoggingParameters.get().pop());
         }
         ServiceExecutionException serviceException = response.getServiceException();
         if (nonNull(serviceException)) {
             putIfNotNull(RESPONSE_KEY, response);
             putIfNotNull(SERVICE_EXCEPTION_KEY, serviceException);
-            putIfNotNull(SERVICE_EVENT_TYPE_KEY, RESPONSE_EVENT);
+            putIfNotNull(LOG_EVENT_TYPE, RESPONSE_EVENT);
             getLogger().error(format(SERVICE_FAILED_MESSAGE,
                     request.getServiceMethodCommand(),
                     getOrElse(get(REQUEST_ID_KEY), DEFAULT_REQUEST_ID),
@@ -94,9 +87,20 @@ public class ServiceLoggingInterception implements ServiceRequestInterception, S
                     serviceException);
             return nextInterceptor(request, response);
         }
+        remove(SERVICE_EXCEPTION_KEY);
         putIfNotNull(RESPONSE_KEY, response);
-        putIfNotNull(SERVICE_EVENT_TYPE_KEY, RESPONSE_EVENT);
+        putIfNotNull(LOG_EVENT_TYPE, RESPONSE_EVENT);
         getLogger().info(format(SERVICE_EXECUTED_MESSAGE, request.getServiceMethodCommand(), getOrElse(get(REQUEST_ID_KEY), DEFAULT_REQUEST_ID), response));
         return nextInterceptor(request, response);
+    }
+
+    private static void putRequestResponseParameters(ServiceRequest<?> request, ServiceCallLoggingParameters parameters) {
+        putIfNotNull(REQUEST_KEY, request);
+        putServiceCallLoggingParameters(parameters);
+        List<String> serviceTypes = serviceModuleState()
+                .getServiceRegistry()
+                .getService(request.getServiceMethodCommand().getServiceId())
+                .getServiceTypes();
+        putIfNotNull(SERVICE_TYPES_KEY, serviceTypes);
     }
 }

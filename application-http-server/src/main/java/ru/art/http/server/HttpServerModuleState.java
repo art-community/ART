@@ -35,4 +35,8 @@ public class HttpServerModuleState implements ModuleState {
     void setRequestContext(HttpRequestContext requestContext) {
         this.requestContext.set(requestContext);
     }
+
+    void clearRequestContext() {
+        requestContext.remove();
+    }
 }

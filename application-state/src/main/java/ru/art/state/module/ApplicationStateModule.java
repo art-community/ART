@@ -28,6 +28,7 @@ import ru.art.state.configuration.ApplicationStateModuleConfiguration.*;
 import ru.art.state.service.*;
 import ru.art.state.specification.*;
 import static java.time.Duration.*;
+import static lombok.AccessLevel.PRIVATE;
 import static ru.art.config.extensions.activator.AgileConfigurationsActivator.*;
 import static ru.art.core.context.Context.*;
 import static ru.art.grpc.server.GrpcServer.*;
@@ -42,9 +43,9 @@ import static ru.art.task.deferred.executor.TaskFactory.*;
 
 @Getter
 public class ApplicationStateModule implements Module<ApplicationStateModuleConfiguration, ApplicationState> {
-    @Getter(lazy = true)
+    @Getter(lazy = true, value = PRIVATE)
     private final static ApplicationStateModuleConfiguration applicationStateModule = context().getModule(APPLICATION_STATE_MODULE_ID, ApplicationStateModule::new);
-    @Getter(lazy = true)
+    @Getter(lazy = true, value = PRIVATE)
     private final static ApplicationState applicationState = context().getModuleState(APPLICATION_STATE_MODULE_ID, ApplicationStateModule::new);
     private final String id = APPLICATION_STATE_MODULE_ID;
     private final ApplicationStateModuleConfiguration defaultConfiguration = new ApplicationStateModuleDefaultConfiguration();

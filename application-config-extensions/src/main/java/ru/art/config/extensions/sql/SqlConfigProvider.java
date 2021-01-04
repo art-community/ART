@@ -20,11 +20,9 @@ package ru.art.config.extensions.sql;
 
 import lombok.experimental.*;
 import ru.art.config.*;
-import ru.art.core.annotation.*;
 import static ru.art.config.extensions.ConfigExtensions.*;
 import static ru.art.config.extensions.sql.SqlConfigKeys.*;
 
-@PublicApi
 @UtilityClass
 public class SqlConfigProvider {
     public static Config sqlDbConfig() {

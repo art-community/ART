@@ -9,13 +9,15 @@ ART is a kit of modules for developing multifunctional applications.
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/3a5d459c173a4109b2d039c8f7cd3cce)](https://app.codacy.com/app/antonbashir/ART?utm_source=github.com&utm_medium=referral&utm_content=art-community/ART&utm_campaign=Badge_Grade_Dashboard)
 ![GitHub repo size](https://img.shields.io/github/repo-size/art-community/art)
 
+[![JFrog Bintray](https://www.bintray.com/docs/images/bintray_badge_color.png)](https://bintray.com/art-community/art/io.github.art?source=watch)
+
 ## Build and Binaries
 Releases are available via Maven Central.
 
 Example:
 ```kotlin
 plugins {
-    id("io.github.art.project") version "1.0.98"
+    id("io.github.art.project") version "1.0.113"
 }
 
 art {
@@ -35,7 +37,7 @@ art {
  }
 ```
 ## Requirements
-- Java 8+ (9, 10, 11, 12, 13)
+- Java 9+
 - Gradle 6+ (to migrate from Gradle 5, delete `gradle`, `.gradle` folders and execute `refresh gradle`)
 - If working with web - installed nodejs and npm
 - If using tarantool on Windows - installed WSL (Tarantool is not supported on Windows System)
@@ -43,6 +45,10 @@ art {
 
 ## Bugs and Feedback
 For bugs, questions and discussions please use the [Github Issues](https://github.com/art-community/art/issues).
+
+Join us on Telegram: https://tx.me/art_github
+
+Join us on Discord: https://discord.gg/jaqxB38
 
 ## Documentation
 
@@ -81,7 +87,6 @@ For bugs, questions and discussions please use the [Github Issues](https://githu
 * `io.github.resilience4j:resilience4j-timelimiter:1.1.1-SNAPSHOT`
 * `io.grpc:grpc-protobuf:1.24.0`
 * `io.grpc:grpc-stub:1.24.0`
-* `io.grpc:grpc-netty:1.24.0`
 * `io.grpc:grpc-netty-shaded:1.24.0`
 * `io.netty:netty-all:4.1.42.Final`
 * `org.zalando:logbook-core:1.13.0`

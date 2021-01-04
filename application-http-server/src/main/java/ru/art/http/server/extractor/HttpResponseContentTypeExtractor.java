@@ -20,10 +20,11 @@ package ru.art.http.server.extractor;
 
 
 import ru.art.core.mime.*;
-import static java.util.Objects.nonNull;
+import static java.util.Objects.*;
 import static ru.art.core.checker.CheckerForEmptiness.*;
 import static ru.art.core.constants.StringConstants.*;
 import static ru.art.http.constants.HttpMimeTypes.*;
+import static ru.art.http.server.HttpServerModuleConfiguration.*;
 import static ru.art.http.server.module.HttpServerModule.*;
 
 public interface HttpResponseContentTypeExtractor {
@@ -31,8 +32,12 @@ public interface HttpResponseContentTypeExtractor {
         if (isEmpty(fileUrl)) return ALL.toString();
         if (!fileUrl.contains(DOT)) return TEXT_HTML.toString();
         String ext = fileUrl.substring(fileUrl.lastIndexOf(DOT));
-        MimeType mimeType = httpServerModule().getResourceConfiguration().getResourceExtensionMimeTypeMappings().get(ext);
-        if (nonNull(mimeType)) {
+        HttpResourceExtensionMapping mapping;
+        MimeType mimeType;
+        if (nonNull(mapping = httpServerModule()
+                .getResourceConfiguration()
+                .getResourceExtensionMappings()
+                .get(ext)) && nonNull(mimeType = mapping.getMimeType())) {
             return mimeType.toString();
         }
         return ALL.toString();

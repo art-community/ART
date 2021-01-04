@@ -20,12 +20,14 @@ package ru.art.remote.scheduler.module;
 
 import lombok.*;
 import ru.art.core.module.Module;
+import ru.art.remote.scheduler.api.communicator.grpc.RemoteSchedulerServiceGrpcCommunicationSpec;
 import ru.art.remote.scheduler.configuration.*;
 import ru.art.remote.scheduler.state.*;
 import static lombok.AccessLevel.*;
 import static ru.art.core.context.Context.*;
 import static ru.art.remote.scheduler.constants.RemoteSchedulerModuleConstants.*;
 import static ru.art.remote.scheduler.controller.PoolController.*;
+import static ru.art.service.ServiceModule.serviceModuleState;
 
 @Getter
 public class RemoteSchedulerModule implements Module<RemoteSchedulerModuleConfiguration, RemoteSchedulerModuleState> {
@@ -48,5 +50,12 @@ public class RemoteSchedulerModule implements Module<RemoteSchedulerModuleConfig
     public static void startRemoteScheduler() {
         fillAllPools();
         startPoolRefreshingTask();
+    }
+
+    @Override
+    public void onLoad() {
+        serviceModuleState().getServiceRegistry()
+                .registerService(new RemoteSchedulerServiceGrpcCommunicationSpec());
+        startRemoteScheduler();
     }
 }

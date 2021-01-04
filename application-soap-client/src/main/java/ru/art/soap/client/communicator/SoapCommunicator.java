@@ -25,10 +25,13 @@ import org.apache.http.impl.nio.client.*;
 import ru.art.entity.*;
 import ru.art.entity.interceptor.*;
 import ru.art.entity.mapper.*;
+import ru.art.http.client.communicator.*;
+import ru.art.http.client.constants.*;
 import ru.art.http.client.handler.*;
 import ru.art.http.client.interceptor.*;
 import ru.art.http.client.model.*;
 import ru.art.soap.content.mapper.*;
+import static ru.art.http.client.constants.HttpClientModuleConstants.*;
 import java.nio.charset.*;
 import java.util.*;
 import java.util.concurrent.*;
@@ -78,7 +81,11 @@ public interface SoapCommunicator {
 
     SoapCommunicator useOperationIdFromConfiguration();
 
+    SoapCommunicator connectionClosingPolicy(ConnectionClosingPolicy policy);
+
     SoapCommunicator version(HttpVersion httpVersion);
+
+    SoapCommunicator enableKeepAlive();
 
     <RequestType, ResponseType> Optional<ResponseType> execute(RequestType request);
 

@@ -26,7 +26,6 @@ import ru.art.tarantool.configuration.lua.*;
 import ru.art.tarantool.exception.*;
 import static java.text.MessageFormat.*;
 import static java.util.Objects.*;
-import static java.util.concurrent.ConcurrentHashMap.*;
 import static ru.art.core.constants.StringConstants.*;
 import static ru.art.core.factory.CollectionsFactory.*;
 import static ru.art.tarantool.connector.TarantoolConnector.*;
@@ -38,24 +37,39 @@ import java.util.*;
 @Setter
 public class TarantoolModuleState implements ModuleState {
     private final Map<String, TarantoolClient> clients = concurrentHashMap();
-    private final Set<TarantoolValueScriptConfiguration> loadedValueScripts = newKeySet();
-    private final Set<TarantoolCommonScriptConfiguration> loadedCommonScripts = newKeySet();
+    private final Map<String, TarantoolClient> clusterClients = concurrentHashMap();
+    private final Map<String, Set<TarantoolValueScriptConfiguration>> loadedValueScripts = concurrentHashMap();
+    private final Map<String, Set<TarantoolCommonScriptConfiguration>> loadedCommonScripts = concurrentHashMap();
 
     @SuppressWarnings("Duplicates")
     public TarantoolClient getClient(String instanceId) {
-        TarantoolClient client = tarantoolModuleState().getClients().get(instanceId);
+        TarantoolClient client = clients.get(instanceId);
         if (isNull(client)) {
-            client = connectToTarantool(instanceId);
+            client = connectToTarantoolInstance(instanceId);
             if (!client.isAlive()) {
-                TarantoolConfiguration tarantoolConfiguration = tarantoolModule().getTarantoolConfigurations().get(instanceId);
-                if (isNull(tarantoolConfiguration)) {
-                    throw new TarantoolConnectionException(format(CONFIGURATION_IS_NULL, instanceId));
-                }
+                TarantoolConfiguration tarantoolConfiguration = getTarantoolConfiguration(instanceId, tarantoolModule().getTarantoolConfigurations());
                 TarantoolConnectionConfiguration connectionConfiguration = tarantoolConfiguration.getConnectionConfiguration();
                 String address = connectionConfiguration.getHost() + COLON + connectionConfiguration.getPort();
                 throw new TarantoolConnectionException(format(UNABLE_TO_CONNECT_TO_TARANTOOL, instanceId, address));
             }
         }
+        clients.put(instanceId, client);
+        return client;
+    }
+
+    @SuppressWarnings("Duplicates")
+    public TarantoolClient getClusterClient(String instanceId) {
+        TarantoolClient client = clusterClients.get(instanceId);
+        if (isNull(client)) {
+            client = connectToTarantoolCluster(instanceId);
+            if (!client.isAlive()) {
+                TarantoolConfiguration tarantoolConfiguration = getTarantoolConfiguration(instanceId, tarantoolModule().getTarantoolConfigurations());
+                TarantoolConnectionConfiguration connectionConfiguration = tarantoolConfiguration.getConnectionConfiguration();
+                String address = connectionConfiguration.getHost() + COLON + connectionConfiguration.getPort();
+                throw new TarantoolConnectionException(format(UNABLE_TO_CONNECT_TO_TARANTOOL, instanceId, address));
+            }
+        }
+        clients.put(instanceId, client);
         return client;
     }
 }

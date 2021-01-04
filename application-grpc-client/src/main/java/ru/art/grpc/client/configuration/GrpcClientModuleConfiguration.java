@@ -18,31 +18,48 @@
 
 package ru.art.grpc.client.configuration;
 
-import io.grpc.*;
-import lombok.*;
-import ru.art.core.module.*;
-import ru.art.entity.*;
-import ru.art.entity.interceptor.*;
-import ru.art.grpc.client.exception.*;
-import ru.art.grpc.client.interceptor.*;
-import ru.art.grpc.client.model.*;
-import ru.art.logging.*;
-import static java.text.MessageFormat.*;
-import static java.util.Collections.*;
-import static java.util.concurrent.ForkJoinPool.*;
-import static ru.art.core.constants.NetworkConstants.*;
-import static ru.art.core.constants.ThreadConstants.*;
-import static ru.art.core.extension.ExceptionExtensions.*;
-import static ru.art.core.factory.CollectionsFactory.*;
-import static ru.art.grpc.client.constants.GrpcClientExceptionMessages.*;
+import io.grpc.ClientInterceptor;
+import lombok.Getter;
+import ru.art.core.module.ModuleConfiguration;
+import ru.art.entity.Entity;
+import ru.art.entity.interceptor.ValueInterceptor;
+import ru.art.grpc.client.exception.GrpcClientException;
+import ru.art.grpc.client.interceptor.GrpcClientLoggingInterceptor;
+import ru.art.grpc.client.interceptor.GrpcClientTracingIdentifiersInterceptor;
+import ru.art.grpc.client.model.GrpcCommunicationTargetConfiguration;
+import ru.art.logging.LoggingValueInterceptor;
+
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ForkJoinPool;
+
+import static io.grpc.internal.GrpcUtil.DEFAULT_KEEPALIVE_TIMEOUT_NANOS;
+import static java.lang.Long.MAX_VALUE;
+import static java.text.MessageFormat.format;
+import static java.util.Collections.emptyMap;
+import static java.util.concurrent.ForkJoinPool.commonPool;
+import static ru.art.core.constants.NetworkConstants.LOCALHOST;
+import static ru.art.core.constants.ThreadConstants.DEFAULT_THREAD_POOL_SIZE;
+import static ru.art.core.extension.ExceptionExtensions.exceptionIfNull;
+import static ru.art.core.factory.CollectionsFactory.linkedListOf;
+import static ru.art.grpc.client.constants.GrpcClientExceptionMessages.GRPC_COMMUNICATION_TARGET_CONFIGURATION_NOT_FOUND;
 import static ru.art.grpc.client.constants.GrpcClientModuleConstants.*;
-import java.util.*;
-import java.util.concurrent.*;
 
 public interface GrpcClientModuleConfiguration extends ModuleConfiguration {
     List<ClientInterceptor> getInterceptors();
 
     long getTimeout();
+
+    long getKeepAliveTimeNanos();
+
+    long getKeepAliveTimeOutNanos();
+
+    boolean isKeepAliveWithoutCalls();
+
+    long getIdleTimeOutNanos();
+
+    boolean isWaitForReady();
 
     Executor getOverridingExecutor();
 
@@ -76,7 +93,7 @@ public interface GrpcClientModuleConfiguration extends ModuleConfiguration {
         @Getter(lazy = true, onMethod = @__({@SuppressWarnings("unchecked")}))
         private final List<ClientInterceptor> interceptors = initializeInterceptors();
         private final Executor asynchronousFuturesExecutor = commonPool();
-        private final long timeout = DEFAULT_TIMEOUT;
+        private final long timeout = DEFAULT_GRPC_DEADLINE;
         private final Executor overridingExecutor = new ForkJoinPool(DEFAULT_THREAD_POOL_SIZE);
         private final String balancerHost = LOCALHOST;
         private final int balancerPort = DEFAULT_GRPC_PORT;
@@ -85,17 +102,18 @@ public interface GrpcClientModuleConfiguration extends ModuleConfiguration {
         private final List<ValueInterceptor<Entity, Entity>> requestValueInterceptors = initializeValueInterceptors();
         @Getter(lazy = true, onMethod = @__({@SuppressWarnings("unchecked")}))
         private final List<ValueInterceptor<Entity, Entity>> responseValueInterceptors = initializeValueInterceptors();
+        private long keepAliveTimeNanos = MAX_VALUE;
+        private long keepAliveTimeOutNanos = DEFAULT_KEEPALIVE_TIMEOUT_NANOS;
+        private boolean keepAliveWithoutCalls = false;
+        private long idleTimeOutNanos = IDLE_DEFAULT_TIMEOUT;
+        private boolean waitForReady = false;
 
         private List<ClientInterceptor> initializeInterceptors() {
-            List<ClientInterceptor> interceptors = linkedListOf(new GrpcClientTracingInterceptor());
-            if (isEnableRawDataTracing()) {
-                interceptors.add(new GrpcClientLoggingInterceptor());
-            }
-            return interceptors;
+            return linkedListOf(new GrpcClientTracingIdentifiersInterceptor(), new GrpcClientLoggingInterceptor());
         }
 
         private List<ValueInterceptor<Entity, Entity>> initializeValueInterceptors() {
-            return isEnableValueTracing() ? linkedListOf(new LoggingValueInterceptor<>()) : linkedListOf();
+            return linkedListOf(new LoggingValueInterceptor<>(this::isEnableValueTracing));
         }
     }
 }

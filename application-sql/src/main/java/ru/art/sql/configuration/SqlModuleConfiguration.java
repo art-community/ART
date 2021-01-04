@@ -18,51 +18,36 @@
 
 package ru.art.sql.configuration;
 
-import com.zaxxer.hikari.*;
 import lombok.*;
-import org.apache.tomcat.jdbc.pool.*;
 import org.jooq.*;
-import org.jooq.impl.*;
 import ru.art.core.module.*;
 import ru.art.sql.constants.*;
-import static ru.art.core.constants.StringConstants.*;
-import static ru.art.sql.constants.ConnectionPoolType.*;
-import static ru.art.sql.constants.DbProvider.*;
-import static ru.art.sql.factory.SqlConnectionPoolsFactory.*;
+import ru.art.sql.exception.*;
+import static java.text.MessageFormat.*;
+import static ru.art.core.extension.ExceptionExtensions.*;
+import static ru.art.core.factory.CollectionsFactory.*;
+import static ru.art.sql.constants.ConnectionPoolInitializationMode.BOOTSTRAP;
+import static ru.art.sql.constants.SqlModuleConstants.ExceptionMessages.*;
+import java.util.*;
 
 public interface SqlModuleConfiguration extends ModuleConfiguration {
-    Configuration getJooqConfiguration();
-
-    HikariConfig getHikariPoolConfig();
-
-    PoolConfiguration getTomcatPoolConfig();
-
-    ConnectionPoolType getConnectionPoolType();
-
-    String getJdbcUrl();
-
-    String getJdbcLogin();
-
-    String getJdbcPassword();
-
-    DbProvider getDbProvider();
-
-    boolean isEnableMetrics();
-
     SqlModuleDefaultConfiguration DEFAULT_CONFIGURATION = new SqlModuleDefaultConfiguration();
+
+    ConnectionPoolInitializationMode getInitializationMode();
+
+    Map<String, SqlDbConfiguration> getDbConfigurations();
+
+    default SqlDbConfiguration getDbConfiguration(String instanceId) {
+        return exceptionIfNull(getDbConfigurations().get(instanceId), new SqlModuleException(format(SQL_DB_CONFIGURATION_NOT_FOUND, instanceId))).toBuilder().build();
+    }
+
+    default Configuration getJooqConfiguration(String instanceId) {
+        return getDbConfiguration(instanceId).getJooqConfiguration();
+    }
 
     @Getter
     class SqlModuleDefaultConfiguration implements SqlModuleConfiguration {
-        private final Configuration jooqConfiguration = new DefaultConfiguration();
-        @Getter(lazy = true)
-        private final HikariConfig hikariPoolConfig = createHikariPoolConfig();
-        @Getter(lazy = true)
-        private final PoolProperties tomcatPoolConfig = createTomcatPoolConfig();
-        private final ConnectionPoolType connectionPoolType = TOMCAT;
-        private final String jdbcUrl = EMPTY_STRING;
-        private final String jdbcLogin = EMPTY_STRING;
-        private final String jdbcPassword = EMPTY_STRING;
-        private final DbProvider dbProvider = POSTGRES;
-        private final boolean enableMetrics = true;
+        private final Map<String, SqlDbConfiguration> dbConfigurations = mapOf();
+        private final ConnectionPoolInitializationMode initializationMode = BOOTSTRAP;
     }
 }

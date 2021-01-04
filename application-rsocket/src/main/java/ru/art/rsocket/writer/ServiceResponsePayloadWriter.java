@@ -63,9 +63,7 @@ public class ServiceResponsePayloadWriter {
                 return writePayloadData(result.getOutValue(), dataFormat);
             }
         }
-        return isNull(responseMapper) ?
-                create(EMPTY_BUFFER) :
-                create(writePayloadData(responseValue, dataFormat));
+        return create(writePayloadData(responseValue, dataFormat));
     }
 
     public static Flux<Payload> writeResponseReactive(RsocketReactiveMethods rsocketReactiveMethods, ServiceResponse<?> serviceResponse, RsocketDataFormat dataFormat) {
@@ -76,23 +74,22 @@ public class ServiceResponsePayloadWriter {
             return error(serviceResponse.getServiceException());
         }
         ValueFromModelMapper<?, ?> responseMapper = rsocketReactiveMethods.getRsocketMethod().responseMapper();
-        Flux<Payload> flux = isNull(responseMapper) || isNull(serviceResponse.getResponseData()) ?
-                empty() :
-                from(cast(serviceResponse.getResponseData()))
-                        .map(response -> fromServiceResponse(responseMapper).map(cast(okResponse(serviceResponse.getCommand(), response))))
-                        .map(responseValue -> processResponseValueInterceptors(responseValue, rsocketReactiveMethods.getRsocketMethod().responseValueInterceptors()))
-                        .filter(Optional::isPresent)
-                        .map(Optional::get)
-                        .map(responseValue -> writePayloadData(responseValue, dataFormat));
+        Flux<Payload> flux = from(cast(serviceResponse.getResponseData()))
+                .map(response -> fromServiceResponse(responseMapper).map(cast(okResponse(serviceResponse.getCommand(), response))))
+                .map(responseValue -> processResponseValueInterceptors(responseValue, rsocketReactiveMethods.getRsocketMethod().responseValueInterceptors()))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .map(responseValue -> writePayloadData(responseValue, dataFormat));
         ReactiveServiceExceptionWrappers exceptionWrappers = rsocketReactiveMethods.getReactiveMethod().reactiveServiceExceptionWrappers();
         return exceptionWrappers
                 .getReactiveServiceExceptionWrappers()
                 .entrySet()
                 .stream()
-                .reduce(flux, (resultFlux, entry) -> resultFlux.onErrorResume(entry.getKey(), exception -> cast(just(writePayloadData(fromServiceResponse(responseMapper).map(cast(ServiceResponse.builder()
-                        .command(serviceResponse.getCommand())
-                        .serviceException(entry.getValue().wrap(serviceResponse.getCommand(), cast(exception)))
-                        .build())), dataFormat)))), (current, next) -> next)
+                .reduce(flux, (resultFlux, entry) -> resultFlux
+                        .onErrorResume(entry.getKey(), exception -> cast(just(writePayloadData(fromServiceResponse(responseMapper).map(cast(ServiceResponse.builder()
+                                .command(serviceResponse.getCommand())
+                                .serviceException(entry.getValue().wrap(serviceResponse.getCommand(), cast(exception)))
+                                .build())), dataFormat)))), (current, next) -> next)
                 .onErrorResume(Throwable.class, exception -> just(writePayloadData(fromServiceResponse(responseMapper).map(cast(ServiceResponse.builder()
                         .command(serviceResponse.getCommand())
                         .serviceException(exceptionWrappers.getUndeclaredExceptionWrapper().wrap(serviceResponse.getCommand(), exception))

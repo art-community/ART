@@ -25,5 +25,6 @@ public interface HttpClientExceptionMessages {
     String RESPONSE_INTERCEPTION_IS_NULL = "Response interception is null";
     String REQUEST_BODY_READING_EXCEPTION = "Request request reading exception";
     String HTTP_SSL_CONFIGURATION_FAILED = "Failed to configure SSL http client. Please check SSL settings";
+    String HTTP_ASYNC_CONFIGURATION_FAILED = "Failed to configure async http client. Please check IOReactor settings";
     String HTTP_COMMUNICATION_TARGET_NOT_FOUND = "Http communication target for service ''{0}'' was not found";
 }

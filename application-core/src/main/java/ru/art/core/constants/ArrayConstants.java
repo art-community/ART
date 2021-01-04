@@ -39,4 +39,5 @@ public interface ArrayConstants {
     Short[] EMPTY_SHORT_ARRAY = {};
     String[] EMPTY_STRINGS = {};
     Object[] EMPTY_OBJECTS = {};
+    int EMPTY_ARRAY_INDEX = -1;
 }

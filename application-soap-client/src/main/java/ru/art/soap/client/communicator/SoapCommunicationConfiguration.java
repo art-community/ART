@@ -26,6 +26,8 @@ import org.apache.http.impl.nio.client.*;
 import ru.art.entity.*;
 import ru.art.entity.interceptor.*;
 import ru.art.entity.mapper.*;
+import ru.art.http.client.constants.*;
+import ru.art.http.client.constants.HttpClientModuleConstants.*;
 import ru.art.http.client.handler.*;
 import ru.art.http.client.interceptor.*;
 import ru.art.soap.client.exception.*;
@@ -33,6 +35,7 @@ import ru.art.soap.content.mapper.*;
 import static lombok.AccessLevel.*;
 import static ru.art.core.checker.CheckerForEmptiness.*;
 import static ru.art.core.factory.CollectionsFactory.*;
+import static ru.art.http.client.constants.HttpClientModuleConstants.ConnectionClosingPolicy.CLOSE_AFTER_RESPONSE;
 import static ru.art.http.client.module.HttpClientModule.*;
 import static ru.art.soap.client.constants.SoapClientModuleConstants.*;
 import static ru.art.soap.client.constants.SoapClientModuleConstants.OperationIdSource.*;
@@ -71,7 +74,8 @@ class SoapCommunicationConfiguration {
     private List<ValueInterceptor<XmlEntity, XmlEntity>> requestValueInterceptors = linkedListOf();
     private List<ValueInterceptor<XmlEntity, XmlEntity>> responseValueInterceptors = linkedListOf();
     private OperationIdSource operationIdSource = REQUEST;
-    private Object request;
+    private ConnectionClosingPolicy connectionClosingPolicy = CLOSE_AFTER_RESPONSE;
+    private boolean enableKeepAlive;
 
     void validateRequiredFields() {
         boolean urlIsEmpty = isEmpty(url);

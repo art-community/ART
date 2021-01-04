@@ -21,6 +21,7 @@ package ru.art.tarantool.service;
 import lombok.experimental.*;
 import org.tarantool.*;
 import ru.art.tarantool.configuration.lua.*;
+import static ru.art.core.caster.Caster.*;
 import static ru.art.core.checker.CheckerForEmptiness.*;
 import static ru.art.core.factory.CollectionsFactory.*;
 import static ru.art.tarantool.caller.TarantoolFunctionCaller.*;
@@ -28,7 +29,6 @@ import static ru.art.tarantool.configuration.lua.TarantoolSequenceConfiguration.
 import static ru.art.tarantool.constants.TarantoolModuleConstants.Functions.*;
 import static ru.art.tarantool.executor.TarantoolLuaExecutor.*;
 import static ru.art.tarantool.module.TarantoolModule.*;
-import java.util.*;
 
 @UtilityClass
 public final class TarantoolSequenceService {
@@ -46,9 +46,9 @@ public final class TarantoolSequenceService {
     public static Integer sequenceNext(String instanceId, String sequenceName) {
         evaluateLuaScript(instanceId, tarantoolSequence(sequenceName).toManageSequenceLua());
         TarantoolClient client = tarantoolModuleState().getClient(instanceId);
-        List<?> result = (List<?>) callTarantoolFunction(client, NEXT + sequenceName).get(0);
+        Integer result = cast(callTarantoolFunction(client, NEXT + sequenceName).get(0));
         if (isEmpty(result)) return null;
-        return (Integer) result.get(0);
+        return result;
     }
 
     public static void resetSequence(String instanceId, String sequenceName) {

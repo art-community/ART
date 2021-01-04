@@ -18,30 +18,21 @@
 
 package ru.art.http.server.body.descriptor;
 
-import ru.art.http.server.module.*;
 import static ru.art.core.constants.ArrayConstants.*;
+import static ru.art.core.extension.InputStreamExtensions.*;
 import static ru.art.http.server.constants.HttpServerExceptionMessages.*;
+import static ru.art.http.server.module.HttpServerModule.*;
 import static ru.art.logging.LoggingModule.*;
-import javax.servlet.*;
 import javax.servlet.http.*;
-import java.io.*;
 
 public interface HttpBodyDescriptor {
     static byte[] readRequestBody(HttpServletRequest request) {
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        byte[] buf = new byte[HttpServerModule.httpServerModule().getRequestBodyBufferSize()];
         try {
-            ServletInputStream inputStream = request.getInputStream();
-            for (int n = inputStream.read(buf); n != -1; n = inputStream.read(buf)) {
-                os.write(buf, 0, n);
-            }
+            return toByteArray(request.getInputStream(), httpServerModule().getRequestBodyBufferSize());
         } catch (Throwable throwable) {
-            loggingModule()
-                    .getLogger(HttpBodyDescriptor.class)
-                    .error(REQUEST_BODY_READING_EXCEPTION, throwable);
+            loggingModule().getLogger(HttpBodyDescriptor.class).error(REQUEST_BODY_READING_EXCEPTION, throwable);
             return EMPTY_BYTES;
         }
-        return os.toByteArray();
     }
 
     static void writeResponseBody(HttpServletResponse response, byte[] body) {

@@ -23,5 +23,5 @@ import ru.art.core.module.*;
 
 @FunctionalInterface
 public interface ModuleConfigurator<C extends ModuleConfiguration, S extends ModuleState> {
-    ModuleConfiguration configure(Module<C, S> module);
+    C configure(Module<C, S> module);
 }

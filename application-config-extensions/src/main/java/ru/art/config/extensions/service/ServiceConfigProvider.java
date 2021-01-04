@@ -24,7 +24,6 @@ import io.github.resilience4j.ratelimiter.*;
 import io.github.resilience4j.retry.*;
 import lombok.experimental.*;
 import ru.art.config.*;
-import ru.art.core.annotation.*;
 import ru.art.service.model.*;
 import static io.github.resilience4j.bulkhead.BulkheadConfig.*;
 import static io.github.resilience4j.circuitbreaker.CircuitBreakerConfig.*;
@@ -37,7 +36,6 @@ import static ru.art.config.extensions.service.ServiceConfigKeys.*;
 import static ru.art.core.extension.ExceptionExtensions.*;
 import java.util.*;
 
-@PublicApi
 @UtilityClass
 public class ServiceConfigProvider {
     public static CircuitBreakerServiceConfig getCircuitBreakerServiceConfig(String sectionId) {

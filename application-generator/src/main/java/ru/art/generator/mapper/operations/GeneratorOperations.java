@@ -93,6 +93,7 @@ public final class GeneratorOperations {
                     .addField(generateFromModelBlock(clazz, generationInfo))
                     .build();
         } catch (Throwable throwable) {
+            throwable.printStackTrace();
             throw new MappingGeneratorException(format(UNABLE_TO_GENERATE_INTERFACE, clazz.getSimpleName(), throwable.getClass().getSimpleName()), throwable);
         }
     }
@@ -276,6 +277,9 @@ public final class GeneratorOperations {
                 case CLASS_DATE:
                     codeBlocks.add(getBuilderLineForField(GET_ENTITY_DATE, field.getName(), field.getName()));
                     break;
+                case CLASS_ENTITY:
+                    codeBlocks.add(getBuilderLineForField(GET_ENTITY, field.getName(), field.getName()));
+                    break;
                 case CLASS_LIST:
                     try {
                         codeBlocks.add(generateToModelForList(field, generationInfo));
@@ -390,6 +394,9 @@ public final class GeneratorOperations {
                     break;
                 case CLASS_DATE:
                     codeBlocks.add(getBuilderLineForField(DATE_FIELD, field.getName(), getField));
+                    break;
+                case CLASS_ENTITY:
+                    codeBlocks.add(of(DOUBLE_TABULATION + ENTITY_FIELD_FROM_ENTITY, field.getName(), getField));
                     break;
                 case CLASS_LIST:
                 case CLASS_SET:

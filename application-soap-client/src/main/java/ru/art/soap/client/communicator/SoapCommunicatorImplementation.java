@@ -26,6 +26,7 @@ import ru.art.core.validator.*;
 import ru.art.entity.*;
 import ru.art.entity.interceptor.*;
 import ru.art.entity.mapper.*;
+import ru.art.http.client.constants.*;
 import ru.art.http.client.handler.*;
 import ru.art.http.client.interceptor.*;
 import ru.art.http.client.model.*;
@@ -182,6 +183,12 @@ public class SoapCommunicatorImplementation implements SoapCommunicator, SoapAsy
     }
 
     @Override
+    public SoapCommunicator connectionClosingPolicy(HttpClientModuleConstants.ConnectionClosingPolicy policy) {
+        configuration.setConnectionClosingPolicy(policy);
+        return this;
+    }
+
+    @Override
     public SoapCommunicator version(HttpVersion httpVersion) {
         HttpVersion httpProtocolVersion = getOrElse(httpVersion, httpClientModule().getHttpVersion());
         configuration.setHttpVersion(validator.notEmptyField(httpProtocolVersion, "httpVersion"));
@@ -189,11 +196,17 @@ public class SoapCommunicatorImplementation implements SoapCommunicator, SoapAsy
     }
 
     @Override
+    public SoapCommunicator enableKeepAlive() {
+        configuration.setEnableKeepAlive(true);
+        return this;
+    }
+
+    @Override
     public <RequestType, ResponseType> Optional<ResponseType> execute(RequestType request) {
-        configuration.setRequest(validator.notNullField(request, "request"));
+        request = validator.notNullField(request, "request");
         validator.validate();
         configuration.validateRequiredFields();
-        return SoapCommunicationExecutor.execute(configuration);
+        return SoapCommunicationExecutor.execute(configuration, request);
     }
 
     @Override
@@ -227,9 +240,9 @@ public class SoapCommunicatorImplementation implements SoapCommunicator, SoapAsy
 
     @Override
     public <RequestType, ResponseType> CompletableFuture<Optional<ResponseType>> executeAsynchronous(RequestType request) {
-        configuration.setRequest(validator.notNullField(request, "request"));
+        request = validator.notNullField(request, "request");
         validator.validate();
         configuration.validateRequiredFields();
-        return SoapCommunicationExecutor.executeAsynchronous(configuration);
+        return SoapCommunicationExecutor.executeAsynchronous(configuration, request);
     }
 }
