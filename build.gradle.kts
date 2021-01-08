@@ -27,9 +27,10 @@ import ru.art.gradle.logging.LogMessageColor.*
 
 plugins {
     `maven-publish`
-    id("io.github.art.project") version "1.0.113"
+    id("io.github.art.project") version "1.0.120"
     id("com.jfrog.bintray") version "1.8.4"
     id("com.jfrog.artifactory") version "4.10.0"
+    kotlin("jvm") version "1.3.50"
 }
 
 tasks.withType(Wrapper::class.java) {
