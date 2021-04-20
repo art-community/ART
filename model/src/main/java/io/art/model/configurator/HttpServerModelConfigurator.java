@@ -21,6 +21,7 @@ package io.art.model.configurator;
 import io.art.core.collection.*;
 import io.art.model.implementation.server.*;
 import io.art.value.constants.ValueModuleConstants.*;
+import io.netty.handler.codec.http.*;
 import io.netty.handler.ssl.*;
 import java.io.*;
 import java.util.*;
@@ -63,6 +64,8 @@ public class HttpServerModelConfigurator {
     private final Map<String, Consumer<? super SslProvider.SslContextSpec>> sniMapping = map();
     private boolean redirectToHttps = false;
 
+
+
     public HttpServerModelConfigurator route(String path, Class<?> serviceClass){
         return route(path, serviceClass, identity());
     }
@@ -77,10 +80,7 @@ public class HttpServerModelConfigurator {
         return this;
     }
 
-    public HttpServerModelConfigurator exceptions(UnaryOperator<HttpServiceExceptionMappingConfigurator> configurator){
-        configurator.apply(exceptionMapping);
-        return this;
-    }
+
 
     public HttpServerModelConfigurator host(String host) {
         this.host = host;
@@ -94,31 +94,6 @@ public class HttpServerModelConfigurator {
 
     public HttpServerModelConfigurator protocol(HttpProtocol version) {
         this.protocol = version;
-        return this;
-    }
-
-    public HttpServerModelConfigurator logging(boolean isEnabled) {
-        logging = isEnabled;
-        return this;
-    }
-
-    public HttpServerModelConfigurator wiretap(boolean isEnabled){
-        wiretap = isEnabled;
-        return this;
-    }
-
-    public HttpServerModelConfigurator accessLogging(boolean isEnabled){
-        accessLogging = isEnabled;
-        return this;
-    }
-
-    public HttpServerModelConfigurator accessLogFilter(Predicate<AccessLogArgProvider> accessLogFilter){
-        this.accessLogFilter = accessLogFilter;
-        return this;
-    }
-
-    public HttpServerModelConfigurator accessLogFormat(AccessLogFactory formatFunction){
-        this.accessLogFormatFunction = formatFunction;
         return this;
     }
 
@@ -159,6 +134,59 @@ public class HttpServerModelConfigurator {
         redirectToHttps = isEnabled;
         return this;
     }
+
+
+
+    public HttpServerModelConfigurator logging(boolean isEnabled) {
+        logging = isEnabled;
+        return this;
+    }
+
+    public HttpServerModelConfigurator wiretap(boolean isEnabled){
+        wiretap = isEnabled;
+        return this;
+    }
+
+    public HttpServerModelConfigurator accessLogging(boolean isEnabled){
+        accessLogging = isEnabled;
+        return this;
+    }
+
+    public HttpServerModelConfigurator accessLogFilter(Predicate<AccessLogArgProvider> accessLogFilter){
+        this.accessLogFilter = accessLogFilter;
+        return this;
+    }
+
+    public HttpServerModelConfigurator accessLogFormat(AccessLogFactory formatFunction){
+        this.accessLogFormatFunction = formatFunction;
+        return this;
+    }
+
+
+
+    public HttpServerModelConfigurator exception(Class<? extends Throwable> exceptionClass, Function<? extends Throwable, ?> mapper){
+        exceptionMapping.on(exceptionClass, mapper);
+        return this;
+    }
+
+    public HttpServerModelConfigurator exception(Class<? extends Throwable> exceptionClass, HttpResponseStatus httpStatus, Supplier<Object> responseSupplier){
+        exceptionMapping.on(exceptionClass, httpStatus, responseSupplier);
+        return this;
+    }
+
+    public HttpServerModelConfigurator exception(Class<? extends Throwable> exceptionClass, HttpResponseStatus httpStatus){
+        return exception(exceptionClass, httpStatus, () -> null);
+    }
+
+    public HttpServerModelConfigurator exception(Class<? extends Throwable> exceptionClass, Integer httpStatus, Supplier<Object> responseSupplier){
+        return exception(exceptionClass, HttpResponseStatus.valueOf(httpStatus), responseSupplier);
+    }
+
+    public HttpServerModelConfigurator exception(Class<? extends Throwable> exceptionClass, Integer httpStatus){
+        return exception(exceptionClass, httpStatus, () -> null);
+    }
+
+
 
     protected HttpServerModel configure() {
         ImmutableMap.Builder<String, HttpServiceModel> services = immutableMapBuilder();
