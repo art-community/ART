@@ -20,6 +20,7 @@ package io.art.http.router;
 
 import io.art.core.mime.*;
 import io.art.core.model.*;
+import io.art.http.authentication.*;
 import io.art.http.configuration.*;
 import io.art.http.exception.*;
 import io.art.http.model.*;
@@ -28,18 +29,15 @@ import io.art.server.specification.*;
 import io.art.value.constants.ValueModuleConstants.*;
 import io.art.value.immutable.*;
 import io.netty.buffer.*;
+import java.nio.file.*;
+import java.util.*;
 import org.reactivestreams.*;
 import reactor.core.publisher.*;
 import reactor.netty.http.server.*;
 import reactor.netty.http.websocket.*;
 import reactor.util.context.*;
-
-import java.io.*;
-import java.nio.file.*;
-import java.util.*;
-
 import static io.art.core.caster.Caster.*;
-import static io.art.core.checker.NullityChecker.let;
+import static io.art.core.checker.NullityChecker.*;
 import static io.art.core.model.ServiceMethodIdentifier.*;
 import static io.art.core.wrapper.ExceptionWrapper.*;
 import static io.art.http.constants.HttpModuleConstants.ExceptionMessages.*;
@@ -56,6 +54,7 @@ import static java.text.MessageFormat.*;
 import static java.util.Objects.*;
 
 public class HttpRouter {
+    private final HttpAuthenticatorRegistry authenticatorRegistry = httpModule().configuration().getServerConfiguration().getAuthentication();
 
     public HttpRouter(HttpServerRoutes routes, HttpServerConfiguration configuration) {
         for (Map.Entry<String, HttpServiceConfiguration> service : configuration.getServices().entrySet()) {
@@ -127,20 +126,26 @@ public class HttpRouter {
 
         Sinks.Many<ByteBuf> unicast = Sinks.many().unicast().onBackpressureBuffer();
 
-        return request.receive()
-                .map(content -> readPayloadData(inputDataFormat, content))
-                .map(HttpPayloadValue::getValue)
-                .transform(specification::serve)
-                .onErrorResume(throwable -> mapException(specification, throwable))
-                .map(output -> writePayloadData(outputDataFormat, output))
-                .contextWrite(ctx -> setContext(ctx
-                        .put(HttpContext.class, HttpContext.from(request, response))
-                        .put(SPECIFICATION_KEY, specification))
-                )
-                .doOnNext(unicast::tryEmitNext)
-                .doOnComplete(unicast::tryEmitComplete)
-                .doOnError(unicast::tryEmitError)
-                .thenMany(response.send(unicast.asFlux()));
+        Authenticator<HttpServerRequest, HttpServerResponse> authenticator = authenticatorRegistry.get(request.path());
+        Boolean isAuthenticated = authenticator.check(request);
+        authenticator.apply(response);
+
+        return !isAuthenticated ?
+                response.send() :
+                request.receive()
+                        .map(content -> readPayloadData(inputDataFormat, content))
+                        .map(HttpPayloadValue::getValue)
+                        .transform(specification::serve)
+                        .onErrorResume(throwable -> mapException(specification, throwable))
+                        .map(output -> writePayloadData(outputDataFormat, output))
+                        .contextWrite(ctx -> setContext(ctx
+                                .put(HttpContext.class, HttpContext.from(request, response))
+                                .put(SPECIFICATION_KEY, specification))
+                        )
+                        .doOnNext(unicast::tryEmitNext)
+                        .doOnComplete(unicast::tryEmitComplete)
+                        .doOnError(unicast::tryEmitError)
+                        .thenMany(response.send(unicast.asFlux()));
     }
 
     private Flux<Value> mapException(ServiceMethodSpecification specification, Throwable exception){

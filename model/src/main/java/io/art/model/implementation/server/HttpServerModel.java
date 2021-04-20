@@ -1,6 +1,7 @@
 package io.art.model.implementation.server;
 
 import io.art.core.collection.*;
+import io.art.http.authentication.*;
 import io.art.value.constants.ValueModuleConstants.*;
 import io.netty.channel.*;
 import java.util.*;
@@ -31,4 +32,5 @@ public class HttpServerModel {
     private final Consumer<? super SslProvider.SslContextSpec> sslConfigurator;
     private final Function<? extends Throwable, ?> exceptionsMapper;
     private final Map<ChannelOption<?>, Object> tcpOptions;
+    private final HttpAuthenticatorRegistry authentication;
 }

@@ -80,7 +80,8 @@ public class HttpCustomizer {
                         .values()
                         .stream()
                         .collect(cast(immutableMapCollector(HttpServiceModel::getId, this::buildServiceConfig))))
-                .exceptionMapper(model.getExceptionsMapper());
+                .exceptionMapper(model.getExceptionsMapper())
+                .authentication(model.getAuthentication());
 
         server(serverConfigurationBuilder.build());
         return this;

@@ -28,6 +28,7 @@ public interface HttpModuleConstants {
     interface ExceptionMessages {
         String SPECIFICATION_NOT_FOUND = "Specification was not found for service method identifiers: {0}";
         String CONFIGURATION_PARAMETER_NOT_EXISTS = "HTTP configuration parameter does not exists: ''{0}''";
+        String NULL_AUTHENTICATION_STATUS = "Authentication status is null. Check() authentication status before apply()";
     }
 
     interface LoggingMessages {

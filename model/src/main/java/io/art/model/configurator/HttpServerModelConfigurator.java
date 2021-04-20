@@ -66,6 +66,7 @@ public class HttpServerModelConfigurator {
     private final Map<String, Consumer<? super SslProvider.SslContextSpec>> sniMapping = map();
     private boolean redirectToHttps = false;
     private final Map<ChannelOption<?>, Object> tcpOptions = map();
+    private final HttpServerAuthenticationConfigurator authentication = new HttpServerAuthenticationConfigurator();
 
 
 
@@ -80,6 +81,11 @@ public class HttpServerModelConfigurator {
                 configurator.apply(new HttpServiceModelConfigurator(serviceClass)
                         .logging(logging)
                         .defaultDataFormat(defaultDataFormat)));
+        return this;
+    }
+
+    public HttpServerModelConfigurator authentication(UnaryOperator<HttpServerAuthenticationConfigurator> configurator) {
+        configurator.apply(authentication);
         return this;
     }
 
@@ -220,6 +226,7 @@ public class HttpServerModelConfigurator {
                                 .build())
                 .exceptionsMapper(exceptionMapping.configure())
                 .tcpOptions(tcpOptions)
+                .authentication(authentication.getRegistry())
                 .build();
     }
 

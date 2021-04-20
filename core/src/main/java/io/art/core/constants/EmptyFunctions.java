@@ -26,7 +26,19 @@ public interface EmptyFunctions {
         return () -> null;
     }
 
+    static <T> UnaryOperator<T> emptyUnaryOperator() {
+        return item -> item;
+    }
+
     static <K, V> Function<K, V> emptyFunction() {
         return (K ignore) -> null;
+    }
+
+    static <T> Predicate<T> emptyTruePredicate() {
+        return (T ignore) -> true;
+    }
+
+    static <T> Predicate<T> emptyFalsePredicate() {
+        return (T ignore) -> false;
     }
 }

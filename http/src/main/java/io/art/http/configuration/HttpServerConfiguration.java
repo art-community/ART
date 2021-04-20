@@ -20,17 +20,15 @@ package io.art.http.configuration;
 
 import io.art.core.changes.*;
 import io.art.core.collection.*;
-import io.art.core.model.*;
 import io.art.core.source.*;
+import io.art.http.authentication.*;
 import io.art.http.refresher.*;
 import io.art.value.constants.ValueModuleConstants.*;
+import java.util.function.*;
 import lombok.*;
 import reactor.netty.http.server.*;
-import java.util.function.*;
-import static io.art.core.checker.EmptinessChecker.*;
 import static io.art.core.checker.NullityChecker.*;
 import static io.art.core.constants.NetworkConstants.*;
-import static io.art.core.model.ServiceMethodIdentifier.*;
 import static io.art.http.constants.HttpModuleConstants.ConfigurationKeys.*;
 import static io.art.http.constants.HttpModuleConstants.Defaults.*;
 import static io.art.value.constants.ValueModuleConstants.DataFormat.*;
@@ -44,6 +42,8 @@ public class HttpServerConfiguration {
     private int fragmentationMtu;
     private DataFormat defaultDataFormat;
     private final Function<? extends Throwable, ?> exceptionMapper;
+    @Builder.Default
+    private final HttpAuthenticatorRegistry authentication = new HttpAuthenticatorRegistry();
 
     public static HttpServerConfiguration defaults() {
         HttpServerConfiguration configuration = HttpServerConfiguration.builder().build();
