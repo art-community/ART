@@ -25,17 +25,17 @@ import io.art.http.module.*;
 import io.art.http.refresher.*;
 import io.art.model.implementation.server.*;
 import io.art.server.module.*;
+import java.util.*;
 import lombok.*;
 import reactor.netty.http.server.*;
-
-import java.util.*;
-
+import reactor.netty.http.server.logging.*;
 import static io.art.core.caster.Caster.*;
 import static io.art.core.checker.NullityChecker.*;
 import static io.art.core.collection.ImmutableMap.*;
 import static io.art.core.constants.StringConstants.*;
 import static io.art.core.factory.MapFactory.*;
 import static io.art.http.constants.HttpModuleConstants.HttpMethodType.*;
+import static java.util.Objects.isNull;
 
 @Getter
 @UsedByGenerator
@@ -51,27 +51,30 @@ public class HttpCustomizer {
         return this;
     }
 
-    public HttpCustomizer server(HttpServerModel httpServerModel) {
+    public HttpCustomizer server(HttpServerModel model) {
         HttpServer server = HttpServer.create()
-                .httpRequestDecoder(httpServerModel.getRequestDecoderConfigurator())
-                .wiretap(httpServerModel.isWiretap())
-                .accessLog(httpServerModel.isAccessLogging())
-                .host(httpServerModel.getHost())
-                .port(httpServerModel.getPort())
-                .protocol(httpServerModel.getProtocol())
-                .compress(httpServerModel.isCompression());
-        let(httpServerModel.getSslConfigurator(), configurator -> server.secure(configurator, httpServerModel.isRedirectToHttps()));
+                .httpRequestDecoder(model.getRequestDecoderConfigurator())
+                .wiretap(model.isWiretap())
+                .accessLog(model.isAccessLogging(), isNull(model.getAccessLogFormatFunction()) ?
+                        AccessLogFactory.createFilter(model.getAccessLogFilter()) :
+                        AccessLogFactory.createFilter(model.getAccessLogFilter(), model.getAccessLogFormatFunction())
+                )
+                .host(model.getHost())
+                .port(model.getPort())
+                .protocol(model.getProtocol())
+                .compress(model.isCompression());
+        let(model.getSslConfigurator(), configurator -> server.secure(configurator, model.isRedirectToHttps()));
 
         HttpServerConfiguration.HttpServerConfigurationBuilder serverConfigurationBuilder = HttpServerConfiguration.builder()
                 .httpServer(server)
-                .defaultDataFormat(httpServerModel.getDefaultDataFormat())
-                .fragmentationMtu(httpServerModel.getFragmentationMtu())
-                .logging(httpServerModel.isLogging())
-                .services(httpServerModel.getServices()
+                .defaultDataFormat(model.getDefaultDataFormat())
+                .fragmentationMtu(model.getFragmentationMtu())
+                .logging(model.isLogging())
+                .services(model.getServices()
                         .values()
                         .stream()
                         .collect(cast(immutableMapCollector(HttpServiceModel::getId, this::buildServiceConfig))))
-                .exceptionMapper(httpServerModel.getExceptionsMapper());
+                .exceptionMapper(model.getExceptionsMapper());
 
         server(serverConfigurationBuilder.build());
         return this;

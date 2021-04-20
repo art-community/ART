@@ -19,22 +19,20 @@
 package io.art.model.configurator;
 
 import io.art.core.collection.*;
-import io.art.core.model.*;
 import io.art.model.implementation.server.*;
 import io.art.value.constants.ValueModuleConstants.*;
 import io.netty.handler.ssl.*;
-import lombok.*;
-import reactor.netty.http.*;
-import reactor.netty.http.server.*;
-import reactor.netty.tcp.SslProvider;
-
 import java.io.*;
 import java.util.*;
 import java.util.function.*;
-
+import lombok.*;
+import reactor.netty.http.*;
+import reactor.netty.http.server.*;
+import reactor.netty.http.server.logging.*;
+import reactor.netty.tcp.SslProvider;
 import static io.art.core.collection.ImmutableMap.*;
 import static io.art.core.constants.NetworkConstants.*;
-import static io.art.core.constants.StringConstants.SLASH;
+import static io.art.core.constants.StringConstants.*;
 import static io.art.core.factory.MapFactory.*;
 import static io.art.core.factory.SetFactory.*;
 import static io.art.http.constants.HttpModuleConstants.Defaults.*;
@@ -55,6 +53,8 @@ public class HttpServerModelConfigurator {
     private boolean logging = false;
     private boolean wiretap = false;
     private boolean accessLogging = false;
+    private Predicate<AccessLogArgProvider> accessLogFilter = ignored -> true;
+    private AccessLogFactory accessLogFormatFunction;
     private int fragmentationMtu = 0;
     private DataFormat defaultDataFormat = JSON;
     private final HttpServiceExceptionMappingConfigurator exceptionMapping = new HttpServiceExceptionMappingConfigurator();
@@ -112,6 +112,16 @@ public class HttpServerModelConfigurator {
         return this;
     }
 
+    public HttpServerModelConfigurator accessLogFilter(Predicate<AccessLogArgProvider> accessLogFilter){
+        this.accessLogFilter = accessLogFilter;
+        return this;
+    }
+
+    public HttpServerModelConfigurator accessLogFormat(AccessLogFactory formatFunction){
+        this.accessLogFormatFunction = formatFunction;
+        return this;
+    }
+
     public HttpServerModelConfigurator compress() {
         compression = true;
         return this;
@@ -162,6 +172,8 @@ public class HttpServerModelConfigurator {
                 .logging(logging)
                 .wiretap(wiretap)
                 .accessLogging(accessLogging)
+                .accessLogFilter(accessLogFilter)
+                .accessLogFormatFunction(accessLogFormatFunction)
                 .fragmentationMtu(fragmentationMtu)
                 .defaultDataFormat(defaultDataFormat)
                 .requestDecoderConfigurator(requestDecoderConfigurator)
