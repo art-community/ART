@@ -34,10 +34,12 @@ import reactor.netty.http.server.*;
 import reactor.netty.http.websocket.*;
 import reactor.util.context.*;
 
+import java.io.*;
 import java.nio.file.*;
 import java.util.*;
 
 import static io.art.core.caster.Caster.*;
+import static io.art.core.checker.NullityChecker.let;
 import static io.art.core.model.ServiceMethodIdentifier.*;
 import static io.art.core.wrapper.ExceptionWrapper.*;
 import static io.art.http.constants.HttpModuleConstants.ExceptionMessages.*;
@@ -86,6 +88,8 @@ public class HttpRouter {
                         routes.file(methodValue.getPath(), methodValue.getFilePath());
                         break;
                     case DIRECTORY:
+                        let(methodValue.getDirectoryDefaultFileName(), fileName ->
+                                routes.file(methodValue.getPath(), methodValue.getFilePath() + fileName));
                         routes.directory(methodValue.getPath(), Paths.get(methodValue.getFilePath()));
                         break;
                 }

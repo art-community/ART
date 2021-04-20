@@ -34,6 +34,7 @@ import java.util.function.*;
 
 import static io.art.core.collection.ImmutableMap.*;
 import static io.art.core.constants.NetworkConstants.*;
+import static io.art.core.constants.StringConstants.SLASH;
 import static io.art.core.factory.MapFactory.*;
 import static io.art.core.factory.SetFactory.*;
 import static io.art.http.constants.HttpModuleConstants.Defaults.*;
@@ -57,7 +58,6 @@ public class HttpServerModelConfigurator {
     private int fragmentationMtu = 0;
     private DataFormat defaultDataFormat = JSON;
     private final HttpServiceExceptionMappingConfigurator exceptionMapping = new HttpServiceExceptionMappingConfigurator();
-    private ServiceMethodIdentifier defaultServiceMethod;
     private UnaryOperator<HttpRequestDecoderSpec> requestDecoderConfigurator = identity();
     private SslContext defaultSslContext;
     private final Map<String, Consumer<? super SslProvider.SslContextSpec>> sniMapping = map();
@@ -69,8 +69,9 @@ public class HttpServerModelConfigurator {
 
     public HttpServerModelConfigurator route(String path, Class<?> serviceClass,
                                              UnaryOperator<HttpServiceModelConfigurator> configurator){
-        addRouteIfAbsent(path, configurator
-                .apply(new HttpServiceModelConfigurator(serviceClass)
+        addRouteIfAbsent(
+                path.endsWith(SLASH) ? path : path + SLASH,
+                configurator.apply(new HttpServiceModelConfigurator(serviceClass)
                         .logging(logging)
                         .defaultDataFormat(defaultDataFormat)));
         return this;
@@ -126,11 +127,6 @@ public class HttpServerModelConfigurator {
         return this;
     }
 
-    public HttpServerModelConfigurator defaultServiceMethod(String serviceId, String methodId) {
-        defaultServiceMethod = new ServiceMethodIdentifier(serviceId, methodId);
-        return this;
-    }
-
     public HttpServerModelConfigurator configureRequestDecoder(UnaryOperator<HttpRequestDecoderSpec> configurator){
         requestDecoderConfigurator = configurator;
         return this;
@@ -168,7 +164,6 @@ public class HttpServerModelConfigurator {
                 .accessLogging(accessLogging)
                 .fragmentationMtu(fragmentationMtu)
                 .defaultDataFormat(defaultDataFormat)
-                .defaultServiceMethod(defaultServiceMethod)
                 .requestDecoderConfigurator(requestDecoderConfigurator)
                 .redirectToHttps(redirectToHttps)
                 .sslConfigurator(isNull(defaultSslContext) ? null :

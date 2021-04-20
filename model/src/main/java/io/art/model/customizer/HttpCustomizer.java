@@ -72,7 +72,6 @@ public class HttpCustomizer {
                         .stream()
                         .collect(cast(immutableMapCollector(HttpServiceModel::getId, this::buildServiceConfig))))
                 .exceptionMapper(httpServerModel.getExceptionsMapper());
-        let(httpServerModel.getDefaultServiceMethod(), serverConfigurationBuilder::defaultServiceMethod);
 
         server(serverConfigurationBuilder.build());
         return this;
@@ -99,11 +98,9 @@ public class HttpCustomizer {
         serviceModel.getHttpMethods()
                 .forEach((id, method) -> configs.put(id,
                         HttpMethodConfiguration.builder()
-                                .path(serviceModel.getPath().endsWith(SLASH) ?
-                                        serviceModel.getPath() + method.getName() :
-                                        serviceModel.getPath() + SLASH + method.getName()
-                                )
+                                .path(serviceModel.getPath() + method.getName())
                                 .filePath(method.getFilePath())
+                                .directoryDefaultFileName(method.getDirectoryDefaultFileName())
                                 .deactivated(method.isDeactivated())
                                 .logging(method.isLogging())
                                 .method(method.getHttpMethodType())

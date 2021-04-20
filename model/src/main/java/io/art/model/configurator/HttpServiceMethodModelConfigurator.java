@@ -25,7 +25,6 @@ import lombok.*;
 
 import java.util.function.*;
 
-import static io.art.core.constants.StringConstants.*;
 import static io.art.http.constants.HttpModuleConstants.*;
 import static io.art.value.constants.ValueModuleConstants.*;
 import static java.util.function.Function.*;
@@ -35,7 +34,8 @@ import static lombok.AccessLevel.*;
 public class HttpServiceMethodModelConfigurator {
     private final String id;
     private String path;
-    private String filePath = EMPTY_STRING;
+    private String filePath;
+    private String directoryDefaultFileName;
     private boolean deactivated = false;
     private boolean logging = false;
     private HttpMethodType httpMethodType = HttpMethodType.GET;
@@ -72,6 +72,11 @@ public class HttpServiceMethodModelConfigurator {
         return this;
     }
 
+    protected HttpServiceMethodModelConfigurator directoryDefaultFileName(String path) {
+        this.directoryDefaultFileName = path;
+        return this;
+    }
+
     public HttpServiceMethodModelConfigurator defaultDataFormat(DataFormat format) {
         defaultDataFormat = format;
         return this;
@@ -87,6 +92,7 @@ public class HttpServiceMethodModelConfigurator {
                 .id(id)
                 .name(path)
                 .filePath(filePath)
+                .directoryDefaultFileName(directoryDefaultFileName)
                 .deactivated(deactivated)
                 .logging(logging)
                 .httpMethodType(httpMethodType)

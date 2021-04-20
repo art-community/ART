@@ -40,7 +40,6 @@ import static io.art.value.constants.ValueModuleConstants.DataFormat.*;
 public class HttpServerConfiguration {
     private HttpServer httpServer;
     private ImmutableMap<String, HttpServiceConfiguration> services;
-    private ServiceMethodIdentifier defaultServiceMethod;
     private boolean logging;
     private int fragmentationMtu;
     private DataFormat defaultDataFormat;
@@ -65,13 +64,6 @@ public class HttpServerConfiguration {
 
         configuration.defaultDataFormat = serverListener.emit(dataFormat(source.getString(DATA_FORMAT_KEY), JSON));
         configuration.fragmentationMtu = serverListener.emit(orElse(source.getInt(FRAGMENTATION_MTU_KEY), 0));
-
-        String serviceId = source.getString(SERVICE_ID_KEY);
-        String methodId = source.getString(METHOD_ID_KEY);
-
-        if (isNotEmpty(serviceId) && isNotEmpty(methodId)) {
-            configuration.defaultServiceMethod = serverListener.emit(serviceMethod(serviceId, methodId));
-        }
 
         int port = serverListener.emit(orElse(source.getInt(TRANSPORT_PORT_KEY), DEFAULT_PORT));
         String host = serverListener.emit(orElse(source.getString(TRANSPORT_HOST_KEY), BROADCAST_IP_ADDRESS));

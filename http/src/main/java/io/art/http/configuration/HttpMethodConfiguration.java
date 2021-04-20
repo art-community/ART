@@ -30,6 +30,7 @@ import static io.art.value.constants.ValueModuleConstants.*;
 public class HttpMethodConfiguration {
     private String path;
     private String filePath;
+    private String directoryDefaultFileName;
     private HttpMethodType method;
     private boolean deactivated;
     private boolean logging;

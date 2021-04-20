@@ -32,6 +32,7 @@ public class HttpServiceMethodModel implements ServiceMethodModel {
     private final String id;
     private final String name;
     private final String filePath;
+    private final String directoryDefaultFileName;
     private final boolean deactivated;
     private final boolean logging;
     private final HttpMethodType httpMethodType;

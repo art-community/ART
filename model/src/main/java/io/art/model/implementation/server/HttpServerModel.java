@@ -23,7 +23,6 @@ public class HttpServerModel {
     private final boolean accessLogging;
     private final int fragmentationMtu;
     private final DataFormat defaultDataFormat;
-    private final ServiceMethodIdentifier defaultServiceMethod;
     private final UnaryOperator<HttpRequestDecoderSpec> requestDecoderConfigurator;
     private final boolean redirectToHttps;
     private final Consumer<? super SslProvider.SslContextSpec> sslConfigurator;

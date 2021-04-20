@@ -4,10 +4,12 @@ import io.art.model.implementation.server.*;
 import io.art.server.specification.ServiceMethodSpecification.*;
 import lombok.*;
 
+import java.io.*;
 import java.util.*;
 import java.util.function.*;
 
 import static io.art.core.collection.ImmutableMap.*;
+import static io.art.core.constants.StringConstants.SLASH;
 import static io.art.core.factory.MapFactory.*;
 import static io.art.http.constants.HttpModuleConstants.*;
 import static io.art.value.constants.ValueModuleConstants.*;
@@ -62,11 +64,30 @@ public class HttpServiceModelConfigurator {
     }
 
     public HttpServiceModelConfigurator file(String httpPath, String filePath){
-        return method(httpPath, method -> method.httpMethod(HttpMethodType.FILE).filePath(filePath));
+        return method(httpPath, method -> method
+                .httpMethod(HttpMethodType.FILE)
+                .filePath(filePath));
     }
 
     public HttpServiceModelConfigurator directory(String httpPath, String directory){
-        return method(httpPath, method -> method.httpMethod(HttpMethodType.DIRECTORY).filePath(directory));
+        return method(
+                httpPath.endsWith(SLASH) ?
+                        httpPath :
+                        httpPath + SLASH, method ->
+                method
+                        .httpMethod(HttpMethodType.DIRECTORY)
+                        .filePath(directory.endsWith(File.separator) ? directory : directory + File.separator));
+    }
+
+    public HttpServiceModelConfigurator directory(String httpPath, String directory, String defaultFileName){
+        return method(
+                httpPath.endsWith(SLASH) ?
+                        httpPath :
+                        httpPath + SLASH,
+                method -> method
+                        .httpMethod(HttpMethodType.DIRECTORY)
+                        .filePath(directory.endsWith(File.separator) ? directory : directory + File.separator)
+                        .directoryDefaultFileName(defaultFileName));
     }
 
     public HttpServiceModelConfigurator get(String methodName, UnaryOperator<HttpServiceMethodModelConfigurator> configurator){
@@ -98,11 +119,30 @@ public class HttpServiceModelConfigurator {
     }
 
     public HttpServiceModelConfigurator file(String httpPath, String filePath, UnaryOperator<HttpServiceMethodModelConfigurator> configurator){
-        return method(httpPath, method -> configurator.apply(method.httpMethod(HttpMethodType.FILE).filePath(filePath)));
+        return method(httpPath, method -> configurator.apply(method
+                .httpMethod(HttpMethodType.FILE)
+                .filePath(filePath)));
     }
 
     public HttpServiceModelConfigurator directory(String httpPath, String directory, UnaryOperator<HttpServiceMethodModelConfigurator> configurator){
-        return method(httpPath, method -> configurator.apply(method.httpMethod(HttpMethodType.DIRECTORY).filePath(directory)));
+        return method(
+                httpPath.endsWith(SLASH) ?
+                        httpPath :
+                        httpPath + SLASH,
+                method -> configurator.apply(method
+                        .httpMethod(HttpMethodType.DIRECTORY)
+                        .filePath(directory.endsWith(File.separator) ? directory : directory + File.separator)));
+    }
+
+    public HttpServiceModelConfigurator directory(String httpPath, String directory, String defaultFileName, UnaryOperator<HttpServiceMethodModelConfigurator> configurator){
+        return method(
+                httpPath.endsWith(SLASH) ?
+                        httpPath :
+                        httpPath + SLASH,
+                method -> configurator.apply(method
+                        .httpMethod(HttpMethodType.DIRECTORY)
+                        .filePath(directory.endsWith(File.separator) ? directory : directory + File.separator)
+                        .directoryDefaultFileName(defaultFileName)));
     }
 
 
