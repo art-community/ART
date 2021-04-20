@@ -19,8 +19,10 @@
 package io.art.http.constants;
 
 import io.art.communicator.constants.CommunicatorModuleConstants.*;
-import lombok.*;
+import io.art.core.exception.*;
+import io.netty.handler.codec.http.*;
 import java.time.*;
+import lombok.*;
 
 public interface HttpModuleConstants {
     interface ExceptionMessages {
@@ -130,6 +132,37 @@ public interface HttpModuleConstants {
         DIRECTORY,
         FILE,
         WEBSOCKET
+    }
+
+
+    enum HttpRedirectCode {
+        FOUND,
+        SEE_OTHER,
+        TEMPORARY_REDIRECT,
+        MOVED_PERMANENTLY,
+        PERMANENT_REDIRECT,
+        MULTIPLE_CHOICES,
+        NOT_MODIFIED;
+
+        public HttpResponseStatus get() {
+            switch (this){
+                case FOUND:
+                    return HttpResponseStatus.FOUND;
+                case SEE_OTHER:
+                    return HttpResponseStatus.SEE_OTHER;
+                case TEMPORARY_REDIRECT:
+                    return HttpResponseStatus.TEMPORARY_REDIRECT;
+                case MOVED_PERMANENTLY:
+                    return HttpResponseStatus.MOVED_PERMANENTLY;
+                case PERMANENT_REDIRECT:
+                    return HttpResponseStatus.PERMANENT_REDIRECT;
+                case MULTIPLE_CHOICES:
+                    return HttpResponseStatus.MULTIPLE_CHOICES;
+                case NOT_MODIFIED:
+                    return HttpResponseStatus.NOT_MODIFIED;
+            }
+            throw new ImpossibleSituationException();
+        }
     }
 
     interface Defaults {
