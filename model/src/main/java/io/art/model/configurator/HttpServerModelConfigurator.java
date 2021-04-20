@@ -21,6 +21,7 @@ package io.art.model.configurator;
 import io.art.core.collection.*;
 import io.art.model.implementation.server.*;
 import io.art.value.constants.ValueModuleConstants.*;
+import io.netty.channel.*;
 import io.netty.handler.codec.http.*;
 import io.netty.handler.ssl.*;
 import java.io.*;
@@ -31,6 +32,7 @@ import reactor.netty.http.*;
 import reactor.netty.http.server.*;
 import reactor.netty.http.server.logging.*;
 import reactor.netty.tcp.SslProvider;
+import reactor.util.annotation.*;
 import static io.art.core.collection.ImmutableMap.*;
 import static io.art.core.constants.NetworkConstants.*;
 import static io.art.core.constants.StringConstants.*;
@@ -63,6 +65,7 @@ public class HttpServerModelConfigurator {
     private SslContext defaultSslContext;
     private final Map<String, Consumer<? super SslProvider.SslContextSpec>> sniMapping = map();
     private boolean redirectToHttps = false;
+    private final Map<ChannelOption<?>, Object> tcpOptions = map();
 
 
 
@@ -109,6 +112,11 @@ public class HttpServerModelConfigurator {
 
     public HttpServerModelConfigurator defaultDataFormat(DataFormat format) {
         defaultDataFormat = format;
+        return this;
+    }
+
+    public <O> HttpServerModelConfigurator tcpOption(ChannelOption<O> key, @Nullable O value){
+        tcpOptions.put(key, value);
         return this;
     }
 
@@ -211,6 +219,7 @@ public class HttpServerModelConfigurator {
                                 .addSniMappings(sniMapping)
                                 .build())
                 .exceptionsMapper(exceptionMapping.configure())
+                .tcpOptions(tcpOptions)
                 .build();
     }
 

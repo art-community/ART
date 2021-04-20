@@ -25,17 +25,17 @@ import io.art.http.module.*;
 import io.art.http.refresher.*;
 import io.art.model.implementation.server.*;
 import io.art.server.module.*;
+import io.netty.channel.*;
 import java.util.*;
 import lombok.*;
 import reactor.netty.http.server.*;
 import reactor.netty.http.server.logging.*;
 import static io.art.core.caster.Caster.*;
-import static io.art.core.checker.NullityChecker.*;
 import static io.art.core.collection.ImmutableMap.*;
 import static io.art.core.constants.StringConstants.*;
 import static io.art.core.factory.MapFactory.*;
 import static io.art.http.constants.HttpModuleConstants.HttpMethodType.*;
-import static java.util.Objects.isNull;
+import static java.util.Objects.*;
 
 @Getter
 @UsedByGenerator
@@ -63,7 +63,13 @@ public class HttpCustomizer {
                 .port(model.getPort())
                 .protocol(model.getProtocol())
                 .compress(model.isCompression());
-        let(model.getSslConfigurator(), configurator -> server.secure(configurator, model.isRedirectToHttps()));
+
+        if (!isNull(model.getSslConfigurator()))
+            server = server.secure(model.getSslConfigurator(), model.isRedirectToHttps());
+
+        for (Map.Entry<ChannelOption<?>, ?> entry: model.getTcpOptions().entrySet()){
+            server = server.option(cast(entry.getKey()), cast(entry.getValue()));
+        }
 
         HttpServerConfiguration.HttpServerConfigurationBuilder serverConfigurationBuilder = HttpServerConfiguration.builder()
                 .httpServer(server)
