@@ -21,6 +21,5 @@ package io.art.core.constants;
 public enum MethodProcessingMode {
     BLOCKING,
     MONO,
-    FLUX,
-    EMPTY
+    FLUX
 }

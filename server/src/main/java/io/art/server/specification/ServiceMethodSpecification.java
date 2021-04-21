@@ -177,7 +177,6 @@ public class ServiceMethodSpecification {
         }
         switch (inputMode) {
             case BLOCKING:
-            case EMPTY:
                 return identity();
             case MONO:
                 return input -> input.map(Mono::just);
@@ -207,19 +206,13 @@ public class ServiceMethodSpecification {
     }
 
     private Function<Flux<Object>, Flux<Object>> adoptServe() {
-        if (inputMode == EMPTY) {
+        if (inputMode == BLOCKING || outputMode == BLOCKING) {
             return input -> input
                     .publishOn(getBlockingScheduler())
                     .transformDeferredContextual((flux, ctx) -> flux
                             .mapNotNull(entry -> processServing(entry, ctx))
                             .defaultIfEmpty(processServing(null, ctx))
                     );
-        }
-
-        if (inputMode == BLOCKING || outputMode == BLOCKING) {
-            return input -> input
-                    .publishOn(getBlockingScheduler())
-                    .transformDeferredContextual((flux, ctx) -> flux.mapNotNull(entry -> processServing(entry, ctx)));
         }
 
         return input -> input
