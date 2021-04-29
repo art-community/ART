@@ -21,19 +21,16 @@ package io.art.http.server;
 import io.art.core.property.*;
 import io.art.http.configuration.*;
 import io.art.http.refresher.*;
-import io.art.http.router.*;
 import io.art.server.*;
 import lombok.*;
 import org.apache.logging.log4j.*;
 import reactor.core.*;
 import reactor.core.publisher.*;
 import reactor.netty.*;
-import reactor.netty.http.server.*;
-import reactor.netty.http.websocket.*;
-
 import static io.art.core.property.Property.*;
 import static io.art.http.constants.HttpModuleConstants.LoggingMessages.*;
 import static io.art.http.manager.HttpManager.*;
+import static io.art.http.router.HttpRouter.*;
 import static io.art.logging.LoggingModule.*;
 import static lombok.AccessLevel.*;
 
@@ -70,7 +67,7 @@ public class HttpServer implements Server {
 
     private DisposableServer createServer() {
         reactor.netty.http.server.HttpServer server = configuration.getServerConfiguration().getHttpServer()
-                .route(routes -> new HttpRouter(routes, configuration.getServerConfiguration()));
+                .handle(httpRouter(configuration.getServerConfiguration()));
         Mono<? extends DisposableServer> bind = server.bind();
         if (configuration.getServerConfiguration().isLogging()) {
             bind = bind

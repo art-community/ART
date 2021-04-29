@@ -29,6 +29,9 @@ import io.art.transport.payload.*;
 import io.art.value.constants.ValueModuleConstants.*;
 import io.art.value.immutable.*;
 import io.netty.buffer.*;
+import java.nio.file.*;
+import java.util.*;
+import java.util.function.*;
 import org.reactivestreams.*;
 import reactor.core.publisher.*;
 import reactor.netty.http.server.*;
@@ -48,13 +51,14 @@ import static io.art.value.mime.MimeTypeDataFormatMapper.*;
 import static io.netty.handler.codec.http.HttpHeaderNames.*;
 import static java.text.MessageFormat.*;
 import static java.util.Objects.*;
-import java.nio.file.*;
-import java.util.*;
 
-public class HttpRouter {
+public class HttpRouter implements
+        BiFunction<HttpServerRequest, HttpServerResponse, Publisher<Void>>{
     private final HttpAuthenticatorRegistry authenticatorRegistry = httpModule().configuration().getServerConfiguration().getAuthentication();
+    private HttpServerRoutes routes;
 
-    public HttpRouter(HttpServerRoutes routes, HttpServerConfiguration configuration) {
+    public HttpRouter(HttpServerConfiguration configuration) {
+        routes = HttpServerRoutes.newRoutes();
         for (Map.Entry<String, HttpServiceConfiguration> service : configuration.getServices().entrySet()) {
             for (Map.Entry<String, HttpMethodConfiguration> method : service.getValue().getMethods().entrySet()) {
                 HttpMethodConfiguration methodValue = method.getValue();
@@ -92,6 +96,19 @@ public class HttpRouter {
                 }
             }
         }
+    }
+
+    public static HttpRouter httpRouter(HttpServerConfiguration configuration){
+        return new HttpRouter(configuration);
+    }
+
+    @Override
+    public Publisher<Void> apply(HttpServerRequest request, HttpServerResponse response) {
+        Authenticator<HttpServerRequest, HttpServerResponse> authenticator = authenticatorRegistry.get(request.path());
+        Boolean isAuthenticated = authenticator.check(request);
+        authenticator.apply(response);
+
+        return isAuthenticated ? routes.apply(request, response) : response.send();
     }
 
     private Publisher<Void> handleWebsocket(ServiceMethodSpecification specification, WebsocketInbound inbound, WebsocketOutbound outbound) {
@@ -135,26 +152,20 @@ public class HttpRouter {
                 .getConfiguration()
                 .getWriter(serviceMethod(specification.getServiceId(), specification.getMethodId()), outputDataFormat);
 
-        Authenticator<HttpServerRequest, HttpServerResponse> authenticator = authenticatorRegistry.get(request.path());
-        Boolean isAuthenticated = authenticator.check(request);
-        authenticator.apply(response);
-
-        return !isAuthenticated ?
-                response.send() :
-                request.receive()
-                        .map(reader::read)
-                        .map(TransportPayload::getValue)
-                        .transform(specification::serve)
-                        .onErrorResume(throwable -> mapException(specification, throwable))
-                        .map(writer::write)
-                        .contextWrite(ctx -> setContext(ctx
+        return request.receive()
+                .map(reader::read)
+                .map(TransportPayload::getValue)
+                .transform(specification::serve)
+                .onErrorResume(throwable -> mapException(specification, throwable))
+                .map(writer::write)
+                .contextWrite(ctx -> setContext(ctx
                                 .put(HttpContext.class, HttpContext.from(request, response))
                                 .put(SPECIFICATION_KEY, specification))
-                        )
-                        .doOnNext(unicast::tryEmitNext)
-                        .doOnComplete(unicast::tryEmitComplete)
-                        .doOnError(unicast::tryEmitError)
-                        .thenMany(response.send(unicast.asFlux()));
+                )
+                .doOnNext(unicast::tryEmitNext)
+                .doOnComplete(unicast::tryEmitComplete)
+                .doOnError(unicast::tryEmitError)
+                .thenMany(response.send(unicast.asFlux()));
     }
 
     private Flux<Value> mapException(ServiceMethodSpecification specification, Throwable exception) {
