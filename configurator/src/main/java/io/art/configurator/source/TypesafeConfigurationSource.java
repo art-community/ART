@@ -59,6 +59,11 @@ public class TypesafeConfigurationSource implements NestedConfiguration {
     }
 
     @Override
+    public String dump() {
+        return typesafeConfiguration.root().render();
+    }
+
+    @Override
     public Boolean asBool() {
         return let(typesafeConfiguration, configuration -> configuration.getBoolean(section));
     }

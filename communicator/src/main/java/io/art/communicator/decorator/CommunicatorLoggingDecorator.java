@@ -70,7 +70,6 @@ public class CommunicatorLoggingDecorator implements UnaryOperator<Flux<Object>>
 
     private void logComplete(CommunicatorAction action) {
         if (!enabled.get()) return;
-        System.out.println(Arrays.toString(Thread.currentThread().getStackTrace()));
         getLogger().info(format(COMMUNICATOR_COMPLETED_MESSAGE, action.getCommunicatorId(), action.getActionId()));
     }
 

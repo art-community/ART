@@ -31,7 +31,7 @@ import static io.art.value.factory.ArrayValueFactory.*;
 import static io.art.value.factory.PrimitivesFactory.*;
 import static io.art.value.immutable.BinaryValue.*;
 import static io.art.value.immutable.Entity.*;
-import static java.text.MessageFormat.format;
+import static java.text.MessageFormat.*;
 import static java.util.Objects.*;
 import java.util.*;
 

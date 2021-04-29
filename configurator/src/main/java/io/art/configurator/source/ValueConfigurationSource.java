@@ -26,6 +26,7 @@ import static io.art.configurator.constants.ConfiguratorModuleConstants.Configur
 import static io.art.core.collection.ImmutableArray.*;
 import static io.art.core.collection.ImmutableSet.*;
 import static io.art.core.combiner.SectionCombiner.*;
+import static io.art.core.extensions.StringExtensions.*;
 import static io.art.value.immutable.Value.*;
 import static io.art.value.mapping.PrimitiveMapping.toString;
 import static java.util.Objects.*;
@@ -81,6 +82,11 @@ public class ValueConfigurationSource implements NestedConfiguration {
             return null;
         }
         return new ValueConfigurationSource(combine(section, path), asEntity(nested));
+    }
+
+    @Override
+    public String dump() {
+        return emptyIfNull(value);
     }
 
 

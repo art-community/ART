@@ -1,6 +1,6 @@
 package io.art.model.configurator;
 
-import io.art.model.implementation.value.*;
+import io.art.model.modeling.value.*;
 import static io.art.core.factory.ArrayFactory.*;
 import static io.art.core.factory.SetFactory.*;
 import java.lang.reflect.*;

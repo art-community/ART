@@ -95,7 +95,7 @@ public class NioBufferExtensions {
 
     public static ByteBuffer expand(ByteBuffer current, int initialPosition, int delta) {
         int expandSize = max((int) (current.limit() * BUFFER_REALLOCATION_FACTOR), current.position() + delta);
-        ByteBuffer temp = current.isDirect() ? ByteBuffer.allocate(expandSize) : ByteBuffer.allocate(expandSize);
+        ByteBuffer temp = current.isDirect() ? ByteBuffer.allocateDirect(expandSize) : ByteBuffer.allocate(expandSize);
         int limit = current.limit();
         current.flip();
         temp.put(current);

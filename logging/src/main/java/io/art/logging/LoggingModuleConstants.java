@@ -61,6 +61,7 @@ public interface LoggingModuleConstants {
 
     interface LoggingMessages {
         String CONFIGURE_FROM_CLASSPATH = "Configure Log4j2 from classpath by file {0}";
+        String USE_SYNCHRONOUS_LOGGING = "Using synchronous Log4j2";
         String USE_ASYNCHRONOUS_LOGGING = "Using asynchronous Log4j2";
         String CONFIGURE_FROM_FILE = "Configure Log4j2 from by file (from -Dlog4j2.configurationFile) {0}";
     }

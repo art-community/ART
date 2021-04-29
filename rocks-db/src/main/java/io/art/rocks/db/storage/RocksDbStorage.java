@@ -27,8 +27,7 @@ import static io.art.core.checker.EmptinessChecker.*;
 import static io.art.core.collection.ImmutableMap.*;
 import static io.art.core.context.Context.*;
 import static io.art.core.factory.MapFactory.*;
-import static io.art.message.pack.descriptor.MessagePackReader.*;
-import static io.art.message.pack.descriptor.MessagePackWriter.*;
+import static io.art.message.pack.module.MessagePackModule.*;
 import static io.art.rocks.db.constants.RocksDbModuleConstants.ExceptionMessages.*;
 import static io.art.rocks.db.constants.RocksDbModuleConstants.*;
 import static io.art.rocks.db.storage.RocksDbCollectionStorage.*;
@@ -73,7 +72,7 @@ public class RocksDbStorage {
         if (isEmpty(entityKey)) return;
         if (isEmpty(value)) return;
         byte[] keyBytes = entityKey.getBytes(context().configuration().getCharset());
-        byte[] valueBytes = writeMessagePackToBytes(value);
+        byte[] valueBytes = messagePackModule().configuration().getWriter().writeToBytes(value);
         RocksDbPrimitiveStorage.put(keyBytes, valueBytes);
     }
 
@@ -82,7 +81,7 @@ public class RocksDbStorage {
         byte[] bytes = get(entityKey);
         if (isEmpty(bytes)) return empty();
         try {
-            return ofNullable(readMessagePack(bytes));
+            return ofNullable(messagePackModule().configuration().getReader().read(bytes));
         } catch (Throwable throwable) {
             throw new RocksDbOperationException(MESSAGE_PACK_PARSING_ERROR, throwable);
         }

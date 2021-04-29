@@ -18,15 +18,17 @@
 
 package io.art.yaml.configuration;
 
-import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.dataformat.yaml.*;
 import io.art.core.module.*;
 import io.art.core.source.*;
+import io.art.yaml.descriptor.*;
 import lombok.*;
 
 @Getter
 public class YamlModuleConfiguration implements ModuleConfiguration {
-    YAMLMapper objectMapper = new YAMLMapper();
+    private final YAMLMapper objectMapper = new YAMLMapper();
+    private final YamlReader reader = new YamlReader(objectMapper.getFactory());
+    private final YamlWriter writer = new YamlWriter(objectMapper.getFactory());
 
     @RequiredArgsConstructor
     public static class Configurator implements ModuleConfigurator<YamlModuleConfiguration, Configurator> {

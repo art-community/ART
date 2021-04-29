@@ -20,58 +20,31 @@ package io.art.yaml.descriptor;
 
 import com.fasterxml.jackson.core.*;
 import com.fasterxml.jackson.dataformat.yaml.*;
-import io.art.core.stream.*;
 import io.art.value.builder.*;
+import io.art.value.descriptor.Reader;
+import io.art.value.immutable.Value;
 import io.art.value.immutable.*;
 import io.art.yaml.exception.*;
-import io.netty.buffer.*;
-import lombok.experimental.*;
+import lombok.*;
 import static com.fasterxml.jackson.core.JsonToken.*;
 import static io.art.core.checker.EmptinessChecker.*;
-import static io.art.core.context.Context.*;
-import static io.art.core.extensions.FileExtensions.*;
 import static io.art.core.factory.ArrayFactory.*;
 import static io.art.value.factory.ArrayValueFactory.*;
 import static io.art.value.factory.PrimitivesFactory.*;
 import static io.art.value.immutable.Entity.*;
 import static io.art.value.mapping.PrimitiveMapping.*;
-import static io.art.yaml.module.YamlModule.*;
 import static java.util.Objects.*;
 import java.io.*;
-import java.nio.*;
-import java.nio.file.*;
 import java.util.*;
 
 
-@UtilityClass
-public class YamlReader {
-    public static Value readYaml(byte[] yamlBytes) {
-        return readYaml(new ByteArrayInputStream(yamlBytes));
-    }
+@AllArgsConstructor
+public class YamlReader implements Reader<Value> {
+    private final YAMLFactory yamlFactory;
 
-    public static Value readYaml(ByteBuffer nioBuffer) {
-        return readYaml(new NioByteBufferInputStream(nioBuffer));
-    }
-
-    public static Value readYaml(ByteBuf nettyBuffer) {
-        return readYaml(new ByteBufInputStream(nettyBuffer));
-    }
-
-    public static Value readYaml(Path path) {
-        return readYaml(fileInputStream(path));
-    }
-
-    public static Value readYaml(String yaml) {
-        return readYaml(yaml.getBytes(context().configuration().getCharset()));
-    }
-
-    public static Value readYaml(InputStream inputStream) {
-        return readYaml(yamlModule().configuration().getObjectMapper().getFactory(), inputStream);
-    }
-
-    public static Value readYaml(YAMLFactory yamlFactory, InputStream yaml) {
-        if (isEmpty(yaml)) return null;
-        try (YAMLParser parser = yamlFactory.createParser(yaml)) {
+    @Override
+    public Value read(InputStream inputStream) {
+        try (YAMLParser parser = yamlFactory.createParser(inputStream)) {
             JsonToken nextToken = parser.nextToken();
             if (isNull(nextToken)) return null;
             switch (nextToken) {

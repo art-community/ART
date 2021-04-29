@@ -77,7 +77,10 @@ public class LoggingModule implements StatelessModule<LoggingModuleConfiguration
         if (configuration.getAsynchronous()) {
             logger.info(USE_ASYNCHRONOUS_LOGGING);
             setProperty(LOG4J_CONTEXT_SELECTOR, AsyncLoggerContextSelector.class.getName());
+            return;
         }
+
+        logger.info(USE_SYNCHRONOUS_LOGGING);
     }
 
     @Override

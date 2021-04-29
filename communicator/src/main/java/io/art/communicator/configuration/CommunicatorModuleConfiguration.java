@@ -25,6 +25,8 @@ import io.art.core.model.*;
 import io.art.core.module.*;
 import io.art.core.source.*;
 import io.art.resilience.configuration.*;
+import io.art.transport.payload.*;
+import io.art.value.constants.ValueModuleConstants.*;
 import lombok.*;
 import reactor.core.scheduler.*;
 import static io.art.communicator.constants.CommunicatorModuleConstants.ConfigurationKeys.*;
@@ -32,6 +34,7 @@ import static io.art.communicator.constants.CommunicatorModuleConstants.Defaults
 import static io.art.core.checker.EmptinessChecker.*;
 import static io.art.core.checker.NullityChecker.*;
 import static io.art.core.collection.ImmutableMap.*;
+import static io.art.core.model.CommunicatorActionIdentifier.*;
 import static java.util.Objects.*;
 import static java.util.Optional.*;
 import java.util.*;
@@ -46,11 +49,18 @@ public class CommunicatorModuleConfiguration implements ModuleConfiguration {
 
     @Getter
     private ImmutableMap<String, CommunicatorProxyConfiguration> configurations = emptyImmutableMap();
+
     @Getter
     private CommunicatorProxyRegistry registry = new CommunicatorProxyRegistry();
+
     @Getter
     private Scheduler scheduler;
 
+    @Getter
+    private Function<DataFormat, TransportPayloadReader> reader;
+
+    @Getter
+    private Function<DataFormat, TransportPayloadWriter> writer;
 
     public Optional<String> findConnectorId(String protocol, CommunicatorActionIdentifier id) {
         CommunicatorProxyConfiguration proxyConfiguration = configurations.get(id.getCommunicatorId());
@@ -60,11 +70,27 @@ public class CommunicatorModuleConfiguration implements ModuleConfiguration {
     }
 
     public Scheduler getBlockingScheduler(String communicatorId, String actionId) {
-        return getActionConfiguration(CommunicatorActionIdentifier.communicatorAction(communicatorId, actionId))
+        return getActionConfiguration(communicatorAction(communicatorId, actionId))
                 .map(CommunicatorActionConfiguration::getBlockingScheduler)
                 .orElseGet(() -> ofNullable(getConfigurations().get(communicatorId))
                         .map(CommunicatorProxyConfiguration::getBlockingScheduler)
                         .orElse(scheduler));
+    }
+
+    public TransportPayloadReader getReader(CommunicatorActionIdentifier id, DataFormat dataFormat) {
+        return getActionConfiguration(id)
+                .map(CommunicatorActionConfiguration::getReader)
+                .orElseGet(() -> ofNullable(getConfigurations().get(id.getCommunicatorId()))
+                        .map(CommunicatorProxyConfiguration::getReader)
+                        .orElse(reader)).apply(dataFormat);
+    }
+
+    public TransportPayloadWriter getWriter(CommunicatorActionIdentifier id, DataFormat dataFormat) {
+        return getActionConfiguration(id)
+                .map(CommunicatorActionConfiguration::getWriter)
+                .orElseGet(() -> ofNullable(getConfigurations().get(id.getCommunicatorId()))
+                        .map(CommunicatorProxyConfiguration::getWriter)
+                        .orElse(writer)).apply(dataFormat);
     }
 
     public Optional<CommunicatorActionConfiguration> getActionConfiguration(CommunicatorActionIdentifier id) {
@@ -117,6 +143,8 @@ public class CommunicatorModuleConfiguration implements ModuleConfiguration {
         @Override
         public Configurator from(ConfigurationSource source) {
             configuration.scheduler = DEFAULT_COMMUNICATOR_BLOCKING_SCHEDULER;
+            configuration.reader = TransportPayloadReader::new;
+            configuration.writer = TransportPayloadWriter::new;
             configuration.configurations = ofNullable(source.getNested(COMMUNICATOR_SECTION))
                     .map(communicator -> communicator.getNestedMap(PROXIES_SECTION, proxy -> CommunicatorProxyConfiguration.from(configuration.refresher, proxy)))
                     .orElse(emptyImmutableMap());
@@ -125,7 +153,7 @@ public class CommunicatorModuleConfiguration implements ModuleConfiguration {
         }
 
         @Override
-        public Configurator override(CommunicatorModuleConfiguration configuration) {
+        public Configurator configure(CommunicatorModuleConfiguration configuration) {
             ifNotEmpty(configuration.getConfigurations(), configurations -> this.configuration.configurations = configurations);
             apply(configuration.getRegistry(), registry -> this.configuration.registry = registry);
             return this;

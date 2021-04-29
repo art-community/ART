@@ -1,14 +1,14 @@
-name: ART Java Build
+name: ART Java Branch
 on:
   push:
     branches-ignore:
       - main
 jobs:
-  gradle:
+  gradle-build:
     strategy:
       matrix:
         os: [ ubuntu-latest, macos-latest, windows-latest ]
-        jdk: [ 1.8, 11, 16 ]
+        jdk: [ 1.8, 11 ]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2

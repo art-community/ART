@@ -33,20 +33,19 @@ import org.reactivestreams.*;
 import reactor.core.publisher.*;
 import reactor.core.scheduler.*;
 import reactor.util.context.*;
-
-import java.util.*;
-import java.util.function.*;
-
 import static io.art.core.caster.Caster.*;
 import static io.art.core.constants.MethodDecoratorScope.*;
 import static io.art.core.constants.MethodProcessingMode.*;
 import static io.art.core.factory.ArrayFactory.*;
+import static io.art.core.model.ServiceMethodIdentifier.*;
 import static io.art.server.constants.ServerModuleConstants.StateKeys.*;
 import static io.art.server.module.ServerModule.*;
 import static io.art.server.state.ServerModuleState.ServerThreadLocalState.*;
 import static java.util.Objects.*;
 import static java.util.function.UnaryOperator.*;
 import static lombok.AccessLevel.*;
+import java.util.*;
+import java.util.function.*;
 
 @Builder(toBuilder = true)
 @UsedByGenerator
@@ -97,6 +96,9 @@ public class ServiceMethodSpecification {
     @Singular("outputDecorator")
     private final List<UnaryOperator<Flux<Object>>> outputDecorators;
 
+    @Getter(lazy = true)
+    private final ServerModuleConfiguration configuration = serverModule().configuration();
+
     @Getter(lazy = true, value = PRIVATE)
     private final Function<Flux<Object>, Flux<Object>> adoptInput = adoptInput();
 
@@ -107,10 +109,8 @@ public class ServiceMethodSpecification {
     private final Function<Flux<Object>, Flux<Object>> adoptServe = adoptServe();
 
     @Getter(lazy = true, value = PRIVATE)
-    private final ServerModuleConfiguration configuration = serverModule().configuration();
+    private final Scheduler blockingScheduler = getConfiguration().getBlockingScheduler(serviceMethod(serviceId, methodId));
 
-    @Getter(lazy = true, value = PRIVATE)
-    private final Scheduler blockingScheduler = getConfiguration().getBlockingScheduler(serviceId, methodId);
 
     public Flux<Value> serve(Flux<Value> input) {
         return input
@@ -187,7 +187,7 @@ public class ServiceMethodSpecification {
         }
     }
 
-    private Function<Flux<Object>, Flux<Object>> adoptOutput(){
+    private Function<Flux<Object>, Flux<Object>> adoptOutput() {
         if (isNull(outputMode)) {
             throw new ImpossibleSituationException();
         }
@@ -219,7 +219,7 @@ public class ServiceMethodSpecification {
                 .transformDeferredContextual((flux, ctx) -> flux.mapNotNull(entry -> processServing(entry, ctx)));
     }
 
-    private Object processServing(Object input, ContextView context){
+    private Object processServing(Object input, ContextView context) {
         if (context.hasKey(SPECIFICATION_KEY)) serverModule().state().localState(fromContext(context));
         return implementation.serve(input);
     }

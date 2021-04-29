@@ -64,7 +64,7 @@ public class RsocketServerConfiguration {
         configuration.defaultMetaDataFormat = JSON;
         configuration.logging = false;
         configuration.fragmentationMtu = 0;
-        configuration.payloadDecoder = PayloadDecoder.DEFAULT;
+        configuration.payloadDecoder = ZERO_COPY;
         configuration.maxInboundPayloadSize = FRAME_LENGTH_MASK;
         configuration.transport = TCP;
         configuration.tcpServer = TcpServer.create().port(DEFAULT_PORT).host(BROADCAST_IP_ADDRESS);

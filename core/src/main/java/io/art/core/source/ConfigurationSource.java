@@ -182,6 +182,7 @@ public interface ConfigurationSource {
         return orEmptyImmutableMap(getNested(path), configuration -> configuration.asMap(mapper));
     }
 
+    String dump();
 
     interface ModuleConfigurationSourceType {
         int getOrder();

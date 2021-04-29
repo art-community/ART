@@ -21,6 +21,7 @@ include("core")
 include("model")
 include("value")
 include("logging")
+include("transport")
 include("resilience")
 include("launcher")
 include("configurator")
@@ -41,6 +42,7 @@ include("scheduler")
 include("graal")
 include("storage")
 include("rocks-db")
+include("meta")
 //include("metrics")
 //include("metrics-http")
 //include("kafka-client")
@@ -58,7 +60,9 @@ pluginManagement {
     }
     resolutionStrategy {
         eachPlugin {
-            if (requested.id.id == "art-internal-jvm") useModule("io.art.gradle:art-gradle:${requested.version}")
+            if (requested.id.id.contains("art")) {
+                useModule("io.art.gradle:art-gradle:main")
+            }
         }
     }
 }

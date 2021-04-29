@@ -7,6 +7,7 @@ import static io.art.configurator.constants.ConfiguratorModuleConstants.Configur
 import static io.art.core.collection.ImmutableSet.*;
 import static io.art.core.constants.StringConstants.*;
 import static java.util.Objects.*;
+import static java.util.stream.Collectors.*;
 
 
 @RequiredArgsConstructor
@@ -27,6 +28,11 @@ public class DelegateConfigurationSource implements ConfigurationSource {
             }
         }
         return null;
+    }
+
+    @Override
+    public String dump() {
+        return sources.stream().map(ConfigurationSource::dump).collect(joining(NEW_LINE));
     }
 
     @Override

@@ -19,7 +19,7 @@
 package io.art.model.configurator;
 
 
-import io.art.model.implementation.server.*;
+import io.art.model.modeling.server.*;
 import io.art.server.specification.ServiceMethodSpecification.*;
 import lombok.*;
 

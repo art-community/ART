@@ -18,62 +18,45 @@
 
 package io.art.message.pack.descriptor;
 
-import io.art.core.extensions.*;
-import io.art.core.stream.*;
 import io.art.message.pack.exception.MessagePackException;
+import io.art.value.descriptor.Writer;
 import io.art.value.immutable.*;
-import lombok.experimental.*;
+import io.netty.buffer.*;
 import org.msgpack.core.*;
-import static io.art.core.constants.BufferConstants.*;
-import static io.art.core.extensions.FileExtensions.*;
-import static io.art.value.immutable.Value.*;
 import static io.art.message.pack.constants.MessagePackConstants.ExceptionMessages.*;
-import static java.nio.ByteBuffer.*;
-import static java.text.MessageFormat.format;
+import static io.art.value.immutable.Value.*;
+import static java.text.MessageFormat.*;
 import static java.util.Objects.*;
 import static org.msgpack.core.MessagePack.*;
 import static org.msgpack.value.ValueFactory.*;
 import java.io.*;
 import java.nio.*;
-import java.nio.file.*;
 import java.util.*;
 
-@UtilityClass
-public class MessagePackWriter {
-    public static void writeMessagePack(Value value, Path path) {
-        try (OutputStream outputStream = fileOutputStream(path)) {
-            writeMessagePack(value, outputStream);
-        } catch (IOException ioException) {
-            throw new MessagePackException(ioException);
-        }
+public class MessagePackWriter implements Writer<Value> {
+    @Override
+    public void write(io.art.value.immutable.Value value, ByteBuffer buffer) {
+        write(value, buffer, MessagePackException::new);
     }
 
-    public static byte[] writeMessagePackToBytes(Value value) {
-        ByteBuffer byteBuffer = allocate(DEFAULT_BUFFER_SIZE);
-        try {
-            try (NioByteBufferOutputStream outputStream = new NioByteBufferOutputStream(byteBuffer)) {
-                writeMessagePack(value, outputStream);
-            } catch (IOException ioException) {
-                throw new MessagePackException(ioException);
-            }
-            return NioBufferExtensions.toByteArray(byteBuffer);
-        } finally {
-            byteBuffer.clear();
-        }
+    @Override
+    public void write(Value value, ByteBuf buffer) {
+        write(value, buffer, MessagePackException::new);
     }
 
-    public static void writeMessagePack(Value value, OutputStream outputStream) {
+    @Override
+    public void write(Value value, OutputStream outputStream) {
         if (Value.valueIsNull(value)) {
             return;
         }
         try (MessagePacker packer = newDefaultPacker(outputStream)) {
-            packer.packValue(writeMessagePack(value));
+            packer.packValue(write(value));
         } catch (Throwable throwable) {
             throw new MessagePackException(throwable);
         }
     }
 
-    public static org.msgpack.value.Value writeMessagePack(Value value) {
+    public org.msgpack.value.Value write(Value value) {
         if (valueIsNull(value)) return null;
         if (isPrimitive(value)) return writePrimitive(asPrimitive(value));
         switch (value.getType()) {
@@ -88,7 +71,7 @@ public class MessagePackWriter {
     }
 
 
-    private static org.msgpack.value.Value writePrimitive(Primitive primitive) {
+    private org.msgpack.value.Value writePrimitive(Primitive primitive) {
         if (valueIsNull(primitive)) return null;
         switch (primitive.getPrimitiveType()) {
             case STRING:
@@ -109,20 +92,20 @@ public class MessagePackWriter {
         throw new MessagePackException(format(VALUE_TYPE_NOT_SUPPORTED, primitive.getType()));
     }
 
-    private static org.msgpack.value.Value writeArray(ArrayValue array) {
+    private org.msgpack.value.Value writeArray(ArrayValue array) {
         if (valueIsNull(array)) return null;
         org.msgpack.value.Value[] values = new org.msgpack.value.Value[array.size()];
         List<Value> list = array.asList();
         int newArrayIndex = 0;
         for (Value value : list) {
-            org.msgpack.value.Value element = writeMessagePack(value);
+            org.msgpack.value.Value element = write(value);
             if (isNull(element)) continue;
             values[newArrayIndex++] = element;
         }
         return newArray(Arrays.copyOf(values, newArrayIndex), true);
     }
 
-    private static org.msgpack.value.Value writeEntity(Entity entity) {
+    private org.msgpack.value.Value writeEntity(Entity entity) {
         if (valueIsNull(entity)) return null;
         MapBuilder mapBuilder = newMapBuilder();
         Set<Primitive> keys = entity.asMap().keySet();
@@ -135,28 +118,28 @@ public class MessagePackWriter {
         return mapBuilder.build();
     }
 
-    private static void writeEntityField(MapBuilder mapBuilder, Primitive key, Value value) {
+    private void writeEntityField(MapBuilder mapBuilder, Primitive key, Value value) {
         switch (key.getType()) {
             case STRING:
-                mapBuilder.put(newString(key.getString()), writeMessagePack(value));
+                mapBuilder.put(newString(key.getString()), write(value));
                 return;
             case INT:
-                mapBuilder.put(newInteger(key.getInt()), writeMessagePack(value));
+                mapBuilder.put(newInteger(key.getInt()), write(value));
                 return;
             case BOOL:
-                mapBuilder.put(newBoolean(key.getBool()), writeMessagePack(value));
+                mapBuilder.put(newBoolean(key.getBool()), write(value));
                 return;
             case LONG:
-                mapBuilder.put(newInteger(key.getLong()), writeMessagePack(value));
+                mapBuilder.put(newInteger(key.getLong()), write(value));
                 return;
             case BYTE:
-                mapBuilder.put(newInteger(key.getByte()), writeMessagePack(value));
+                mapBuilder.put(newInteger(key.getByte()), write(value));
                 return;
             case DOUBLE:
-                mapBuilder.put(newFloat(key.getDouble()), writeMessagePack(value));
+                mapBuilder.put(newFloat(key.getDouble()), write(value));
                 return;
             case FLOAT:
-                mapBuilder.put(newFloat(key.getFloat()), writeMessagePack(value));
+                mapBuilder.put(newFloat(key.getFloat()), write(value));
         }
     }
 }

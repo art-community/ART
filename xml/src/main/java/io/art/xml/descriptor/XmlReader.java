@@ -19,60 +19,30 @@
 package io.art.xml.descriptor;
 
 import io.art.core.collection.*;
-import io.art.core.stream.*;
+import io.art.value.descriptor.Reader;
 import io.art.value.immutable.*;
-import io.art.value.immutable.XmlEntity.*;
 import io.art.xml.exception.*;
-import io.netty.buffer.*;
 import lombok.*;
-import lombok.experimental.*;
 import org.apache.logging.log4j.*;
 import static io.art.core.checker.EmptinessChecker.*;
 import static io.art.core.collection.ImmutableMap.*;
-import static io.art.core.context.Context.*;
-import static io.art.core.extensions.FileExtensions.*;
 import static io.art.logging.LoggingModule.*;
 import static io.art.value.immutable.XmlEntity.*;
 import static io.art.xml.constants.XmlMappingExceptionMessages.*;
-import static io.art.xml.module.XmlModule.*;
 import static java.util.Objects.*;
 import static javax.xml.stream.XMLStreamConstants.*;
 import static lombok.AccessLevel.*;
 import javax.xml.stream.*;
 import java.io.*;
-import java.nio.*;
-import java.nio.file.*;
 
-@UtilityClass
-public class XmlReader {
+@AllArgsConstructor
+public class XmlReader implements Reader<XmlEntity> {
     @Getter(lazy = true, value = PRIVATE)
     private static final Logger logger = logger(XmlWriter.class);
+    private final XMLInputFactory xmlInputFactory;
 
-    public static XmlEntity readXml(byte[] bytes) {
-        return readXml(new ByteArrayInputStream(bytes));
-    }
-
-    public static XmlEntity readXml(Path path) {
-        return readXml(fileInputStream(path));
-    }
-
-    public static XmlEntity readXml(ByteBuf nettyBuffer) {
-        return readXml(new ByteBufInputStream(nettyBuffer));
-    }
-
-    public static XmlEntity readXml(ByteBuffer nioBuffer) {
-        return readXml(new NioByteBufferInputStream(nioBuffer));
-    }
-
-    public static XmlEntity readXml(String xml) {
-        return readXml(xml.getBytes(context().configuration().getCharset()));
-    }
-
-    public static XmlEntity readXml(InputStream inputStream) {
-        return readXml(xmlModule().configuration().getXmlInputFactory(), inputStream);
-    }
-
-    public static XmlEntity readXml(XMLInputFactory xmlInputFactory, InputStream inputStream) {
+    @Override
+    public XmlEntity read(InputStream inputStream) {
         if (isEmpty(inputStream)) return null;
         XMLStreamReader reader = null;
         try {

@@ -1,7 +1,7 @@
 package io.art.launcher;
 
 import io.art.configurator.module.*;
-import io.art.model.implementation.module.*;
+import io.art.model.modeling.module.*;
 import lombok.*;
 
 @Getter

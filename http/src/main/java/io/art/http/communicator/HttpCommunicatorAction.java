@@ -25,8 +25,8 @@ import io.art.core.mime.*;
 import io.art.core.model.*;
 import io.art.core.property.*;
 import io.art.http.configuration.*;
-import io.art.http.model.*;
 import io.art.http.refresher.*;
+import io.art.transport.payload.*;
 import io.art.value.immutable.Value;
 import io.netty.handler.codec.http.*;
 import lombok.*;
@@ -38,7 +38,6 @@ import static io.art.core.constants.CompilerSuppressingWarnings.*;
 import static io.art.core.property.Property.*;
 import static io.art.http.constants.HttpModuleConstants.HttpProtocol.*;
 import static io.art.http.module.HttpModule.*;
-import static io.art.http.payload.HttpPayloadReader.*;
 import static io.art.logging.LoggingModule.*;
 import static io.art.value.mime.MimeTypeDataFormatMapper.*;
 import static io.netty.handler.codec.http.HttpHeaderNames.*;
@@ -107,8 +106,8 @@ public class HttpCommunicatorAction implements CommunicatorActionImplementation 
         HttpMethod httpMethod = communicationMethod();
         if (GET.equals(httpMethod)) {
             return input -> client.get().response((response, data) -> data
-                    .map(payload -> readPayloadData(fromMimeType(MimeType.valueOf(response.responseHeaders().get(CONTENT_TYPE))), payload))
-                    .map(HttpPayloadValue::getValue));
+                    .map(payload -> communicatorModule().configuration().getReader(communicatorActionId, fromMimeType(MimeType.valueOf(response.responseHeaders().get(CONTENT_TYPE)))).read(payload))
+                    .map(TransportPayload::getValue));
         }
         throw new ImpossibleSituationException();
     }

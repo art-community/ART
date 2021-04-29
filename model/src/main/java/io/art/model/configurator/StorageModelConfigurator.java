@@ -2,8 +2,8 @@ package io.art.model.configurator;
 
 import io.art.core.collection.ImmutableMap;
 import io.art.core.collection.ImmutableSet;
-import io.art.model.implementation.storage.StorageModuleModel;
-import io.art.model.implementation.storage.TarantoolSpaceModel;
+import io.art.model.modeling.storage.StorageModuleModel;
+import io.art.model.modeling.storage.TarantoolSpaceModel;
 
 import java.util.function.Function;
 import java.util.function.UnaryOperator;

@@ -23,14 +23,12 @@ import io.art.core.model.*;
 import io.art.http.authentication.*;
 import io.art.http.configuration.*;
 import io.art.http.exception.*;
-import io.art.http.model.*;
 import io.art.http.state.*;
 import io.art.server.specification.*;
+import io.art.transport.payload.*;
 import io.art.value.constants.ValueModuleConstants.*;
 import io.art.value.immutable.*;
 import io.netty.buffer.*;
-import java.nio.file.*;
-import java.util.*;
 import org.reactivestreams.*;
 import reactor.core.publisher.*;
 import reactor.netty.http.server.*;
@@ -43,8 +41,6 @@ import static io.art.core.wrapper.ExceptionWrapper.*;
 import static io.art.http.constants.HttpModuleConstants.ExceptionMessages.*;
 import static io.art.http.constants.HttpModuleConstants.*;
 import static io.art.http.module.HttpModule.*;
-import static io.art.http.payload.HttpPayloadReader.*;
-import static io.art.http.payload.HttpPayloadWriter.*;
 import static io.art.server.constants.ServerModuleConstants.StateKeys.*;
 import static io.art.server.module.ServerModule.*;
 import static io.art.server.state.ServerModuleState.ServerThreadLocalState.*;
@@ -52,6 +48,8 @@ import static io.art.value.mime.MimeTypeDataFormatMapper.*;
 import static io.netty.handler.codec.http.HttpHeaderNames.*;
 import static java.text.MessageFormat.*;
 import static java.util.Objects.*;
+import java.nio.file.*;
+import java.util.*;
 
 public class HttpRouter {
     private final HttpAuthenticatorRegistry authenticatorRegistry = httpModule().configuration().getServerConfiguration().getAuthentication();
@@ -61,7 +59,7 @@ public class HttpRouter {
             for (Map.Entry<String, HttpMethodConfiguration> method : service.getValue().getMethods().entrySet()) {
                 HttpMethodConfiguration methodValue = method.getValue();
                 HttpMethodType httpMethodType = methodValue.getMethod();
-                switch (httpMethodType){
+                switch (httpMethodType) {
                     case GET:
                         routes.get(methodValue.getPath(), (request, response) -> handleHttp(findSpecification(serviceMethod(service.getKey(), method.getKey())), request, response));
                         break;
@@ -104,12 +102,17 @@ public class HttpRouter {
         DataFormat outputDataFormat = ignoreException(
                 () -> fromMimeType(MimeType.valueOf(inbound.headers().get(ACCEPT))),
                 ignored -> defaultDataFormat);
-
+        TransportPayloadReader reader = specification
+                .getConfiguration()
+                .getReader(serviceMethod(specification.getServiceId(), specification.getMethodId()), inputDataFormat);
+        TransportPayloadWriter writer = specification
+                .getConfiguration()
+                .getWriter(serviceMethod(specification.getServiceId(), specification.getMethodId()), outputDataFormat);
         return inbound.receive()
-                .map(content -> readPayloadData(inputDataFormat, content))
-                .map(HttpPayloadValue::getValue)
+                .map(reader::read)
+                .map(TransportPayload::getValue)
                 .transform(specification::serve)
-                .map(output -> writePayloadData(outputDataFormat, output))
+                .map(writer::write)
                 .transform(outbound::send)
                 .then();
 
@@ -125,6 +128,12 @@ public class HttpRouter {
                 ignored -> defaultDataFormat);
 
         Sinks.Many<ByteBuf> unicast = Sinks.many().unicast().onBackpressureBuffer();
+        TransportPayloadReader reader = specification
+                .getConfiguration()
+                .getReader(serviceMethod(specification.getServiceId(), specification.getMethodId()), inputDataFormat);
+        TransportPayloadWriter writer = specification
+                .getConfiguration()
+                .getWriter(serviceMethod(specification.getServiceId(), specification.getMethodId()), outputDataFormat);
 
         Authenticator<HttpServerRequest, HttpServerResponse> authenticator = authenticatorRegistry.get(request.path());
         Boolean isAuthenticated = authenticator.check(request);
@@ -133,11 +142,11 @@ public class HttpRouter {
         return !isAuthenticated ?
                 response.send() :
                 request.receive()
-                        .map(content -> readPayloadData(inputDataFormat, content))
-                        .map(HttpPayloadValue::getValue)
+                        .map(reader::read)
+                        .map(TransportPayload::getValue)
                         .transform(specification::serve)
                         .onErrorResume(throwable -> mapException(specification, throwable))
-                        .map(output -> writePayloadData(outputDataFormat, output))
+                        .map(writer::write)
                         .contextWrite(ctx -> setContext(ctx
                                 .put(HttpContext.class, HttpContext.from(request, response))
                                 .put(SPECIFICATION_KEY, specification))
@@ -148,7 +157,7 @@ public class HttpRouter {
                         .thenMany(response.send(unicast.asFlux()));
     }
 
-    private Flux<Value> mapException(ServiceMethodSpecification specification, Throwable exception){
+    private Flux<Value> mapException(ServiceMethodSpecification specification, Throwable exception) {
         Object result = httpModule().configuration().getServerConfiguration()
                 .getExceptionMapper()
                 .apply(cast(exception));
@@ -157,7 +166,7 @@ public class HttpRouter {
                 Flux.just(specification.getOutputMapper().map(cast(result)));
     }
 
-    private Context setContext(Context context){
+    private Context setContext(Context context) {
         serverModule().state().localState(fromContext(context));
         return context;
     }
@@ -168,7 +177,7 @@ public class HttpRouter {
                 .orElseThrow(() -> new HttpException(format(SPECIFICATION_NOT_FOUND, serviceMethodId)));
     }
 
-    private HttpMethodConfiguration findMethodConfiguration(ServiceMethodSpecification specification){
+    private HttpMethodConfiguration findMethodConfiguration(ServiceMethodSpecification specification) {
         return httpModule().configuration().getServerConfiguration()
                 .getServices().get(specification.getServiceId())
                 .getMethods().get(specification.getMethodId());

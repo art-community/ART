@@ -20,14 +20,12 @@ package io.art.model.configurator;
 
 import io.art.core.collection.*;
 import io.art.core.operator.*;
-import io.art.http.server.*;
-import io.art.model.implementation.server.*;
+import io.art.model.modeling.server.*;
 import static io.art.core.collection.ImmutableMap.*;
 import static io.art.core.collection.ImmutableSet.*;
 import static io.art.core.factory.ArrayFactory.*;
 import static java.util.function.UnaryOperator.*;
 
-import java.util.*;
 import java.util.function.*;
 
 public class ServerModelConfigurator {

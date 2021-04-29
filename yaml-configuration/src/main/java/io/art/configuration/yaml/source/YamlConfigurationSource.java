@@ -70,6 +70,12 @@ public class YamlConfigurationSource implements NestedConfiguration {
     }
 
     @Override
+    @SneakyThrows
+    public String dump() {
+        return YAML_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(configuration);
+    }
+
+    @Override
     public Boolean asBool() {
         return let(configuration, JsonNode::asBoolean);
     }

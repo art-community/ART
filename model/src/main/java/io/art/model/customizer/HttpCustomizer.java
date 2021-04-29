@@ -23,7 +23,7 @@ import io.art.core.collection.*;
 import io.art.http.configuration.*;
 import io.art.http.module.*;
 import io.art.http.refresher.*;
-import io.art.model.implementation.server.*;
+import io.art.model.modeling.server.*;
 import io.art.server.module.*;
 import io.netty.channel.*;
 import java.util.*;

@@ -19,56 +19,34 @@
 package io.art.yaml.descriptor;
 
 import com.fasterxml.jackson.dataformat.yaml.*;
-import io.art.core.extensions.*;
-import io.art.core.stream.*;
+import io.art.value.descriptor.Writer;
+import io.art.value.immutable.Value;
 import io.art.value.immutable.*;
 import io.art.yaml.exception.*;
-import lombok.experimental.*;
+import io.netty.buffer.*;
+import lombok.*;
 import static io.art.core.caster.Caster.*;
-import static io.art.core.constants.BufferConstants.*;
-import static io.art.core.context.Context.*;
-import static io.art.core.extensions.FileExtensions.*;
 import static io.art.value.immutable.Value.*;
-import static io.art.yaml.module.YamlModule.*;
-import static java.nio.ByteBuffer.*;
 import java.io.*;
 import java.nio.*;
-import java.nio.file.*;
 import java.util.*;
 
-@UtilityClass
-public class YamlWriter {
-    public static byte[] writeYamlToBytes(Value value) {
-        ByteBuffer byteBuffer = allocate(DEFAULT_BUFFER_SIZE);
-        try {
-            try (NioByteBufferOutputStream outputStream = new NioByteBufferOutputStream(byteBuffer)) {
-                writeYaml(value, outputStream);
-            } catch (IOException ioException) {
-                throw new YamlException(ioException);
-            }
-            return NioBufferExtensions.toByteArray(byteBuffer);
-        } finally {
-            byteBuffer.clear();
-        }
+@AllArgsConstructor
+public class YamlWriter implements Writer<Value> {
+    private final YAMLFactory yamlFactory;
+
+    @Override
+    public void write(Value value, ByteBuffer buffer) {
+        write(value, buffer, YamlException::new);
     }
 
-    public static void writeYaml(Value value, Path path) {
-        try (OutputStream outputStream = fileOutputStream(path)) {
-            writeYaml(value, outputStream);
-        } catch (IOException ioException) {
-            throw new YamlException(ioException);
-        }
+    @Override
+    public void write(Value value, ByteBuf buffer) {
+        write(value, buffer, YamlException::new);
     }
 
-    public static String writeYaml(Value value) {
-        return new String(writeYamlToBytes(value), context().configuration().getCharset());
-    }
-
-    public static void writeYaml(Value value, OutputStream outputStream) {
-        writeYaml(yamlModule().configuration().getObjectMapper().getFactory(), value, outputStream);
-    }
-
-    public static void writeYaml(YAMLFactory yamlFactory, Value value, OutputStream outputStream) {
+    @Override
+    public void write(Value value, OutputStream outputStream) {
         if (valueIsNull(value)) {
             return;
         }

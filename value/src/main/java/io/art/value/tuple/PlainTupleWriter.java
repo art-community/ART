@@ -18,14 +18,13 @@
 
 package io.art.value.tuple;
 
-import io.art.value.immutable.*;
 import io.art.value.immutable.Value;
+import io.art.value.immutable.*;
 import io.art.value.tuple.schema.*;
 import lombok.*;
 import lombok.experimental.*;
 import static io.art.core.caster.Caster.*;
-import static io.art.core.factory.ArrayFactory.dynamicArrayOf;
-import static io.art.core.factory.ArrayFactory.fixedArrayOf;
+import static io.art.core.factory.ArrayFactory.*;
 import static io.art.value.constants.ValueModuleConstants.ValueType.*;
 import static io.art.value.immutable.Value.*;
 import static io.art.value.tuple.schema.ValueSchema.*;
@@ -65,7 +64,7 @@ public class PlainTupleWriter {
         List<?> tuple = dynamicArrayOf();
         Set<Primitive> keys = entity.asMap().keySet();
         for (Primitive key : keys) {
-            if (valueIsNull(key)) continue;;
+            if (valueIsNull(key)) continue;
             Value value = entity.get(key);
             if (valueIsNull(value)) {
                 tuple.add(null);

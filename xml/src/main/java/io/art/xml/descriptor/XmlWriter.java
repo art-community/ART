@@ -19,71 +19,32 @@
 package io.art.xml.descriptor;
 
 import io.art.core.collection.*;
-import io.art.core.extensions.*;
-import io.art.core.stream.*;
+import io.art.value.descriptor.Writer;
 import io.art.value.immutable.*;
 import io.art.xml.exception.*;
+import io.netty.buffer.*;
 import lombok.*;
-import lombok.experimental.*;
 import org.apache.logging.log4j.*;
 import static io.art.core.checker.EmptinessChecker.*;
-import static io.art.core.constants.BufferConstants.*;
 import static io.art.core.context.Context.*;
-import static io.art.core.extensions.FileExtensions.*;
 import static io.art.logging.LoggingModule.*;
 import static io.art.value.constants.ValueModuleConstants.ValueType.XmlValueType.*;
 import static io.art.xml.constants.XmlDocumentConstants.*;
-import static io.art.xml.module.XmlModule.*;
-import static java.nio.ByteBuffer.*;
-import static java.nio.charset.StandardCharsets.*;
 import static java.util.Objects.*;
 import static lombok.AccessLevel.*;
 import javax.xml.stream.*;
 import java.io.*;
 import java.nio.*;
-import java.nio.file.*;
 import java.util.*;
 
-@UtilityClass
-public class XmlWriter {
+@AllArgsConstructor
+public class XmlWriter implements Writer<XmlEntity> {
     @Getter(lazy = true, value = PRIVATE)
-    private static final Logger logger = logger(XmlWriter.class);
+    private final Logger logger = logger(XmlWriter.class);
+    private final XMLOutputFactory outputFactory;
 
-    public static byte[] writeXmlToBytes(XmlEntity entity) throws XmlException {
-        ByteBuffer byteBuffer = allocate(DEFAULT_BUFFER_SIZE);
-        try {
-            try (NioByteBufferOutputStream outputStream = new NioByteBufferOutputStream(byteBuffer)) {
-                writeXml(entity, outputStream);
-            } catch (IOException ioException) {
-                throw new XmlException(ioException);
-            }
-            return NioBufferExtensions.toByteArray(byteBuffer);
-        } finally {
-            byteBuffer.clear();
-        }
-    }
-
-    public static void writeXml(XmlEntity entity, Path path) throws XmlException {
-        try (OutputStream outputStream = fileOutputStream(path)) {
-            writeXml(entity, outputStream);
-        } catch (IOException ioException) {
-            throw new XmlException(ioException);
-        }
-    }
-
-    public static String writeXml(XmlEntity entity) throws XmlException {
-        return new String(writeXmlToBytes(entity), context().configuration().getCharset());
-    }
-
-    public static void writeXml(XmlEntity entity, OutputStream outputStream) throws XmlException {
-        try {
-            writeXml(xmlModule().configuration().getXmlOutputFactory(), entity, outputStream);
-        } catch (Throwable throwable) {
-            throw new XmlException(throwable);
-        }
-    }
-
-    public static void writeXml(XMLOutputFactory outputFactory, XmlEntity entity, OutputStream outputStream) throws XmlException {
+    @Override
+    public void write(XmlEntity entity, OutputStream outputStream) {
         if (isNull(entity)) return;
         XMLStreamWriter writer = null;
         try {
@@ -102,14 +63,24 @@ public class XmlWriter {
         }
     }
 
+    @Override
+    public void write(XmlEntity value, ByteBuffer buffer) {
+        write(value, buffer, XmlException::new);
+    }
 
-    private static void writeAllElements(XMLStreamWriter xmlStreamWriter, XmlEntity xmlEntity) throws XMLStreamException {
+    @Override
+    public void write(XmlEntity value, ByteBuf buffer) {
+        write(value, buffer, XmlException::new);
+    }
+
+
+    private void writeAllElements(XMLStreamWriter xmlStreamWriter, XmlEntity xmlEntity) throws XMLStreamException {
         writeStartDocument(xmlStreamWriter);
         writeXmlEntity(xmlStreamWriter, xmlEntity);
         writeEndDocument(xmlStreamWriter);
     }
 
-    private static void writeXmlEntity(XMLStreamWriter xmlStreamWriter, XmlEntity entity) throws XMLStreamException {
+    private void writeXmlEntity(XMLStreamWriter xmlStreamWriter, XmlEntity entity) throws XMLStreamException {
         ImmutableArray<XmlEntity> children = entity.getChildren();
 
         if (isEmpty(entity.getTag())) {
@@ -133,7 +104,7 @@ public class XmlWriter {
         writeEndElement(xmlStreamWriter);
     }
 
-    private static void writeValue(XMLStreamWriter xmlStreamWriter, XmlEntity entity) throws XMLStreamException {
+    private void writeValue(XMLStreamWriter xmlStreamWriter, XmlEntity entity) throws XMLStreamException {
         if (entity.isCData()) {
             writeCData(xmlStreamWriter, entity);
             return;
@@ -141,7 +112,7 @@ public class XmlWriter {
         writeCharacters(xmlStreamWriter, entity);
     }
 
-    private static void writeStartElement(XMLStreamWriter xmlStreamWriter, XmlEntity entity) throws XMLStreamException {
+    private void writeStartElement(XMLStreamWriter xmlStreamWriter, XmlEntity entity) throws XMLStreamException {
         String namespace = entity.getNamespace();
         String prefix = entity.getPrefix();
 
@@ -152,43 +123,43 @@ public class XmlWriter {
         xmlStreamWriter.writeStartElement(entity.getTag());
     }
 
-    private static void writeNamespaces(XMLStreamWriter xmlStreamWriter, XmlEntity entity) throws XMLStreamException {
+    private void writeNamespaces(XMLStreamWriter xmlStreamWriter, XmlEntity entity) throws XMLStreamException {
         ImmutableMap<String, String> namespaces = entity.getNamespaces();
         for (Map.Entry<String, String> entry : namespaces.entrySet()) {
             xmlStreamWriter.writeNamespace(entry.getKey(), entry.getValue());
         }
     }
 
-    private static void writeAttributes(XMLStreamWriter xmlStreamWriter, XmlEntity entity) throws XMLStreamException {
+    private void writeAttributes(XMLStreamWriter xmlStreamWriter, XmlEntity entity) throws XMLStreamException {
         ImmutableMap<String, String> attributes = entity.getAttributes();
         for (Map.Entry<String, String> entry : attributes.entrySet()) {
             xmlStreamWriter.writeAttribute(entry.getKey(), entry.getValue());
         }
     }
 
-    private static void writeCharacters(XMLStreamWriter xmlStreamWriter, XmlEntity entity) throws XMLStreamException {
+    private void writeCharacters(XMLStreamWriter xmlStreamWriter, XmlEntity entity) throws XMLStreamException {
         String value = entity.getValue();
         if (nonNull(value)) {
             xmlStreamWriter.writeCharacters(value);
         }
     }
 
-    private static void writeCData(XMLStreamWriter xmlStreamWriter, XmlEntity entity) throws XMLStreamException {
+    private void writeCData(XMLStreamWriter xmlStreamWriter, XmlEntity entity) throws XMLStreamException {
         XmlValue<?> xmlValue = entity.getXmlValue();
         if (CDATA.equals(xmlValue.getType())) {
-            xmlStreamWriter.writeCData(writeXml((XmlEntity) xmlValue.getValue()));
+            xmlStreamWriter.writeCData(writeToString((XmlEntity) xmlValue.getValue()));
         }
     }
 
-    private static void writeEndElement(XMLStreamWriter xmlStreamWriter) throws XMLStreamException {
+    private void writeEndElement(XMLStreamWriter xmlStreamWriter) throws XMLStreamException {
         xmlStreamWriter.writeEndElement();
     }
 
-    private static void writeStartDocument(XMLStreamWriter xmlStreamWriter) throws XMLStreamException {
-        xmlStreamWriter.writeStartDocument(UTF_8.name(), XML_VERSION);
+    private void writeStartDocument(XMLStreamWriter xmlStreamWriter) throws XMLStreamException {
+        xmlStreamWriter.writeStartDocument(context().configuration().getCharset().name(), XML_VERSION);
     }
 
-    private static void writeEndDocument(XMLStreamWriter xmlStreamWriter) throws XMLStreamException {
+    private void writeEndDocument(XMLStreamWriter xmlStreamWriter) throws XMLStreamException {
         xmlStreamWriter.writeEndDocument();
     }
 }

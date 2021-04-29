@@ -20,7 +20,7 @@ package io.art.model.configurator;
 
 import io.art.core.collection.*;
 import io.art.core.operator.*;
-import io.art.model.implementation.communicator.*;
+import io.art.model.modeling.communicator.*;
 import lombok.*;
 import static io.art.core.collection.ImmutableMap.*;
 import static io.art.core.collection.ImmutableSet.*;

@@ -23,6 +23,7 @@ import io.art.core.constants.*;
 import lombok.*;
 import static com.google.common.base.Strings.*;
 import static io.art.core.checker.NullityChecker.*;
+import static io.art.core.colorizer.AnsiColorizer.*;
 import static io.art.core.constants.StringConstants.*;
 
 @NoArgsConstructor(staticName = "printer")
@@ -41,12 +42,12 @@ public class ColoredPrinter {
     }
 
     public ColoredPrinter message(String message) {
-        builder.append(repeat(TABULATION, tabulation)).append(AnsiColorizer.additional(message)).append(NEW_LINE);
+        builder.append(repeat(TABULATION, tabulation)).append(additional(message)).append(NEW_LINE);
         return this;
     }
 
     public ColoredPrinter value(String name, Object value) {
-        return message(AnsiColorizer.success(name + COLON + SPACE) + AnsiColorizer.additional(let(value, Object::toString, NULL_STRING)));
+        return message(success(name + COLON + SPACE) + additional(let(value, Object::toString, NULL_STRING)));
     }
 
     public ColoredPrinter tabulation(int count) {

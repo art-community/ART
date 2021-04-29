@@ -19,56 +19,35 @@
 package io.art.json.descriptor;
 
 import com.fasterxml.jackson.core.*;
-import io.art.core.extensions.*;
-import io.art.core.stream.*;
 import io.art.json.exception.*;
+import io.art.value.descriptor.Writer;
+import io.art.value.immutable.Value;
 import io.art.value.immutable.*;
-import lombok.experimental.*;
+import io.netty.buffer.*;
+import lombok.*;
 import static io.art.core.caster.Caster.*;
-import static io.art.core.constants.BufferConstants.*;
-import static io.art.core.context.Context.*;
-import static io.art.core.extensions.FileExtensions.*;
 import static io.art.value.immutable.Value.*;
-import static io.art.json.module.JsonModule.*;
-import static java.nio.ByteBuffer.*;
 import java.io.*;
 import java.nio.*;
-import java.nio.file.*;
+import java.nio.charset.*;
 import java.util.*;
 
-@UtilityClass
-public class JsonWriter {
-    public static byte[] writeJsonToBytes(Value value) {
-        ByteBuffer byteBuffer = allocate(DEFAULT_BUFFER_SIZE);
-        try {
-            try (NioByteBufferOutputStream outputStream = new NioByteBufferOutputStream(byteBuffer)) {
-                writeJson(value, outputStream);
-            } catch (IOException ioException) {
-                throw new JsonException(ioException);
-            }
-            return NioBufferExtensions.toByteArray(byteBuffer);
-        } finally {
-            byteBuffer.clear();
-        }
+@AllArgsConstructor
+public class JsonWriter implements Writer<Value> {
+    private final JsonFactory jsonFactory;
+
+    @Override
+    public void write(Value value, ByteBuffer buffer) {
+        write(value, buffer, JsonException::new);
     }
 
-    public static void writeJson(Value value, Path path) {
-        try (OutputStream outputStream = fileOutputStream(path)) {
-            writeJson(value, outputStream);
-        } catch (IOException ioException) {
-            throw new JsonException(ioException);
-        }
+    @Override
+    public void write(Value value, ByteBuf buffer) {
+        write(value, buffer, JsonException::new);
     }
 
-    public static String writeJson(Value value) {
-        return new String(writeJsonToBytes(value), context().configuration().getCharset());
-    }
-
-    public static void writeJson(Value value, OutputStream outputStream) {
-        writeJson(jsonModule().configuration().getObjectMapper().getFactory(), value, outputStream);
-    }
-
-    public static void writeJson(JsonFactory jsonFactory, Value value, OutputStream outputStream) {
+    @Override
+    public void write(Value value, OutputStream outputStream) {
         if (valueIsNull(value)) {
             return;
         }
@@ -108,7 +87,6 @@ public class JsonWriter {
             throw new JsonException(ioException);
         }
     }
-
 
     private static void writeJsonEntity(JsonGenerator generator, Entity entity) throws IOException {
         if (valueIsNull(entity)) return;

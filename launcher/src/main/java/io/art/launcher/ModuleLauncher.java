@@ -21,27 +21,23 @@ package io.art.launcher;
 import io.art.communicator.module.*;
 import io.art.configurator.module.*;
 import io.art.core.annotation.*;
-import io.art.core.collection.*;
 import io.art.core.configuration.*;
-import io.art.core.constants.*;
 import io.art.core.context.*;
 import io.art.core.module.*;
 import io.art.core.property.*;
-import io.art.http.configuration.HttpServerConfiguration;
-import io.art.http.configuration.*;
-import io.art.http.configuration.HttpServerConfiguration.*;
 import io.art.http.module.*;
 import io.art.json.module.*;
 import io.art.logging.*;
+import io.art.message.pack.module.*;
 import io.art.model.customizer.*;
-import io.art.model.implementation.communicator.*;
-import io.art.model.implementation.module.*;
-import io.art.model.implementation.server.*;
+import io.art.model.modeling.communicator.*;
+import io.art.model.modeling.module.*;
+import io.art.model.modeling.server.*;
+import io.art.protobuf.module.*;
 import io.art.rocks.db.module.*;
 import io.art.rsocket.module.*;
 import io.art.scheduler.module.*;
 import io.art.server.module.*;
-import io.art.server.specification.*;
 import io.art.storage.module.*;
 import io.art.tarantool.module.*;
 import io.art.value.module.*;
@@ -49,18 +45,8 @@ import io.art.xml.module.*;
 import io.art.yaml.module.*;
 import lombok.experimental.*;
 import org.apache.logging.log4j.*;
-import reactor.netty.http.server.*;
-
-import java.util.*;
-import java.util.concurrent.atomic.*;
-import java.util.function.*;
-
-import static io.art.core.caster.Caster.cast;
 import static io.art.core.checker.EmptinessChecker.*;
 import static io.art.core.checker.NullityChecker.*;
-import static io.art.core.collection.ImmutableMap.*;
-import static io.art.core.colorizer.AnsiColorizer.*;
-import static io.art.core.constants.StringConstants.*;
 import static io.art.core.context.Context.*;
 import static io.art.core.extensions.ThreadExtensions.*;
 import static io.art.core.property.LazyProperty.*;
@@ -68,10 +54,12 @@ import static io.art.core.singleton.SingletonsRegistry.*;
 import static io.art.http.module.HttpModule.*;
 import static io.art.launcher.ModuleLauncherConstants.*;
 import static io.art.logging.LoggingModule.*;
+import static io.art.model.configurator.ModuleModelConfigurator.*;
 import static io.art.rsocket.module.RsocketModule.*;
-import static io.netty.handler.codec.http.HttpMethod.*;
 import static java.util.Objects.*;
 import static java.util.Optional.*;
+import java.util.concurrent.atomic.*;
+import java.util.function.*;
 
 @UtilityClass
 @UsedByGenerator
@@ -113,6 +101,8 @@ public class ModuleLauncher {
                     .put(LoggingModule::new, module -> logging(module, state, loggingCustomizer))
                     .put(SchedulerModule::new, module -> scheduler(module, state))
                     .put(JsonModule::new, module -> json(module, state))
+                    .put(ProtobufModule::new, module -> protobuf(module, state))
+                    .put(MessagePackModule::new, module -> messagePack(module, state))
                     .put(YamlModule::new, module -> yaml(module, state))
                     .put(XmlModule::new, module -> xml(module, state))
                     .put(ServerModule::new, module -> server(module, state, serverCustomizer.apply(module)))
@@ -132,16 +122,20 @@ public class ModuleLauncher {
                     .mainModuleId(model.getMainModuleId())
                     .build();
             initialize(contextConfiguration, modules.get(), message -> logger.get().info(message));
-            LAUNCHED_MESSAGES.forEach(message -> logger.get().info(success(message)));
+            LAUNCHED_MESSAGES.forEach(message -> logger.get().info(message));
             if (needBlock()) block();
         }
+    }
+
+    public static void launch() {
+        launch(module().configure());
     }
 
     private static ConfiguratorModule configurator(ConfiguratorModule configuratorModule, ConfiguratorCustomizer configuratorCustomizer) {
         ofNullable(configuratorCustomizer)
                 .ifPresent(customizer -> configuratorModule
                         .configure(configurator -> configurator
-                                .override(customizer.configure(configuratorModule.orderedSources()))));
+                                .configure(customizer.configure(configuratorModule.orderedSources()))));
         return configuratorModule;
     }
 
@@ -150,7 +144,7 @@ public class ModuleLauncher {
         if (isNull(customizer)) {
             return value;
         }
-        value.configure(configurator -> configurator.override(customizer.getConfiguration()));
+        value.configure(configurator -> configurator.configure(customizer.getConfiguration()));
         return value;
     }
 
@@ -164,13 +158,23 @@ public class ModuleLauncher {
         if (isNull(customizer)) {
             return logging;
         }
-        logging.configure(configurator -> configurator.override(customizer.getConfiguration()));
+        logging.configure(configurator -> configurator.configure(customizer.getConfiguration()));
         return logging;
     }
 
     private static JsonModule json(JsonModule json, ModuleConfiguringState state) {
         json.configure(configurator -> configurator.from(state.getConfigurator().orderedSources()));
         return json;
+    }
+
+    private static MessagePackModule messagePack(MessagePackModule messagePack, ModuleConfiguringState state) {
+        messagePack.configure(configurator -> configurator.from(state.getConfigurator().orderedSources()));
+        return messagePack;
+    }
+
+    private static ProtobufModule protobuf(ProtobufModule protobuf, ModuleConfiguringState state) {
+        protobuf.configure(configurator -> configurator.from(state.getConfigurator().orderedSources()));
+        return protobuf;
     }
 
     private static YamlModule yaml(YamlModule yaml, ModuleConfiguringState state) {
@@ -188,7 +192,7 @@ public class ModuleLauncher {
         if (isNull(customizer)) {
             return server;
         }
-        server.configure(configurator -> configurator.override(customizer.getConfiguration()));
+        server.configure(configurator -> configurator.configure(customizer.getConfiguration()));
         return server;
     }
 
@@ -197,7 +201,7 @@ public class ModuleLauncher {
         if (isNull(customizer)) {
             return communicator;
         }
-        communicator.configure(configurator -> configurator.override(customizer.getConfiguration()));
+        communicator.configure(configurator -> configurator.configure(customizer.getConfiguration()));
         return communicator;
     }
 
@@ -212,7 +216,7 @@ public class ModuleLauncher {
         }
         rsocket.configure(configurator -> configurator
                 .from(state.getConfigurator().orderedSources())
-                .override(rsocketCustomizer.getConfiguration()));
+                .configure(rsocketCustomizer.getConfiguration()));
         return rsocket;
     }
 
@@ -230,7 +234,7 @@ public class ModuleLauncher {
 //        }
         http.configure(configurator -> configurator
                 .from(state.getConfigurator().orderedSources())
-                .override(httpCustomizer.getConfiguration()));
+                .configure(httpCustomizer.getConfiguration()));
         return http;
     }
 
@@ -239,12 +243,12 @@ public class ModuleLauncher {
         return tarantool;
     }
 
-    private static StorageModule storage(StorageModule storage, ModuleConfiguringState state, StorageCustomizer storageCustomizer){
+    private static StorageModule storage(StorageModule storage, ModuleConfiguringState state, StorageCustomizer storageCustomizer) {
         storage.configure(configurator -> configurator.from(state.getConfigurator().orderedSources()));
-        if (isNull(storageCustomizer)){
+        if (isNull(storageCustomizer)) {
             return storage;
         }
-        storage.configure(configurator -> configurator.override(storageCustomizer.getConfiguration()));
+        storage.configure(configurator -> configurator.configure(storageCustomizer.getConfiguration()));
         return storage;
     }
 

@@ -1,7 +1,7 @@
 package io.art.model.configurator;
 
 import io.art.core.collection.*;
-import io.art.model.implementation.storage.*;
+import io.art.model.modeling.storage.*;
 import lombok.*;
 
 import java.util.function.*;

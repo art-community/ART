@@ -29,6 +29,8 @@ import static io.art.core.constants.StringConstants.*;
 import static io.art.core.context.Context.*;
 import static java.lang.System.*;
 import static java.nio.ByteBuffer.*;
+import static java.nio.channels.Channels.newInputStream;
+import static java.nio.channels.Channels.newOutputStream;
 import static java.nio.channels.FileChannel.*;
 import static java.nio.file.Files.*;
 import static java.nio.file.Paths.*;
@@ -59,24 +61,49 @@ public class FileExtensions {
         return path.substring(0, path.lastIndexOf(DOT));
     }
 
+    public static File fileOf(URL url) {
+        return new File(ExceptionHandler.<URI>wrapException(InternalRuntimeException::new).call(url::toURI));
+    }
+
+
+    public static void readFileToBuffer(String path, ByteBuffer buffer) {
+        readFileToBuffer(get(path), buffer);
+    }
+
+    public static void readFileToBuffer(Path path, ByteBuffer buffer) {
+        try (FileChannel fileChannel = open(path)) {
+            fileChannel.read(buffer);
+            buffer.flip();
+        } catch (IOException ioException) {
+            throw new InternalRuntimeException(ioException);
+        }
+    }
+
 
     public static String readFile(String path) {
-        return readFile(get(path), DEFAULT_BUFFER_SIZE);
+        ByteBuffer buffer = allocate(DEFAULT_BUFFER_SIZE);
+        try {
+            return readFile(get(path), buffer);
+        } finally {
+            buffer.clear();
+        }
     }
 
     public static String readFile(Path path) {
-        return readFile(path, DEFAULT_BUFFER_SIZE);
-    }
-
-    public static String readFile(String path, int bufferSize) {
-        return readFile(get(path), bufferSize);
-    }
-
-    public static String readFile(Path path, int bufferSize) {
-        if (bufferSize <= 0) {
-            return EMPTY_STRING;
+        ByteBuffer buffer = allocate(DEFAULT_BUFFER_SIZE);
+        try {
+            return readFile(path, buffer);
+        } finally {
+            buffer.clear();
         }
-        ByteBuffer buffer = allocate(bufferSize);
+    }
+
+
+    public static String readFile(String path, ByteBuffer buffer) {
+        return readFile(get(path), buffer);
+    }
+
+    public static String readFile(Path path, ByteBuffer buffer) {
         StringBuilder result = new StringBuilder(EMPTY_STRING);
         CharsetDecoder decoder = context().configuration().getCharset().newDecoder();
         try (FileChannel fileChannel = open(path)) {
@@ -84,53 +111,69 @@ public class FileExtensions {
                 fileChannel.read(buffer);
                 buffer.flip();
                 if (buffer.limit() > 1) {
-                    result.append(decoder.decode(buffer).toString());
+                    result.append(decoder.decode(buffer));
                 }
                 buffer.clear();
             } while (fileChannel.position() < fileChannel.size());
             return result.toString();
         } catch (IOException ioException) {
             throw new InternalRuntimeException(ioException);
+        }
+    }
+
+
+    public static String readFileQuietly(String path) {
+        ByteBuffer buffer = allocate(DEFAULT_BUFFER_SIZE);
+        try {
+            return readFileQuietly(path, buffer);
+        } finally {
+            buffer.clear();
+        }
+    }
+
+    public static String readFileQuietly(String path, ByteBuffer buffer) {
+        return readFileQuietly(get(path), buffer);
+    }
+
+
+    public static String readFileQuietly(Path path) {
+        ByteBuffer buffer = allocate(DEFAULT_BUFFER_SIZE);
+        try {
+            return readFileQuietly(path, buffer);
+        } finally {
+            buffer.clear();
+        }
+    }
+
+    public static String readFileQuietly(Path path, ByteBuffer buffer) {
+        return readFileQuietly(path, buffer, context().configuration().getCharset());
+    }
+
+
+    public static String readFile(String path, Charset charset) {
+        ByteBuffer buffer = allocate(DEFAULT_BUFFER_SIZE);
+        try {
+            return readFile(path, buffer, charset);
+        } finally {
+            buffer.clear();
+        }
+    }
+
+    public static String readFile(Path path, Charset charset) {
+        ByteBuffer buffer = allocate(DEFAULT_BUFFER_SIZE);
+        try {
+            return readFile(path, buffer, charset);
         } finally {
             buffer.clear();
         }
     }
 
 
-    public static String readFileQuietly(String path) {
-        return readFileQuietly(path, DEFAULT_BUFFER_SIZE);
+    public static String readFile(String path, ByteBuffer buffer, Charset charset) {
+        return readFile(get(path), buffer, charset);
     }
 
-    public static String readFileQuietly(String path, int bufferSize) {
-        return readFileQuietly(get(path), bufferSize);
-    }
-
-    public static String readFileQuietly(Path path) {
-        return readFileQuietly(path, DEFAULT_BUFFER_SIZE);
-    }
-
-    public static String readFileQuietly(Path path, int bufferSize) {
-        return readFileQuietly(path, bufferSize, context().configuration().getCharset());
-    }
-
-
-    public static String readFile(String path, Charset charset) {
-        return readFile(path, DEFAULT_BUFFER_SIZE, charset);
-    }
-
-    public static String readFile(Path path, Charset charset) {
-        return readFile(path, DEFAULT_BUFFER_SIZE, charset);
-    }
-
-    public static String readFile(String path, int bufferSize, Charset charset) {
-        return readFile(get(path), bufferSize, charset);
-    }
-
-    public static String readFile(Path path, int bufferSize, Charset charset) {
-        if (bufferSize <= 0) {
-            return EMPTY_STRING;
-        }
-        ByteBuffer buffer = allocate(bufferSize);
+    public static String readFile(Path path, ByteBuffer buffer, Charset charset) {
         StringBuilder result = new StringBuilder(EMPTY_STRING);
         CharsetDecoder decoder = charset.newDecoder();
         try (FileChannel fileChannel = open(path)) {
@@ -138,80 +181,101 @@ public class FileExtensions {
                 fileChannel.read(buffer);
                 buffer.flip();
                 if (buffer.limit() > 1) {
-                    result.append(decoder.decode(buffer).toString());
+                    result.append(decoder.decode(buffer));
                 }
                 buffer.clear();
             } while (fileChannel.position() < fileChannel.size());
             return result.toString();
         } catch (IOException ioException) {
             throw new InternalRuntimeException(ioException);
-        } finally {
-            buffer.clear();
         }
     }
 
 
     public static String readFileQuietly(String path, Charset charset) {
-        return readFileQuietly(path, DEFAULT_BUFFER_SIZE, charset);
+        ByteBuffer buffer = allocate(DEFAULT_BUFFER_SIZE);
+        try {
+            return readFileQuietly(path, buffer, charset);
+        } finally {
+            buffer.clear();
+        }
     }
 
-    public static String readFileQuietly(String path, int bufferSize, Charset charset) {
-        return readFileQuietly(get(path), bufferSize, charset);
+    public static String readFileQuietly(String path, ByteBuffer buffer, Charset charset) {
+        return readFileQuietly(get(path), buffer, charset);
     }
+
 
     public static String readFileQuietly(Path path, Charset charset) {
-        return readFileQuietly(path, DEFAULT_BUFFER_SIZE, charset);
+        ByteBuffer buffer = allocate(DEFAULT_BUFFER_SIZE);
+        try {
+            return readFileQuietly(path, buffer, charset);
+        } finally {
+            buffer.clear();
+        }
     }
 
-    public static String readFileQuietly(Path path, int bufferSize, Charset charset) {
-        if (bufferSize <= 0) {
-            return EMPTY_STRING;
-        }
-        ByteBuffer buffer = allocate(bufferSize);
+    public static String readFileQuietly(Path path, ByteBuffer buffer, Charset charset) {
         StringBuilder result = new StringBuilder(EMPTY_STRING);
         CharsetDecoder decoder = charset.newDecoder();
         try (FileChannel fileChannel = open(path)) {
             do {
                 fileChannel.read(buffer);
                 buffer.flip();
-                result.append(decoder.decode(buffer).toString());
+                result.append(decoder.decode(buffer));
                 buffer.clear();
             } while (fileChannel.position() < fileChannel.size());
             return result.toString();
         } catch (IOException ioException) {
             ioException.printStackTrace();
-        } finally {
-            buffer.clear();
         }
         return result.toString();
     }
 
 
     public static byte[] readFileBytes(String path) {
-        return readFileBytes(get(path), DEFAULT_BUFFER_SIZE);
+        ByteBuffer buffer = allocate(DEFAULT_BUFFER_SIZE);
+        try {
+            return readFileBytes(get(path), buffer);
+        } finally {
+            buffer.clear();
+        }
     }
 
     public static byte[] readFileBytesQuietly(String path) {
-        return readFileBytesQuietly(get(path), DEFAULT_BUFFER_SIZE);
+        ByteBuffer buffer = allocate(DEFAULT_BUFFER_SIZE);
+        try {
+            return readFileBytesQuietly(get(path), buffer);
+        } finally {
+            buffer.clear();
+        }
     }
 
+
     public static byte[] readFileBytes(Path path) {
-        return readFileBytes(path, DEFAULT_BUFFER_SIZE);
+        ByteBuffer buffer = allocate(DEFAULT_BUFFER_SIZE);
+        try {
+            return readFileBytes(path, buffer);
+        } finally {
+            buffer.clear();
+        }
     }
 
     public static byte[] readFileBytesQuietly(Path path) {
-        return readFileBytesQuietly(path, DEFAULT_BUFFER_SIZE);
-    }
-
-    public static byte[] readFileBytes(String path, int bufferSize) {
-        return readFileBytes(get(path), bufferSize);
-    }
-
-    public static byte[] readFileBytes(Path path, int bufferSize) {
-        if (bufferSize <= 0) {
-            return EMPTY_BYTES;
+        ByteBuffer buffer = allocate(DEFAULT_BUFFER_SIZE);
+        try {
+            return readFileBytesQuietly(path, buffer);
+        } finally {
+            buffer.clear();
         }
-        ByteBuffer buffer = allocate(bufferSize);
+    }
+
+
+    public static byte[] readFileBytes(String path, ByteBuffer buffer) {
+        return readFileBytes(get(path), buffer);
+    }
+
+    public static byte[] readFileBytes(Path path, ByteBuffer buffer) {
         byte[] result = EMPTY_BYTES;
         try (FileChannel fileChannel = open(path)) {
             do {
@@ -228,14 +292,13 @@ public class FileExtensions {
             return result;
         } catch (IOException ioException) {
             throw new InternalRuntimeException(ioException);
-        } finally {
-            buffer.clear();
         }
     }
 
-    public static byte[] readFileBytesQuietly(Path path, int bufferSize) {
+
+    public static byte[] readFileBytesQuietly(Path path, ByteBuffer buffer) {
         try {
-            return readFileBytes(path, bufferSize);
+            return readFileBytes(path, buffer);
         } catch (Throwable throwable) {
             return EMPTY_BYTES;
         }
@@ -243,7 +306,7 @@ public class FileExtensions {
 
 
     public static InputStream fileInputStream(String path) {
-        return fileInputStream(Paths.get(path));
+        return fileInputStream(get(path));
     }
 
     public static InputStream fileInputStream(Path path) {
@@ -252,7 +315,7 @@ public class FileExtensions {
 
     public static InputStream fileInputStream(File file) {
         try {
-            return new FileInputStream(file);
+            return newInputStream(open(file.toPath()));
         } catch (IOException ioException) {
             throw new InternalRuntimeException(ioException);
         }
@@ -260,7 +323,7 @@ public class FileExtensions {
 
 
     public static OutputStream fileOutputStream(String path) {
-        return fileOutputStream(Paths.get(path));
+        return fileOutputStream(get(path));
     }
 
     public static OutputStream fileOutputStream(Path path) {
@@ -269,7 +332,7 @@ public class FileExtensions {
 
     public static OutputStream fileOutputStream(File file) {
         try {
-            return new FileOutputStream(file);
+            return newOutputStream(open(file.toPath(), CREATE, TRUNCATE_EXISTING, WRITE));
         } catch (IOException ioException) {
             throw new InternalRuntimeException(ioException);
         }
@@ -283,6 +346,7 @@ public class FileExtensions {
     public static void writeFileQuietly(String path, String content) {
         writeFileQuietly(get(path), content);
     }
+
 
     public static void writeFile(Path path, String content) {
         writeFileQuietly(path, content.getBytes());
@@ -301,30 +365,38 @@ public class FileExtensions {
         writeFileQuietly(get(path), content);
     }
 
+
     public static void writeFile(Path path, byte[] content) {
-        ByteBuffer byteBuffer = wrap(content);
+        writeFile(path, wrap(content));
+    }
+
+    public static void writeFileQuietly(Path path, byte[] content) {
+        writeFileQuietly(path, wrap(content));
+    }
+
+
+    public static void writeFile(Path path, ByteBuffer buffer) {
         try {
             Path parent = path.getParent();
             if (nonNull(parent)) {
                 createDirectories(parent);
             }
             try (FileChannel fileChannel = open(path, CREATE, TRUNCATE_EXISTING, WRITE)) {
-                fileChannel.write(byteBuffer);
+                fileChannel.write(buffer);
             }
         } catch (IOException ioException) {
             throw new InternalRuntimeException(ioException);
         }
     }
 
-    public static void writeFileQuietly(Path path, byte[] content) {
-        ByteBuffer byteBuffer = wrap(content);
+    public static void writeFileQuietly(Path path, ByteBuffer buffer) {
         try {
             Path parent = path.getParent();
             if (nonNull(parent)) {
                 createDirectories(parent);
             }
             try (FileChannel fileChannel = open(path, CREATE, TRUNCATE_EXISTING, WRITE)) {
-                fileChannel.write(byteBuffer);
+                fileChannel.write(buffer);
             }
         } catch (IOException ioException) {
             ioException.printStackTrace();
@@ -332,16 +404,16 @@ public class FileExtensions {
     }
 
 
-    public static boolean deleteFileRecursive(String path) {
-        return deleteFileRecursive(get(path));
+    public static boolean recursiveDelete(String path) {
+        return recursiveDelete(get(path));
     }
 
-    public static boolean deleteFileRecursive(Path path) {
-        return deleteFileRecursive(path.toFile());
+    public static boolean recursiveDelete(Path path) {
+        return recursiveDelete(path.toFile());
     }
 
     @SuppressWarnings("all")
-    public static boolean deleteFileRecursive(File file) {
+    public static boolean recursiveDelete(File file) {
         if (isNull(file) || !file.exists()) {
             return true;
         }
@@ -353,16 +425,12 @@ public class FileExtensions {
             return file.delete();
         }
         for (File child : children) {
-            deleteFileRecursive(child);
+            recursiveDelete(child);
         }
         return file.delete();
     }
 
-    public static File fileOf(URL url) {
-        return new File(ExceptionHandler.<URI>wrapException(InternalRuntimeException::new).call(url::toURI));
-    }
-
-    public static void copyRecursive(Path from, Path to) {
+    public static void recursiveCopy(Path from, Path to) {
         File file = from.toFile();
         if (!file.exists()) {
             return;
@@ -372,7 +440,7 @@ public class FileExtensions {
                 if (!to.getParent().toFile().exists()) {
                     createDirectories(to.getParent());
                 }
-                copy(from, to, REPLACE_EXISTING);
+                Files.copy(from, to, REPLACE_EXISTING);
                 return;
             }
             File[] children = file.listFiles();
@@ -381,7 +449,7 @@ public class FileExtensions {
             }
             for (File child : children) {
                 Path toPath = to.resolve(child.toPath().getFileName());
-                copyRecursive(child.toPath(), toPath);
+                recursiveCopy(child.toPath(), toPath);
             }
         } catch (IOException ioException) {
             ioException.printStackTrace();

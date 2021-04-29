@@ -25,12 +25,14 @@ import io.art.core.source.*;
 import io.art.server.model.*;
 import io.art.server.refresher.*;
 import io.art.server.registry.*;
+import io.art.transport.payload.*;
 import lombok.*;
 import reactor.core.scheduler.*;
 import static io.art.core.checker.NullityChecker.*;
 import static io.art.core.collection.ImmutableMap.*;
 import static io.art.server.constants.ServerModuleConstants.ConfigurationKeys.*;
 import static io.art.server.constants.ServerModuleConstants.Defaults.*;
+import static io.art.value.constants.ValueModuleConstants.*;
 import static java.util.Objects.*;
 import static java.util.Optional.*;
 import java.util.*;
@@ -46,21 +48,45 @@ public class ServerModuleConfiguration implements ModuleConfiguration {
 
     @Getter
     private ImmutableMap<String, ServiceConfiguration> configurations = emptyImmutableMap();
+
     @Getter
     private ServiceSpecificationRegistry registry = new ServiceSpecificationRegistry();
+
     @Getter
     private Scheduler blockingScheduler;
 
-    public Scheduler getBlockingScheduler(String serviceId, String methodId) {
-        return getMethodConfiguration(serviceId, methodId)
+    @Getter
+    private Function<DataFormat, TransportPayloadReader> reader;
+
+    @Getter
+    private Function<DataFormat, TransportPayloadWriter> writer;
+
+    public Scheduler getBlockingScheduler(ServiceMethodIdentifier id) {
+        return getMethodConfiguration(id)
                 .map(ServiceMethodConfiguration::getBlockingScheduler)
-                .orElseGet(() -> ofNullable(configurations.get(serviceId))
+                .orElseGet(() -> ofNullable(configurations.get(id.getServiceId()))
                         .map(ServiceConfiguration::getBlockingScheduler)
                         .orElse(blockingScheduler));
     }
 
-    public Optional<ServiceMethodConfiguration> getMethodConfiguration(String serviceId, String methodId) {
-        return ofNullable(configurations.get(serviceId)).map(configuration -> configuration.getMethods().get(methodId));
+    public TransportPayloadReader getReader(ServiceMethodIdentifier id, DataFormat dataFormat) {
+        return getMethodConfiguration(id)
+                .map(ServiceMethodConfiguration::getReader)
+                .orElseGet(() -> ofNullable(configurations.get(id.getServiceId()))
+                        .map(ServiceConfiguration::getReader)
+                        .orElse(reader)).apply(dataFormat);
+    }
+
+    public TransportPayloadWriter getWriter(ServiceMethodIdentifier id, DataFormat dataFormat) {
+        return getMethodConfiguration(id)
+                .map(ServiceMethodConfiguration::getWriter)
+                .orElseGet(() -> ofNullable(configurations.get(id.getServiceId()))
+                        .map(ServiceConfiguration::getWriter)
+                        .orElse(writer)).apply(dataFormat);
+    }
+
+    public Optional<ServiceMethodConfiguration> getMethodConfiguration(ServiceMethodIdentifier id) {
+        return ofNullable(configurations.get(id.getServiceId())).map(configuration -> configuration.getMethods().get(id.getMethodId()));
     }
 
     public boolean isLogging(ServiceMethodIdentifier identifier) {
@@ -108,6 +134,8 @@ public class ServerModuleConfiguration implements ModuleConfiguration {
         @Override
         public Configurator from(ConfigurationSource source) {
             configuration.blockingScheduler = DEFAULT_SERVICE_METHOD_BLOCKING_SCHEDULER;
+            configuration.reader = TransportPayloadReader::new;
+            configuration.writer = TransportPayloadWriter::new;
             configuration.configurations = ofNullable(source.getNested(SERVER_SECTION))
                     .map(server -> server.getNestedMap(SERVER_SERVICES_KEY, service -> ServiceConfiguration.from(configuration.refresher, service)))
                     .orElse(emptyImmutableMap());
@@ -116,7 +144,7 @@ public class ServerModuleConfiguration implements ModuleConfiguration {
         }
 
         @Override
-        public Configurator override(ServerModuleConfiguration configuration) {
+        public Configurator configure(ServerModuleConfiguration configuration) {
             apply(configuration.getRegistry(), registry -> this.configuration.registry = registry);
             return this;
         }

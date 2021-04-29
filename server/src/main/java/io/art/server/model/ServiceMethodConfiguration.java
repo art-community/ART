@@ -21,11 +21,14 @@ package io.art.server.model;
 import io.art.core.changes.*;
 import io.art.core.source.*;
 import io.art.server.refresher.*;
+import io.art.transport.payload.*;
+import io.art.value.constants.ValueModuleConstants.*;
 import lombok.*;
 import reactor.core.scheduler.*;
 import static io.art.core.checker.NullityChecker.*;
 import static io.art.server.constants.ServerModuleConstants.ConfigurationKeys.*;
 import static io.art.server.constants.ServerModuleConstants.Defaults.*;
+import java.util.function.*;
 
 @Getter
 public class ServiceMethodConfiguration {
@@ -33,6 +36,8 @@ public class ServiceMethodConfiguration {
     private boolean logging;
     private boolean validating;
     private Scheduler blockingScheduler;
+    private Function<DataFormat, TransportPayloadReader> reader;
+    private Function<DataFormat, TransportPayloadWriter> writer;
 
     public static ServiceMethodConfiguration from(ServerModuleRefresher refresher, ConfigurationSource source) {
         ServiceMethodConfiguration configuration = new ServiceMethodConfiguration();
@@ -43,6 +48,8 @@ public class ServiceMethodConfiguration {
         configuration.logging = loggingListener.emit(orElse(source.getBool(LOGGING_KEY), true));
         configuration.validating = validationListener.emit(orElse(source.getBool(VALIDATING_KEY), true));
         configuration.blockingScheduler = DEFAULT_SERVICE_METHOD_BLOCKING_SCHEDULER;
+        configuration.reader = TransportPayloadReader::new;
+        configuration.writer = TransportPayloadWriter::new;
         return configuration;
     }
 }

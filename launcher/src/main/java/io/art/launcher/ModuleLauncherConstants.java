@@ -22,6 +22,7 @@ import io.art.core.collection.*;
 import static io.art.core.factory.SetFactory.*;
 
 public interface ModuleLauncherConstants {
+    String CONFIGURATION_MESSAGE = "Modules configured. Current configuration:";
     ImmutableSet<String> LAUNCHED_MESSAGES = immutableSetOf(
             "Initialization completed",
             "Have a nice work with ART!"

@@ -22,8 +22,6 @@ import io.art.core.changes.*;
 import io.art.core.source.*;
 import io.art.rsocket.constants.RsocketModuleConstants.*;
 import io.art.rsocket.exception.*;
-import io.art.rsocket.model.*;
-import io.art.rsocket.model.RsocketSetupPayload.*;
 import io.art.rsocket.refresher.*;
 import lombok.*;
 import reactor.netty.http.client.*;
@@ -32,7 +30,6 @@ import static io.art.core.checker.EmptinessChecker.*;
 import static io.art.core.checker.NullityChecker.*;
 import static io.art.core.combiner.SectionCombiner.*;
 import static io.art.core.constants.StringConstants.*;
-import static io.art.core.model.ServiceMethodIdentifier.*;
 import static io.art.rsocket.configuration.RsocketKeepAliveConfiguration.*;
 import static io.art.rsocket.configuration.RsocketResumeConfiguration.*;
 import static io.art.rsocket.configuration.RsocketRetryConfiguration.*;
@@ -57,7 +54,6 @@ public class RsocketConnectorConfiguration {
     private RsocketKeepAliveConfiguration keepAlive;
     private RsocketResumeConfiguration resume;
     private RsocketRetryConfiguration retry;
-    private RsocketSetupPayload setupPayload;
     private TransportMode transport;
     private TcpClient tcpClient;
     private int tcpMaxFrameLength;
@@ -72,13 +68,9 @@ public class RsocketConnectorConfiguration {
         configuration.logging = false;
         configuration.fragment = 0;
         configuration.maxInboundPayloadSize = Integer.MAX_VALUE;
-        configuration.payloadDecoderMode = DEFAULT;
+        configuration.payloadDecoderMode = ZERO_COPY;
         configuration.dataFormat = JSON;
         configuration.metaDataFormat = JSON;
-        configuration.setupPayload = RsocketSetupPayload.builder()
-                .dataFormat(configuration.dataFormat)
-                .metadataFormat(configuration.metaDataFormat)
-                .build();
         configuration.tcpMaxFrameLength = FRAME_LENGTH_MASK;
         configuration.httpWebSocketPath = SLASH;
         return configuration;
@@ -97,19 +89,6 @@ public class RsocketConnectorConfiguration {
         configuration.keepAlive = source.getNested(KEEP_ALIVE_SECTION, RsocketKeepAliveConfiguration::rsocketKeepAlive);
         configuration.resume = source.getNested(RESUME_SECTION, RsocketResumeConfiguration::rsocketResume);
         configuration.retry = source.getNested(RECONNECT_SECTION, RsocketRetryConfiguration::rsocketRetry);
-
-        RsocketSetupPayloadBuilder setupPayloadBuilder = RsocketSetupPayload.builder()
-                .dataFormat(configuration.dataFormat)
-                .metadataFormat(configuration.metaDataFormat);
-
-        String serviceId = source.getString(SERVICE_ID_KEY);
-        String methodId = source.getString(METHOD_ID_KEY);
-
-        if (isNotEmpty(serviceId) && isNotEmpty(methodId)) {
-            setupPayloadBuilder.serviceMethod(serviceMethod(serviceId, methodId));
-        }
-
-        configuration.setupPayload = setupPayloadBuilder.build();
 
         if (!source.has(TRANSPORT_SECTION)) {
             configuration.tcpMaxFrameLength = defaults.tcpMaxFrameLength;
@@ -163,19 +142,6 @@ public class RsocketConnectorConfiguration {
         configuration.keepAlive = listener.emit(let(source.getNested(KEEP_ALIVE_SECTION), section -> rsocketKeepAlive(section, defaults.keepAlive), defaults.keepAlive));
         configuration.resume = listener.emit(let(source.getNested(RESUME_SECTION), section -> rsocketResume(section, defaults.resume), defaults.resume));
         configuration.retry = listener.emit(let(source.getNested(RECONNECT_SECTION), section -> rsocketRetry(section, defaults.retry), defaults.retry));
-
-        RsocketSetupPayloadBuilder setupPayloadBuilder = RsocketSetupPayload.builder()
-                .dataFormat(configuration.dataFormat)
-                .metadataFormat(configuration.metaDataFormat);
-
-        String serviceId = source.getString(SERVICE_ID_KEY);
-        String methodId = source.getString(METHOD_ID_KEY);
-
-        if (isNotEmpty(serviceId) && isNotEmpty(methodId)) {
-            setupPayloadBuilder.serviceMethod(serviceMethod(serviceId, methodId));
-        }
-
-        configuration.setupPayload = listener.emit(setupPayloadBuilder.build());
 
         if (!source.has(TRANSPORT_SECTION) && isNull(defaults.transport)) {
             throw new RsocketException(format(CONFIGURATION_PARAMETER_NOT_EXISTS, combine(source.getSection(), TRANSPORT_SECTION)));

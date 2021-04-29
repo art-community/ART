@@ -19,55 +19,44 @@
 package io.art.protobuf.descriptor;
 
 import com.google.protobuf.*;
-import io.art.core.stream.*;
-import io.art.value.builder.*;
-import io.art.value.immutable.Value;
 import io.art.protobuf.exception.*;
-import io.netty.buffer.*;
-import lombok.experimental.*;
+import io.art.value.builder.*;
+import io.art.value.descriptor.Reader;
+import io.art.value.immutable.Value;
 import static com.google.protobuf.Value.KindCase.*;
-import static io.art.core.extensions.FileExtensions.*;
 import static io.art.core.extensions.NioBufferExtensions.*;
+import static io.art.protobuf.constants.ProtobufConstants.*;
+import static io.art.protobuf.constants.ProtobufConstants.ExceptionMessages.*;
 import static io.art.value.factory.ArrayValueFactory.*;
 import static io.art.value.factory.PrimitivesFactory.*;
 import static io.art.value.immutable.BinaryValue.*;
 import static io.art.value.immutable.Entity.*;
-import static io.art.protobuf.constants.ProtobufConstants.*;
-import static io.art.protobuf.constants.ProtobufConstants.ExceptionMessages.*;
 import static java.text.MessageFormat.*;
 import static java.util.Objects.*;
 import java.io.*;
 import java.nio.*;
-import java.nio.file.*;
 import java.util.*;
 
-@UtilityClass
-public class ProtobufReader {
-    public static Value readProtobuf(byte[] bytes) {
-        return readProtobuf(new ByteArrayInputStream(bytes));
-    }
-
-    public static Value readProtobuf(ByteBuffer nioBuffer) {
-        return readProtobuf(new NioByteBufferInputStream(nioBuffer));
-    }
-
-    public static Value readProtobuf(ByteBuf nettyBuffer) {
-        return readProtobuf(new ByteBufInputStream(nettyBuffer));
-    }
-
-    public static Value readProtobuf(Path path) {
-        return readProtobuf(fileInputStream(path));
-    }
-
-    public static Value readProtobuf(InputStream inputStream) {
+public class ProtobufReader implements Reader<Value> {
+    @Override
+    public Value read(InputStream inputStream) {
         try {
-            return readProtobuf(com.google.protobuf.Value.parseFrom(inputStream));
+            return read(com.google.protobuf.Value.parseFrom(inputStream));
         } catch (Throwable throwable) {
             throw new ProtobufException(throwable);
         }
     }
 
-    public static Value readProtobuf(com.google.protobuf.Value value) {
+    @Override
+    public Value read(ByteBuffer nioBuffer) {
+        try {
+            return read(com.google.protobuf.Value.parseFrom(nioBuffer));
+        } catch (Throwable throwable) {
+            throw new ProtobufException(throwable);
+        }
+    }
+
+    public Value read(com.google.protobuf.Value value) {
         if (isNull(value) || value.getKindCase() == NULL_VALUE) return null;
         switch (value.getKindCase()) {
             case NUMBER_VALUE:
@@ -94,13 +83,12 @@ public class ProtobufReader {
         throw new ProtobufException(format(VALUE_TYPE_NOT_SUPPORTED, value.getKindCase()));
     }
 
-
-    private static Value readArray(ListValue protobufCollection) {
+    private Value readArray(ListValue protobufCollection) {
         List<com.google.protobuf.Value> values = protobufCollection.getValuesList();
-        return array(index -> readProtobuf(values.get(index)), values::size);
+        return array(index -> read(values.get(index)), values::size);
     }
 
-    private static Value readEntity(Struct protobufEntity) {
+    private Value readEntity(Struct protobufEntity) {
         EntityBuilder entityBuilder = entityBuilder();
         Map<String, com.google.protobuf.Value> fields = protobufEntity.getFieldsMap();
         for (Map.Entry<String, com.google.protobuf.Value> entry : fields.entrySet()) {
@@ -108,7 +96,7 @@ public class ProtobufReader {
             if (isNull(key)) continue;
             com.google.protobuf.Value value = entry.getValue();
             if (isNull(value) || value.getKindCase() == NULL_VALUE) continue;
-            entityBuilder.lazyPut(key, () -> readProtobuf(value));
+            entityBuilder.lazyPut(key, () -> read(value));
         }
         return entityBuilder.build();
     }

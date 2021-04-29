@@ -37,8 +37,8 @@ public interface RsocketModuleConstants {
         String RSOCKET_DISPOSING = "Disposing RSocket";
         String SERVER_STARTED = "RSocket server started";
         String SERVER_STOPPED = "RSocket server stopped";
-        String COMMUNICATOR_STARTED = "RSocket communicator started\nConnector: {0}\nSetup payload: {1}";
-        String COMMUNICATOR_STOPPED = "RSocket communicator stopped\nConnector: {0}\nSetup payload: {1}";
+        String COMMUNICATOR_STARTED = "RSocket communicator started\nConnector: {0}";
+        String COMMUNICATOR_STOPPED = "RSocket communicator stopped\nConnector: {0}";
 
         String FIRE_AND_FORGET_REQUEST_LOG = "RSocket executing fireAndForget()\nData:\n{0}\nMetadata:\n{1}";
         String FIRE_AND_FORGET_RESPONSE_LOG = "RSocket fireAndForget() completed";

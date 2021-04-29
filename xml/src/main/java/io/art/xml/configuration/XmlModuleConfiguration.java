@@ -18,15 +18,16 @@
 
 package io.art.xml.configuration;
 
-import io.art.core.source.*;
-import lombok.*;
 import io.art.core.module.*;
+import io.art.core.source.*;
+import io.art.xml.descriptor.*;
+import lombok.*;
 import javax.xml.stream.*;
 
 @Getter
 public class XmlModuleConfiguration implements ModuleConfiguration {
-    private final XMLInputFactory xmlInputFactory = XMLInputFactory.newInstance();
-    private final XMLOutputFactory xmlOutputFactory = XMLOutputFactory.newFactory();
+    private final XmlReader reader = new XmlReader(XMLInputFactory.newFactory());
+    private final XmlWriter writer = new XmlWriter(XMLOutputFactory.newFactory());
 
     @RequiredArgsConstructor
     public static class Configurator implements ModuleConfigurator<XmlModuleConfiguration, Configurator> {

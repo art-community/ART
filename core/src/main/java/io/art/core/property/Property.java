@@ -84,8 +84,8 @@ public class Property<T> implements Supplier<T> {
         return this;
     }
 
-    public Property<T> listenConsumer(Supplier<ChangesConsumer> listener) {
-        return created(ignore -> listener.get().consume(this));
+    public Property<T> listenConsumer(Supplier<ChangesConsumer> consumer) {
+        return created(ignore -> consumer.get().consume(this));
     }
 
     public Property<T> listen(Supplier<ChangesListener> listener) {

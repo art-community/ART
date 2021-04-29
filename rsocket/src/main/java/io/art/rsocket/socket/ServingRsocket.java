@@ -24,12 +24,13 @@ import io.art.core.model.*;
 import io.art.rsocket.configuration.*;
 import io.art.rsocket.exception.*;
 import io.art.rsocket.model.*;
-import io.art.rsocket.payload.*;
 import io.art.rsocket.state.*;
+import io.art.server.configuration.*;
 import io.art.server.specification.*;
-import io.art.value.immutable.Value;
+import io.art.transport.payload.*;
 import io.art.value.immutable.*;
 import io.rsocket.*;
+import io.rsocket.util.*;
 import org.reactivestreams.*;
 import reactor.core.publisher.*;
 import reactor.util.context.*;
@@ -38,6 +39,7 @@ import static io.art.rsocket.constants.RsocketModuleConstants.*;
 import static io.art.rsocket.constants.RsocketModuleConstants.ExceptionMessages.*;
 import static io.art.rsocket.model.RsocketSetupPayload.*;
 import static io.art.rsocket.module.RsocketModule.*;
+import static io.art.rsocket.reader.RsocketPayloadReader.*;
 import static io.art.rsocket.state.RsocketModuleState.RsocketThreadLocalState.*;
 import static io.art.server.module.ServerModule.*;
 import static io.art.value.constants.ValueModuleConstants.*;
@@ -48,10 +50,11 @@ import static io.art.value.mime.MimeTypeDataFormatMapper.*;
 import static java.text.MessageFormat.*;
 import static java.util.Objects.*;
 import static reactor.core.publisher.Flux.*;
+import java.util.function.*;
 
 public class ServingRsocket implements RSocket {
-    private final RsocketPayloadReader reader;
-    private final RsocketPayloadWriter writer;
+    private final TransportPayloadReader dataReader;
+    private final TransportPayloadWriter dataWriter;
     private final RSocket requesterSocket;
     private final RsocketModuleState moduleState = rsocketModule().state();
     private final RsocketSetupPayload setupPayload;
@@ -61,18 +64,20 @@ public class ServingRsocket implements RSocket {
         moduleState.registerRequester(this.requesterSocket = requesterSocket);
         DataFormat dataFormat = fromMimeType(MimeType.valueOf(payload.dataMimeType()), serverConfiguration.getDefaultDataFormat());
         DataFormat metaDataFormat = fromMimeType(MimeType.valueOf(payload.metadataMimeType()), serverConfiguration.getDefaultMetaDataFormat());
-        reader = new RsocketPayloadReader(dataFormat, metaDataFormat);
-        writer = new RsocketPayloadWriter(dataFormat, metaDataFormat);
-        RsocketPayloadValue payloadMetaData = reader.readPayloadMetaData(payload);
+        Function<DataFormat, TransportPayloadReader> setupReader = serverModule().configuration().getReader();
+        TransportPayload setupPayloadData = setupReader.apply(dataFormat).read(payload.sliceData());
         RsocketSetupPayloadBuilder setupPayloadBuilder = RsocketSetupPayload.builder()
                 .dataFormat(dataFormat)
                 .metadataFormat(metaDataFormat);
         Entity serviceIdentifiers;
-        if (isEntity(payloadMetaData.getValue()) && nonNull(serviceIdentifiers = asEntity(asEntity(payloadMetaData.getValue()).get(SERVICE_METHOD_IDENTIFIERS_KEY)))) {
+        if (!setupPayloadData.isEmpty() && isEntity(setupPayloadData.getValue()) && nonNull(serviceIdentifiers = asEntity(asEntity(setupPayloadData.getValue()).get(SERVICE_METHOD_IDENTIFIERS_KEY)))) {
             ServiceMethodIdentifier serviceMethodId = toServiceMethod(serviceIdentifiers);
             if (nonNull(serviceMethodId)) {
                 setupPayload = setupPayloadBuilder.serviceMethod(serviceMethodId).build();
                 specification = findSpecification(serviceMethodId);
+                ServerModuleConfiguration configuration = specification.getConfiguration();
+                dataReader = configuration.getReader(serviceMethodId, dataFormat);
+                dataWriter = configuration.getWriter(serviceMethodId, dataFormat);
                 return;
             }
         }
@@ -80,6 +85,9 @@ public class ServingRsocket implements RSocket {
         if (nonNull(defaultServiceMethod)) {
             setupPayload = setupPayloadBuilder.serviceMethod(defaultServiceMethod).build();
             specification = findSpecification(defaultServiceMethod);
+            ServerModuleConfiguration configuration = specification.getConfiguration();
+            dataReader = configuration.getReader(defaultServiceMethod, dataFormat);
+            dataWriter = configuration.getWriter(defaultServiceMethod, dataFormat);
             return;
         }
         throw new ImpossibleSituationException();
@@ -87,38 +95,38 @@ public class ServingRsocket implements RSocket {
 
     @Override
     public Mono<Void> fireAndForget(Payload payload) {
-        RsocketPayloadValue payloadValue = reader.readPayloadData(payload);
+        TransportPayload payloadValue = readRsocketPayload(dataReader, payload);
         Flux<Value> input = addContext(payloadValue.isEmpty() ? empty() : just(payloadValue.getValue()));
         return specification.serve(input).then();
     }
 
     @Override
     public Mono<Payload> requestResponse(Payload payload) {
-        RsocketPayloadValue payloadValue = reader.readPayloadData(payload);
+        TransportPayload payloadValue = readRsocketPayload(dataReader, payload);
         Flux<Value> input = addContext(payloadValue.isEmpty() ? empty() : just(payloadValue.getValue()));
-        return specification.serve(input).map(writer::writePayloadData).last(EMPTY_PAYLOAD);
+        return specification.serve(input).map(value -> ByteBufPayload.create(dataWriter.write(value))).last(EMPTY_PAYLOAD);
     }
 
     @Override
     public Flux<Payload> requestStream(Payload payload) {
-        RsocketPayloadValue payloadValue = reader.readPayloadData(payload);
+        TransportPayload payloadValue = readRsocketPayload(dataReader, payload);
         Flux<Value> input = addContext(payloadValue.isEmpty() ? empty() : just(payloadValue.getValue()));
-        return specification.serve(input).map(writer::writePayloadData);
+        return specification.serve(input).map(value -> ByteBufPayload.create(dataWriter.write(value)));
     }
 
     @Override
     public Flux<Payload> requestChannel(Publisher<Payload> payloads) {
         Flux<Value> input = addContext(from(payloads)
-                .map(reader::readPayloadData)
+                .map(data -> readRsocketPayload(dataReader, data))
                 .filter(data -> !data.isEmpty())
-                .map(RsocketPayloadValue::getValue));
-        return specification.serve(input).map(writer::writePayloadData);
+                .map(TransportPayload::getValue));
+        return specification.serve(input).map(value -> ByteBufPayload.create(dataWriter.write(value)));
     }
 
     @Override
     public Mono<Void> metadataPush(Payload payload) {
-        RsocketPayloadValue payloadValue = reader.readPayloadMetaData(payload);
-        Flux<Value> input = addContext(isNull(payloadValue) ? empty() : just(payloadValue.getValue()));
+        TransportPayload payloadValue = readRsocketPayload(dataReader, payload);
+        Flux<Value> input = addContext(payloadValue.isEmpty() ? empty() : just(payloadValue.getValue()));
         return specification.serve(input).then();
     }
 

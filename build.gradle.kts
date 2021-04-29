@@ -46,6 +46,5 @@ subprojects {
 
     java {
         withSourcesJar()
-        withJavadocJar()
     }
 }

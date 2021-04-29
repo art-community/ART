@@ -33,7 +33,7 @@ public class NioByteBufferInputStream extends InputStream {
     }
 
     @Override
-    public int read() throws IOException {
+    public int read() {
         return buffer.hasRemaining() ? (buffer.get() & 0xFF) : -1;
     }
 

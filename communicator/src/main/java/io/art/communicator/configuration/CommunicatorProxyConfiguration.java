@@ -23,12 +23,15 @@ import io.art.core.changes.*;
 import io.art.core.collection.*;
 import io.art.core.source.*;
 import io.art.resilience.configuration.*;
+import io.art.transport.payload.*;
+import io.art.value.constants.*;
 import lombok.*;
 import reactor.core.scheduler.*;
 import static io.art.communicator.constants.CommunicatorModuleConstants.ConfigurationKeys.*;
 import static io.art.communicator.constants.CommunicatorModuleConstants.Defaults.*;
 import static io.art.core.checker.NullityChecker.*;
 import static io.art.resilience.constants.ResilienceModuleConstants.ConfigurationKeys.*;
+import java.util.function.*;
 
 @Getter
 public class CommunicatorProxyConfiguration {
@@ -38,6 +41,8 @@ public class CommunicatorProxyConfiguration {
     private ImmutableMap<String, CommunicatorActionConfiguration> actions;
     private ImmutableMap<String, String> connectors;
     private ResilienceConfiguration resilienceConfiguration;
+    private Function<ValueModuleConstants.DataFormat, TransportPayloadReader> reader;
+    private Function<ValueModuleConstants.DataFormat, TransportPayloadWriter> writer;
 
     public static CommunicatorProxyConfiguration from(CommunicatorModuleRefresher refresher, ConfigurationSource source) {
         CommunicatorProxyConfiguration configuration = new CommunicatorProxyConfiguration();
@@ -49,6 +54,8 @@ public class CommunicatorProxyConfiguration {
         configuration.connectors = source.getNestedMap(CONNECTORS_KEY, NestedConfiguration::asString);
         configuration.actions = source.getNestedMap(ACTIONS_SECTION, action -> CommunicatorActionConfiguration.from(refresher, action));
         configuration.resilienceConfiguration = source.getNested(RESILIENCE_SECTION, action -> ResilienceConfiguration.from(refresher.resilienceListener(), action));
+        configuration.reader = TransportPayloadReader::new;
+        configuration.writer = TransportPayloadWriter::new;
         return configuration;
     }
 }

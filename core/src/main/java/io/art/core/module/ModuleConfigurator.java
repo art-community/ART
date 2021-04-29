@@ -28,10 +28,6 @@ public interface ModuleConfigurator<Configuration extends ModuleConfiguration, C
         return cast(this);
     }
 
-    default Configurator override(Configuration configuration) {
-        return cast(this);
-    }
-
     default Configurator from(ImmutableArray<ConfigurationSource> sources) {
         sources.forEach(this::from);
         return cast(this);
@@ -39,6 +35,10 @@ public interface ModuleConfigurator<Configuration extends ModuleConfiguration, C
 
     default Configurator from(Collection<ConfigurationSource> sources) {
         sources.forEach(this::from);
+        return cast(this);
+    }
+
+    default Configurator configure(Configuration configuration) {
         return cast(this);
     }
 }

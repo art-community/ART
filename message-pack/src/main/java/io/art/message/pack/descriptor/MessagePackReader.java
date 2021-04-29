@@ -18,61 +18,45 @@
 
 package io.art.message.pack.descriptor;
 
-import io.art.core.stream.*;
+import io.art.message.pack.exception.MessagePackException;
 import io.art.value.builder.*;
+import io.art.value.descriptor.Reader;
 import io.art.value.immutable.ArrayValue;
 import io.art.value.immutable.Value;
-import io.art.message.pack.exception.MessagePackException;
-import io.netty.buffer.*;
-import lombok.experimental.*;
 import org.msgpack.core.*;
 import org.msgpack.value.*;
-import static io.art.core.extensions.FileExtensions.*;
+import static io.art.message.pack.constants.MessagePackConstants.ExceptionMessages.*;
 import static io.art.value.factory.ArrayValueFactory.*;
 import static io.art.value.factory.PrimitivesFactory.*;
 import static io.art.value.immutable.BinaryValue.*;
 import static io.art.value.immutable.Entity.*;
-import static io.art.message.pack.constants.MessagePackConstants.ExceptionMessages.*;
 import static java.text.MessageFormat.*;
 import static java.util.Objects.*;
 import static org.msgpack.core.MessagePack.*;
 import java.io.*;
 import java.nio.*;
-import java.nio.file.*;
 import java.util.*;
 
 
-@UtilityClass
-public class MessagePackReader {
-    public static Value readMessagePack(Path path) {
-        try (InputStream inputStream = fileInputStream(path)) {
-            return readMessagePack(inputStream);
-        } catch (IOException ioException) {
-            throw new MessagePackException(ioException);
-        }
-    }
-
-    public static Value readMessagePack(byte[] bytes) {
-        return readMessagePack(new ByteArrayInputStream(bytes));
-    }
-
-    public static Value readMessagePack(ByteBuf nettyBuffer) {
-        return readMessagePack(new ByteBufInputStream(nettyBuffer));
-    }
-
-    public static Value readMessagePack(ByteBuffer nioBuffer) {
-        return readMessagePack(new NioByteBufferInputStream(nioBuffer));
-    }
-
-    public static Value readMessagePack(InputStream inputStream) {
+public class MessagePackReader implements Reader<Value> {
+    public Value read(InputStream inputStream) {
         try (MessageUnpacker unpacker = newDefaultUnpacker(inputStream)) {
-            return readMessagePack(unpacker.unpackValue());
+            return read(unpacker.unpackValue());
         } catch (Throwable throwable) {
             throw new MessagePackException(throwable);
         }
     }
 
-    public static Value readMessagePack(org.msgpack.value.Value value) {
+    @Override
+    public Value read(ByteBuffer nioBuffer) {
+        try (MessageUnpacker unpacker = newDefaultUnpacker(nioBuffer)) {
+            return read(unpacker.unpackValue());
+        } catch (Throwable throwable) {
+            throw new MessagePackException(throwable);
+        }
+    }
+
+    public Value read(org.msgpack.value.Value value) {
         if (isNull(value) || value.isNilValue()) return null;
         switch (value.getValueType()) {
             case NIL:
@@ -106,7 +90,7 @@ public class MessagePackReader {
     }
 
 
-    private static Value readMap(org.msgpack.value.MapValue map) {
+    private Value readMap(org.msgpack.value.MapValue map) {
         if (isNull(map) || map.isNilValue()) return null;
         EntityBuilder entityBuilder = entityBuilder();
         for (Map.Entry<org.msgpack.value.Value, org.msgpack.value.Value> entry : map.entrySet()) {
@@ -149,7 +133,7 @@ public class MessagePackReader {
         return entityBuilder.build();
     }
 
-    private static Value readEntityField(org.msgpack.value.Value value) {
+    private Value readEntityField(org.msgpack.value.Value value) {
         switch (value.getValueType()) {
             case BOOLEAN:
                 return boolPrimitive(value.asBooleanValue().getBoolean());
@@ -181,8 +165,8 @@ public class MessagePackReader {
         throw new MessagePackException(format(VALUE_TYPE_NOT_SUPPORTED, value.getValueType()));
     }
 
-    private static ArrayValue readArray(org.msgpack.value.ArrayValue array) {
+    private ArrayValue readArray(org.msgpack.value.ArrayValue array) {
         if (isNull(array) || array.isNilValue()) return null;
-        return array(index -> readMessagePack(array.get(index)), array::size);
+        return array(index -> read(array.get(index)), array::size);
     }
 }

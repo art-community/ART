@@ -21,39 +21,38 @@ package io.art.protobuf.descriptor;
 import com.google.protobuf.Value;
 import com.google.protobuf.*;
 import io.art.protobuf.exception.*;
+import io.art.value.descriptor.Writer;
 import io.art.value.immutable.*;
-import lombok.experimental.*;
+import io.netty.buffer.*;
 import static com.google.protobuf.UnknownFieldSet.*;
-import static com.google.protobuf.UnsafeByteOperations.unsafeWrap;
-import static io.art.core.checker.NullityChecker.*;
-import static io.art.core.constants.ArrayConstants.*;
-import static io.art.core.extensions.FileExtensions.*;
-import static io.art.value.immutable.Value.*;
+import static com.google.protobuf.UnsafeByteOperations.*;
 import static io.art.protobuf.constants.ProtobufConstants.*;
 import static io.art.protobuf.constants.ProtobufConstants.ExceptionMessages.*;
-import static java.text.MessageFormat.format;
+import static io.art.value.immutable.Value.*;
+import static java.text.MessageFormat.*;
 import static java.util.Objects.*;
 import java.io.*;
-import java.nio.file.*;
+import java.nio.*;
 import java.util.*;
 
-@UtilityClass
-public class ProtobufWriter {
-    public static byte[] writeProtobufToBytes(io.art.value.immutable.Value value) {
-        return let(writeProtobuf(value), MessageLite::toByteArray, EMPTY_BYTES);
+public class ProtobufWriter implements Writer<io.art.value.immutable.Value> {
+    @Override
+    public void write(io.art.value.immutable.Value value, ByteBuffer buffer) {
+        write(value, buffer, ProtobufException::new);
     }
 
-    public static void writeProtobuf(io.art.value.immutable.Value value, Path path) {
-        Value protobuf = writeProtobuf(value);
-        apply(protobuf, result -> writeFileQuietly(path, result.toByteArray()));
+    @Override
+    public void write(io.art.value.immutable.Value value, ByteBuf buffer) {
+        write(value, buffer, ProtobufException::new);
     }
 
-    public static void writeProtobuf(io.art.value.immutable.Value value, OutputStream outputStream) {
-        if (io.art.value.immutable.Value.valueIsNull(value)) {
+    @Override
+    public void write(io.art.value.immutable.Value value, OutputStream outputStream) {
+        if (valueIsNull(value)) {
             return;
         }
         try {
-            Value protobuf = writeProtobuf(value);
+            Value protobuf = write(value);
             if (nonNull(protobuf)) {
                 protobuf.writeTo(outputStream);
             }
@@ -62,7 +61,7 @@ public class ProtobufWriter {
         }
     }
 
-    public static com.google.protobuf.Value writeProtobuf(io.art.value.immutable.Value value) {
+    public com.google.protobuf.Value write(io.art.value.immutable.Value value) {
         if (valueIsNull(value)) return null;
         switch (value.getType()) {
             case STRING:
@@ -97,23 +96,23 @@ public class ProtobufWriter {
     }
 
 
-    private static com.google.protobuf.Value writeArray(ArrayValue array) {
+    private com.google.protobuf.Value writeArray(ArrayValue array) {
         ListValue.Builder listBuilder = ListValue.newBuilder();
         for (io.art.value.immutable.Value element : array.asList()) {
-            Value protobuf = writeProtobuf(element);
+            Value protobuf = write(element);
             if (isNull(protobuf)) continue;
             listBuilder.addValues(protobuf);
         }
         return com.google.protobuf.Value.newBuilder().setListValue(listBuilder.build()).build();
     }
 
-    private static com.google.protobuf.Value writeEntity(Entity entity) {
+    private com.google.protobuf.Value writeEntity(Entity entity) {
         Struct.Builder builder = Struct.newBuilder();
         Set<Primitive> keys = entity.asMap().keySet();
         for (Primitive key : keys) {
             if (valueIsNull(key)) continue;
             io.art.value.immutable.Value value = entity.get(key);
-            Value protobuf = writeProtobuf(value);
+            Value protobuf = write(value);
             if (isNull(protobuf)) continue;
             builder.putFields(key.getString(), protobuf);
         }

@@ -19,56 +19,30 @@
 package io.art.json.descriptor;
 
 import com.fasterxml.jackson.core.*;
-import io.art.core.stream.*;
 import io.art.json.exception.*;
 import io.art.value.builder.*;
+import io.art.value.descriptor.Reader;
+import io.art.value.immutable.Value;
 import io.art.value.immutable.*;
-import io.netty.buffer.*;
-import lombok.experimental.*;
+import lombok.*;
 import static com.fasterxml.jackson.core.JsonToken.*;
 import static io.art.core.checker.EmptinessChecker.*;
-import static io.art.core.context.Context.*;
-import static io.art.core.extensions.FileExtensions.*;
-import static io.art.core.factory.ArrayFactory.dynamicArrayOf;
+import static io.art.core.factory.ArrayFactory.*;
 import static io.art.value.factory.ArrayValueFactory.*;
 import static io.art.value.factory.PrimitivesFactory.*;
 import static io.art.value.immutable.Entity.*;
 import static io.art.value.mapping.PrimitiveMapping.*;
-import static io.art.json.module.JsonModule.*;
 import static java.util.Objects.*;
 import java.io.*;
-import java.nio.*;
-import java.nio.file.*;
 import java.util.*;
 
 
-@UtilityClass
-public class JsonReader {
-    public static Value readJson(byte[] jsonBytes) {
-        return readJson(new ByteArrayInputStream(jsonBytes));
-    }
+@AllArgsConstructor
+public class JsonReader implements Reader<Value> {
+    private final JsonFactory jsonFactory;
 
-    public static Value readJson(ByteBuffer nioBuffer) {
-        return readJson(new NioByteBufferInputStream(nioBuffer));
-    }
-
-    public static Value readJson(ByteBuf nettyBuffer) {
-        return readJson(new ByteBufInputStream(nettyBuffer));
-    }
-
-    public static Value readJson(Path path) {
-        return readJson(fileInputStream(path));
-    }
-
-    public static Value readJson(String json) {
-        return readJson(json.getBytes(context().configuration().getCharset()));
-    }
-
-    public static Value readJson(InputStream inputStream) {
-        return readJson(jsonModule().configuration().getObjectMapper().getFactory(), inputStream);
-    }
-
-    public static Value readJson(JsonFactory jsonFactory, InputStream json) {
+    @Override
+    public Value read(InputStream json) {
         if (isEmpty(json)) return null;
         try (JsonParser parser = jsonFactory.createParser(json)) {
             JsonToken nextToken = parser.nextToken();

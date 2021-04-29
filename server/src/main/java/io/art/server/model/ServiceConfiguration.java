@@ -22,11 +22,14 @@ import io.art.core.changes.*;
 import io.art.core.collection.*;
 import io.art.core.source.*;
 import io.art.server.refresher.*;
+import io.art.transport.payload.*;
+import io.art.value.constants.*;
 import lombok.*;
 import reactor.core.scheduler.*;
 import static io.art.core.checker.NullityChecker.*;
 import static io.art.server.constants.ServerModuleConstants.ConfigurationKeys.*;
 import static io.art.server.constants.ServerModuleConstants.Defaults.*;
+import java.util.function.*;
 
 @Getter
 public class ServiceConfiguration {
@@ -35,6 +38,8 @@ public class ServiceConfiguration {
     private boolean validating;
     private Scheduler blockingScheduler;
     private ImmutableMap<String, ServiceMethodConfiguration> methods;
+    private Function<ValueModuleConstants.DataFormat, TransportPayloadReader> reader;
+    private Function<ValueModuleConstants.DataFormat, TransportPayloadWriter> writer;
 
     public static ServiceConfiguration from(ServerModuleRefresher refresher, ConfigurationSource source) {
         ServiceConfiguration configuration = new ServiceConfiguration();
@@ -46,6 +51,8 @@ public class ServiceConfiguration {
         configuration.validating = validationListener.emit(orElse(source.getBool(VALIDATING_KEY), true));
         configuration.blockingScheduler = DEFAULT_SERVICE_METHOD_BLOCKING_SCHEDULER;
         configuration.methods = source.getNestedMap(METHODS_KEY, method -> ServiceMethodConfiguration.from(refresher, source));
+        configuration.reader = TransportPayloadReader::new;
+        configuration.writer = TransportPayloadWriter::new;
         return configuration;
     }
 }

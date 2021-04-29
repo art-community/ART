@@ -76,7 +76,7 @@ public class ConfiguratorModuleConfiguration implements ModuleConfiguration {
 
 
         @Override
-        public Configurator override(ConfiguratorModuleConfiguration configuration) {
+        public Configurator configure(ConfiguratorModuleConfiguration configuration) {
             ifNotEmpty(configuration.getCustomConfigurations(), configurations -> this.configuration.customConfigurations = configurations);
             return this;
         }
