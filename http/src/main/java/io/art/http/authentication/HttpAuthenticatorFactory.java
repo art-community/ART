@@ -29,13 +29,16 @@ import static io.art.http.authentication.Authenticator.*;
 import static java.util.Objects.*;
 
 @UtilityClass
-public class HttpAuthenticator {
+public class HttpAuthenticatorFactory {
 
-    public static Authenticator<HttpServerRequest, HttpServerResponse> basicHttpAuthentication(Function<String, AuthenticationStatus> credentialsChecker, String realm, UnaryOperator<HttpServerResponse> onAllow){
+    public static Authenticator<HttpServerRequest, HttpServerResponse> basicHttpAuthentication(
+            Predicate<String> credentialsChecker,
+            String realm,
+            UnaryOperator<HttpServerResponse> onAllow){
+
         AuthenticatorBuilder<HttpServerRequest, HttpServerResponse> builder = authenticatorBuilder();
-
         return builder
-                .authenticationChecker((HttpServerRequest request) -> credentialsChecker.apply(decodeBasicAuthHeader(request.requestHeaders().get("Authorization"))))
+                .authenticationChecker((HttpServerRequest request) -> checkHttpAuthentication(request, credentialsChecker))
                 .onUnauthorized(response -> response
                         .status(HttpResponseStatus.UNAUTHORIZED)
                         .header("WWW-Authenticate", "Basic realm=\"" + realm +"\""))
@@ -45,7 +48,8 @@ public class HttpAuthenticator {
                 .build();
     }
 
-    public static Authenticator<HttpServerRequest, HttpServerResponse> basicHttpAuthentication(Function<String, AuthenticationStatus> credentialsChecker, String realm){
+    public static Authenticator<HttpServerRequest, HttpServerResponse> basicHttpAuthentication(
+            Predicate<String> credentialsChecker, String realm){
         return basicHttpAuthentication(credentialsChecker, realm, emptyUnaryOperator());
     }
 
@@ -72,8 +76,13 @@ public class HttpAuthenticator {
         return alwaysDeny(response -> response.status(HttpResponseStatus.FORBIDDEN));
     }
 
+    private static AuthenticationStatus checkHttpAuthentication(HttpServerRequest request, Predicate<String> credentialsChecker){
+        String header = request.requestHeaders().get("Authorization");
+        if (isNull(header)) return AuthenticationStatus.unauthenticated;
+        return credentialsChecker.test(decodeBasicAuthHeader(header)) ? AuthenticationStatus.allow : AuthenticationStatus.deny;
+    }
+
     private static String decodeBasicAuthHeader(String header){
-        if (isNull(header)) return null;
         if (!header.startsWith("Basic ")) throw new IllegalArgumentException("Not an Http Basic auth");
         return new String(Base64.getDecoder().decode(header.replace("Basic ", "")));
     }

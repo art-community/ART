@@ -23,46 +23,71 @@ import io.art.http.authentication.*;
 import java.util.function.*;
 import lombok.*;
 import reactor.netty.http.server.*;
-import static io.art.http.authentication.HttpAuthenticator.*;
-import static io.art.http.authentication.HttpAuthenticatorRegistry.*;
+import static io.art.http.authentication.HttpAuthenticatorFactory.*;
+import static io.art.http.authentication.HttpAuthenticationRouter.*;
 
 public class HttpServerAuthenticationConfigurator {
     @Getter(value=AccessLevel.PROTECTED)
-    private final HttpAuthenticatorRegistry registry = httpAuthenticatorRegistry();
+    private final HttpAuthenticationRouter registry = httpAuthenticationRouter();
 
-    public HttpServerAuthenticationConfigurator on(String path, Authenticator<HttpServerRequest, HttpServerResponse> authenticator){
-        registry.add(path, authenticator);
+    public HttpServerAuthenticationConfigurator custom(Authenticator<HttpServerRequest, HttpServerResponse> authenticator,
+                                                       UnaryOperator<AuthenticationMethod> configurator){
+        registry.add(authenticator, configurator);
         return this;
     }
 
-    public HttpServerAuthenticationConfigurator basicHttp(String pathPattern, Function<String, AuthenticationStatus> credentialsChecker,
-                                                          String realm, UnaryOperator<HttpServerResponse> onAllow){
-        registry.add(pathPattern, basicHttpAuthentication(credentialsChecker, realm, onAllow));
+    public HttpServerAuthenticationConfigurator basicHttp(Predicate<String> credentialsChecker,
+                                                          String realm, UnaryOperator<HttpServerResponse> onAllow,
+                                                          UnaryOperator<AuthenticationMethod> configurator){
+        registry.add(basicHttpAuthentication(credentialsChecker, realm, onAllow), configurator);
         return this;
     }
 
-    public HttpServerAuthenticationConfigurator basicHttp(String pathPattern, Function<String, AuthenticationStatus> credentialsChecker, String realm){
-        registry.add(pathPattern, basicHttpAuthentication(credentialsChecker, realm));
+    public HttpServerAuthenticationConfigurator basicHttp(Predicate<String> credentialsChecker,
+                                                          String realm, UnaryOperator<AuthenticationMethod> configurator){
+        registry.add(basicHttpAuthentication(credentialsChecker, realm), configurator);
         return this;
     }
+
+    public HttpServerAuthenticationConfigurator allow(UnaryOperator<AuthenticationMethod> configurator){
+        return custom(alwaysAllow(), configurator);
+    }
+
+    public HttpServerAuthenticationConfigurator allow(UnaryOperator<HttpServerResponse> onAllow,
+                                                      UnaryOperator<AuthenticationMethod> configurator){
+        return custom(alwaysAllow(onAllow), configurator);
+    }
+
+    public HttpServerAuthenticationConfigurator deny(UnaryOperator<AuthenticationMethod> configurator){
+        return custom(alwaysDeny(), configurator);
+    }
+
+    public HttpServerAuthenticationConfigurator deny(UnaryOperator<HttpServerResponse> onDeny,
+                                                     UnaryOperator<AuthenticationMethod> configurator){
+        return custom(alwaysDeny(onDeny), configurator);
+    }
+
+
+
 
     public HttpServerAuthenticationConfigurator orElseAllow(){
-        registry.defaultAuthenticator(alwaysAllow());
-        return this;
+        return defaultAuthenticator(alwaysAllow());
     }
 
     public HttpServerAuthenticationConfigurator orElseAllow(UnaryOperator<HttpServerResponse> onAllow){
-        registry.defaultAuthenticator(alwaysAllow(onAllow));
-        return this;
+        return defaultAuthenticator(alwaysAllow(onAllow));
     }
 
     public HttpServerAuthenticationConfigurator orElseDeny(){
-        registry.defaultAuthenticator(alwaysDeny());
-        return this;
+        return defaultAuthenticator(alwaysDeny());
     }
 
     public HttpServerAuthenticationConfigurator orElseDeny(UnaryOperator<HttpServerResponse> onDeny){
-        registry.defaultAuthenticator(alwaysDeny(onDeny));
+        return defaultAuthenticator(alwaysDeny(onDeny));
+    }
+
+    protected HttpServerAuthenticationConfigurator defaultAuthenticator(Authenticator<HttpServerRequest, HttpServerResponse> authenticator){
+        registry.defaultAuthenticator(authenticator);
         return this;
     }
 }

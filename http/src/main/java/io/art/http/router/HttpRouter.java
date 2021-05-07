@@ -54,7 +54,7 @@ import static java.util.Objects.*;
 
 public class HttpRouter implements
         BiFunction<HttpServerRequest, HttpServerResponse, Publisher<Void>>{
-    private final HttpAuthenticatorRegistry authenticatorRegistry = httpModule().configuration().getServerConfiguration().getAuthentication();
+    private final HttpAuthenticationRouter authenticationRouter = httpModule().configuration().getServerConfiguration().getAuthentication();
     private HttpServerRoutes routes;
 
     public HttpRouter(HttpServerConfiguration configuration) {
@@ -104,7 +104,7 @@ public class HttpRouter implements
 
     @Override
     public Publisher<Void> apply(HttpServerRequest request, HttpServerResponse response) {
-        Authenticator<HttpServerRequest, HttpServerResponse> authenticator = authenticatorRegistry.get(request.path());
+        Authenticator<HttpServerRequest, HttpServerResponse> authenticator = authenticationRouter.get(request.path());
         Boolean isAuthenticated = authenticator.check(request);
         authenticator.apply(response);
 

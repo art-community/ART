@@ -32,5 +32,5 @@ public class HttpServerModel {
     private final Consumer<? super SslProvider.SslContextSpec> sslConfigurator;
     private final Function<? extends Throwable, ?> exceptionsMapper;
     private final Map<ChannelOption<?>, Object> tcpOptions;
-    private final HttpAuthenticatorRegistry authentication;
+    private final HttpAuthenticationRouter authentication;
 }

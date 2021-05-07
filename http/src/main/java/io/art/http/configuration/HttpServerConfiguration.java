@@ -31,6 +31,7 @@ import static io.art.core.checker.NullityChecker.*;
 import static io.art.core.constants.NetworkConstants.*;
 import static io.art.http.constants.HttpModuleConstants.ConfigurationKeys.*;
 import static io.art.http.constants.HttpModuleConstants.Defaults.*;
+import static io.art.http.authentication.HttpAuthenticationRouter.*;
 import static io.art.value.constants.ValueModuleConstants.DataFormat.*;
 
 @Getter
@@ -43,7 +44,7 @@ public class HttpServerConfiguration {
     private DataFormat defaultDataFormat;
     private final Function<? extends Throwable, ?> exceptionMapper;
     @Builder.Default
-    private final HttpAuthenticatorRegistry authentication = new HttpAuthenticatorRegistry();
+    private final HttpAuthenticationRouter authentication = httpAuthenticationRouter();
 
     public static HttpServerConfiguration defaults() {
         HttpServerConfiguration configuration = HttpServerConfiguration.builder().build();

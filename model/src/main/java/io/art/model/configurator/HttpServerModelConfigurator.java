@@ -19,7 +19,6 @@
 package io.art.model.configurator;
 
 import io.art.core.collection.*;
-import io.art.core.model.*;
 import io.art.model.modeling.server.*;
 import io.art.value.constants.ValueModuleConstants.*;
 import io.netty.channel.*;
