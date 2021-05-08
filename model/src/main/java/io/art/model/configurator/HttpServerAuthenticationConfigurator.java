@@ -38,14 +38,16 @@ public class HttpServerAuthenticationConfigurator {
     }
 
     public HttpServerAuthenticationConfigurator basic(Predicate<String> credentialsChecker,
-                                                      String realm, UnaryOperator<HttpServerResponse> onAllow,
+                                                      String realm,
+                                                      UnaryOperator<HttpServerResponse> onAllow,
                                                       UnaryOperator<AuthenticationMethod> configurator){
         registry.add(basicHttpAuthentication(credentialsChecker, realm, onAllow), configurator);
         return this;
     }
 
     public HttpServerAuthenticationConfigurator basic(Predicate<String> credentialsChecker,
-                                                      String realm, UnaryOperator<AuthenticationMethod> configurator){
+                                                      String realm,
+                                                      UnaryOperator<AuthenticationMethod> configurator){
         registry.add(basicHttpAuthentication(credentialsChecker, realm), configurator);
         return this;
     }
