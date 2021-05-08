@@ -23,6 +23,7 @@ import io.art.http.authentication.*;
 import java.util.function.*;
 import lombok.*;
 import reactor.netty.http.server.*;
+import static io.art.core.constants.StringConstants.*;
 import static io.art.http.authentication.HttpAuthenticatorFactory.*;
 import static io.art.http.authentication.HttpAuthenticationRouter.*;
 
@@ -36,21 +37,36 @@ public class HttpServerAuthenticationConfigurator {
         return this;
     }
 
-    public HttpServerAuthenticationConfigurator basicHttp(Predicate<String> credentialsChecker,
-                                                          String realm, UnaryOperator<HttpServerResponse> onAllow,
-                                                          UnaryOperator<AuthenticationMethod> configurator){
+    public HttpServerAuthenticationConfigurator basic(Predicate<String> credentialsChecker,
+                                                      String realm, UnaryOperator<HttpServerResponse> onAllow,
+                                                      UnaryOperator<AuthenticationMethod> configurator){
         registry.add(basicHttpAuthentication(credentialsChecker, realm, onAllow), configurator);
         return this;
     }
 
-    public HttpServerAuthenticationConfigurator basicHttp(Predicate<String> credentialsChecker,
-                                                          String realm, UnaryOperator<AuthenticationMethod> configurator){
+    public HttpServerAuthenticationConfigurator basic(Predicate<String> credentialsChecker,
+                                                      String realm, UnaryOperator<AuthenticationMethod> configurator){
         registry.add(basicHttpAuthentication(credentialsChecker, realm), configurator);
         return this;
     }
 
+    public HttpServerAuthenticationConfigurator basic(Predicate<String> credentialsChecker,
+                                                      UnaryOperator<HttpServerResponse> onAllow,
+                                                      UnaryOperator<AuthenticationMethod> configurator){
+        return basic(credentialsChecker, EMPTY_STRING, onAllow, configurator);
+    }
+
+    public HttpServerAuthenticationConfigurator basic(Predicate<String> credentialsChecker,
+                                                      UnaryOperator<AuthenticationMethod> configurator){
+        return basic(credentialsChecker, EMPTY_STRING, configurator);
+    }
+
     public HttpServerAuthenticationConfigurator allow(UnaryOperator<AuthenticationMethod> configurator){
         return custom(alwaysAllow(), configurator);
+    }
+
+    public HttpServerAuthenticationConfigurator allow(String... paths){
+        return custom(alwaysAllow(), allow -> allow.on(paths));
     }
 
     public HttpServerAuthenticationConfigurator allow(UnaryOperator<HttpServerResponse> onAllow,
@@ -62,6 +78,10 @@ public class HttpServerAuthenticationConfigurator {
         return custom(alwaysDeny(), configurator);
     }
 
+    public HttpServerAuthenticationConfigurator deny(String... paths){
+        return custom(alwaysDeny(), a -> a.on(paths));
+    }
+
     public HttpServerAuthenticationConfigurator deny(UnaryOperator<HttpServerResponse> onDeny,
                                                      UnaryOperator<AuthenticationMethod> configurator){
         return custom(alwaysDeny(onDeny), configurator);
@@ -70,9 +90,6 @@ public class HttpServerAuthenticationConfigurator {
 
 
 
-    public HttpServerAuthenticationConfigurator orElseAllow(){
-        return defaultAuthenticator(alwaysAllow());
-    }
 
     public HttpServerAuthenticationConfigurator orElseAllow(UnaryOperator<HttpServerResponse> onAllow){
         return defaultAuthenticator(alwaysAllow(onAllow));
