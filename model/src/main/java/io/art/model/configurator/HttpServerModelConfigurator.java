@@ -62,7 +62,7 @@ public class HttpServerModelConfigurator {
     private DataFormat defaultDataFormat = JSON;
     private final HttpServiceExceptionMappingConfigurator exceptionMapping = new HttpServiceExceptionMappingConfigurator();
     private UnaryOperator<HttpRequestDecoderSpec> requestDecoderConfigurator = identity();
-    private SslContext defaultSslContext;
+    private Http2SslContextSpec defaultSslContext;
     private final Map<String, Consumer<? super SslProvider.SslContextSpec>> sniMapping = map();
     private boolean redirectToHttps = false;
     private final Map<ChannelOption<?>, Object> tcpOptions = map();
@@ -133,7 +133,7 @@ public class HttpServerModelConfigurator {
 
     @SneakyThrows
     public HttpServerModelConfigurator ssl(File certificate, File key){
-        defaultSslContext = SslContextBuilder.forServer(certificate, key).build();
+        defaultSslContext = Http2SslContextSpec.forServer(certificate, key);
         return this;
     }
 
@@ -209,7 +209,7 @@ public class HttpServerModelConfigurator {
                 .services(services.build())
                 .host(host)
                 .port(port)
-                .protocol(protocol)
+                .protocol(isNull(defaultSslContext) ? protocol : HttpProtocol.H2)
                 .compression(compression)
                 .logging(logging)
                 .wiretap(wiretap)
