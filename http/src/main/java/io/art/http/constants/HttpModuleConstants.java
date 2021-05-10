@@ -112,14 +112,14 @@ public interface HttpModuleConstants {
         String SETUP_PAYLOAD_KEY = "setupPayload";
     }
 
-    interface HttpMethodNames {
-        String GET_METHOD_NAME = "GET";
-        String POST_METHOD_NAME = "POST";
-        String PUT_METHOD_NAME = "PUT";
-        String DELETE_METHOD_NAME = "DELETE";
-        String OPTIONS_METHOD_NAME = "OPTIONS";
-        String HEAD_METHOD_NAME = "HEAD";
-        String PATCH_METHOD_NAME = "PATCH";
+    interface HttpAuthentication {
+        String AUTHORIZATION_HEADER = "Authorization";
+
+        String BEARER_PREFIX = "Bearer ";
+        String BASIC_PREFIX = "Basic ";
+
+        int BEARER_PREFIX_LENGTH = BEARER_PREFIX.length();
+        int BASIC_PREFIX_LENGTH = BASIC_PREFIX.length();
     }
 
     enum HttpMethodType {

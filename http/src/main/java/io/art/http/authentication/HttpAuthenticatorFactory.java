@@ -26,64 +26,100 @@ import lombok.experimental.*;
 import reactor.netty.http.server.*;
 import static io.art.core.constants.EmptyFunctions.*;
 import static io.art.http.authentication.Authenticator.*;
+import static io.art.http.constants.HttpModuleConstants.HttpAuthentication.*;
 import static java.util.Objects.*;
 
 @UtilityClass
 public class HttpAuthenticatorFactory {
 
-    public static Authenticator<HttpServerRequest, HttpServerResponse> basicHttpAuthentication(
-            Predicate<String> credentialsChecker,
-            String realm,
-            UnaryOperator<HttpServerResponse> onAllow){
+    public static Authenticator<HttpServerRequest, HttpServerResponse> customAuthentication(Function<HttpServerRequest, AuthenticationStatus> authenticationChecker) {
+        return authentication(authenticationChecker).build();
+    }
 
-        AuthenticatorBuilder<HttpServerRequest, HttpServerResponse> builder = authenticatorBuilder();
-        return builder
-                .authenticationChecker((HttpServerRequest request) -> checkHttpAuthentication(request, credentialsChecker))
-                .onUnauthorized(response -> response
+    public static Authenticator<HttpServerRequest, HttpServerResponse> customHeaderAuthentication(Predicate<String> credentialsChecker, UnaryOperator<String> headerDecoder) {
+        return headerAuthentication(credentialsChecker, headerDecoder).build();
+    }
+
+    public static Authenticator<HttpServerRequest, HttpServerResponse> basicAuthentication(Predicate<String> credentialsChecker) {
+        return headerAuthentication(credentialsChecker, HttpAuthenticatorFactory::decodeBasicHeader)
+                .unauthenticated(response -> response
+                        .status(HttpResponseStatus.UNAUTHORIZED)
+                        .header("WWW-Authenticate", "Basic realm=\"\""))
+                .build();
+    }
+
+    public static Authenticator<HttpServerRequest, HttpServerResponse> basicAuthentication(Predicate<String> credentialsChecker, String realm) {
+        return headerAuthentication(credentialsChecker, HttpAuthenticatorFactory::decodeBasicHeader)
+                .unauthenticated(response -> response
                         .status(HttpResponseStatus.UNAUTHORIZED)
                         .header("WWW-Authenticate", "Basic realm=\"" + realm +"\""))
-                .onDeny(response -> response
-                        .status(HttpResponseStatus.FORBIDDEN))
-                .onAllow(onAllow)
                 .build();
     }
 
-    public static Authenticator<HttpServerRequest, HttpServerResponse> basicHttpAuthentication(
-            Predicate<String> credentialsChecker, String realm){
-        return basicHttpAuthentication(credentialsChecker, realm, emptyUnaryOperator());
+    public static Authenticator<HttpServerRequest, HttpServerResponse> bearerAuthentication(Predicate<String> credentialsChecker) {
+        return headerAuthentication(credentialsChecker, HttpAuthenticatorFactory::decodeBearerHeader).build();
     }
 
-    public static Authenticator<HttpServerRequest, HttpServerResponse> alwaysAllow(UnaryOperator<HttpServerResponse> onAllow){
+
+
+    public static Authenticator<HttpServerRequest, HttpServerResponse> alwaysAllow(UnaryOperator<HttpServerResponse> onAllow) {
         AuthenticatorBuilder<HttpServerRequest, HttpServerResponse> builder = authenticatorBuilder();
         return builder
-                .onAllow(onAllow)
+                .passed(onAllow)
                 .build();
     }
 
-    public static Authenticator<HttpServerRequest, HttpServerResponse> alwaysAllow(){
+    public static Authenticator<HttpServerRequest, HttpServerResponse> alwaysAllow() {
         return alwaysAllow(emptyUnaryOperator());
     }
 
-    public static Authenticator<HttpServerRequest, HttpServerResponse> alwaysDeny(UnaryOperator<HttpServerResponse> onDeny){
+    public static Authenticator<HttpServerRequest, HttpServerResponse> alwaysDeny(UnaryOperator<HttpServerResponse> onDeny) {
         AuthenticatorBuilder<HttpServerRequest, HttpServerResponse> builder = authenticatorBuilder();
         return builder
                 .authenticationChecker(request -> AuthenticationStatus.deny)
-                .onDeny(onDeny)
+                .failed(onDeny)
                 .build();
     }
 
-    public static Authenticator<HttpServerRequest, HttpServerResponse> alwaysDeny(){
+    public static Authenticator<HttpServerRequest, HttpServerResponse> alwaysDeny() {
         return alwaysDeny(response -> response.status(HttpResponseStatus.FORBIDDEN));
     }
 
-    private static AuthenticationStatus checkHttpAuthentication(HttpServerRequest request, Predicate<String> credentialsChecker){
-        String header = request.requestHeaders().get("Authorization");
-        if (isNull(header)) return AuthenticationStatus.unauthenticated;
-        return credentialsChecker.test(decodeBasicAuthHeader(header)) ? AuthenticationStatus.allow : AuthenticationStatus.deny;
+
+
+    private static AuthenticatorBuilder<HttpServerRequest, HttpServerResponse> authentication(
+            Function<HttpServerRequest, AuthenticationStatus> authenticator)
+    {
+        AuthenticatorBuilder<HttpServerRequest, HttpServerResponse> builder = authenticatorBuilder();
+        return builder
+                .authenticationChecker(authenticator)
+                .unauthenticated(response -> response
+                        .status(HttpResponseStatus.UNAUTHORIZED))
+                .failed(response -> response
+                        .status(HttpResponseStatus.FORBIDDEN));
     }
 
-    private static String decodeBasicAuthHeader(String header){
-        if (!header.startsWith("Basic ")) throw new IllegalArgumentException("Not an Http Basic auth");
-        return new String(Base64.getDecoder().decode(header.replace("Basic ", "")));
+    private static AuthenticatorBuilder<HttpServerRequest, HttpServerResponse> headerAuthentication(
+            Predicate<String> credentialsChecker,
+            UnaryOperator<String> headerDecoder)
+    {
+        return authentication((HttpServerRequest request) -> checkAuthentication(request, credentialsChecker, headerDecoder));
+    }
+
+    private static AuthenticationStatus checkAuthentication(HttpServerRequest request, Predicate<String> credentialsChecker, UnaryOperator<String> headerDecoder) {
+        String authenticationData = headerDecoder.apply(request.requestHeaders().get(AUTHORIZATION_HEADER));
+        if (isNull(authenticationData)) return AuthenticationStatus.unauthenticated;
+        return credentialsChecker.test(authenticationData) ? AuthenticationStatus.allow : AuthenticationStatus.deny;
+    }
+
+
+    private static String decodeBearerHeader(String header) {
+        if (isNull(header) || !header.startsWith(BEARER_PREFIX)) return null;
+        return header.substring(BEARER_PREFIX_LENGTH);
+    }
+
+    private static String decodeBasicHeader(String header) {
+        if (isNull(header) || !header.startsWith(BASIC_PREFIX)) return null;
+        return new String(Base64.getDecoder().decode(header.substring(BASIC_PREFIX_LENGTH)));
     }
 }

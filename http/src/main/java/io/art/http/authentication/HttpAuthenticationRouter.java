@@ -24,6 +24,7 @@ import java.util.regex.*;
 import lombok.*;
 import reactor.netty.http.server.*;
 import static io.art.core.collector.SetCollector.*;
+import static io.art.core.constants.StringConstants.*;
 import static io.art.core.factory.MapFactory.*;
 import static io.art.core.factory.SetFactory.*;
 import static io.art.http.authentication.HttpAuthenticatorFactory.*;
@@ -64,7 +65,11 @@ public class HttpAuthenticationRouter {
         private final Set<UriPathTemplate> paths = set();
         private final Set<String> ignoredPaths = set();
         @Getter(value = AccessLevel.PROTECTED)
-        private final Authenticator<HttpServerRequest, HttpServerResponse> authenticator;
+        private Authenticator<HttpServerRequest, HttpServerResponse> authenticator;
+
+        private AuthenticationMethod(Authenticator<HttpServerRequest, HttpServerResponse> authenticator) {
+            this.authenticator = authenticator;
+        }
 
         private Boolean matches(String path) {
             return !ignoredPaths.contains(path) &&
@@ -73,12 +78,27 @@ public class HttpAuthenticationRouter {
 
         public AuthenticationMethod on(String... templates){
             Arrays.stream(templates).forEach(pathPattern ->
-                    paths.add(new UriPathTemplate(pathPattern.startsWith("/") ? pathPattern.substring(1) : pathPattern)));
+                    paths.add(new UriPathTemplate(pathPattern.startsWith(SLASH) ? pathPattern : SLASH + pathPattern)));
             return this;
         }
 
         public AuthenticationMethod ignore(String... paths){
             Arrays.stream(paths).forEach(path -> ignoredPaths.add(path.startsWith("/") ? path.substring(1) : path));
+            return this;
+        }
+
+        public AuthenticationMethod unauthenticated(UnaryOperator<HttpServerResponse> action) {
+            authenticator = authenticator.toBuilder().unauthenticated(action).build();
+            return this;
+        }
+
+        public AuthenticationMethod failed(UnaryOperator<HttpServerResponse> action) {
+            authenticator = authenticator.toBuilder().failed(action).build();
+            return this;
+        }
+
+        public AuthenticationMethod passed(UnaryOperator<HttpServerResponse> action) {
+            authenticator = authenticator.toBuilder().passed(action).build();
             return this;
         }
 

@@ -24,16 +24,16 @@ import static io.art.core.constants.EmptyFunctions.*;
 import static io.art.http.constants.HttpModuleConstants.ExceptionMessages.*;
 
 @RequiredArgsConstructor
-@Builder
+@Builder(toBuilder = true)
 public class Authenticator <T, R>{
     @Builder.Default
     private final Function<T, AuthenticationStatus> authenticationChecker = ignored -> AuthenticationStatus.allow;
     @Builder.Default
-    private final UnaryOperator<R> onUnauthorized = emptyUnaryOperator();
+    private final UnaryOperator<R> unauthenticated = emptyUnaryOperator();
     @Builder.Default
-    private final UnaryOperator<R> onDeny = emptyUnaryOperator();
+    private final UnaryOperator<R> failed = emptyUnaryOperator();
     @Builder.Default
-    private final UnaryOperator<R> onAllow = emptyUnaryOperator();
+    private final UnaryOperator<R> passed = emptyUnaryOperator();
     private final ThreadLocal<AuthenticationStatus> status = new ThreadLocal<>();
 
     public static <M, N> AuthenticatorBuilder<M, N> authenticatorBuilder(){
@@ -51,13 +51,13 @@ public class Authenticator <T, R>{
         R result;
         switch (status.get()){
             case unauthenticated:
-                result = onUnauthorized.apply(response);
+                result = unauthenticated.apply(response);
                 break;
             case allow:
-                result = onAllow.apply(response);
+                result = passed.apply(response);
                 break;
             case deny:
-                result = onDeny.apply(response);
+                result = failed.apply(response);
                 break;
             default:
                 throw new IllegalStateException(NULL_AUTHENTICATION_STATUS);
@@ -67,15 +67,15 @@ public class Authenticator <T, R>{
     }
 
     private R allow(R response){
-        return onAllow.apply(response);
+        return passed.apply(response);
     }
 
     private R deny(R response){
-        return onDeny.apply(response);
+        return failed.apply(response);
     }
 
     private R requestAuthentication(R response) {
-        return onUnauthorized.apply(response);
+        return unauthenticated.apply(response);
     }
 
     public enum AuthenticationStatus {

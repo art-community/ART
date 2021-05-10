@@ -18,50 +18,56 @@
 
 package io.art.model.configurator;
 
-import io.art.http.authentication.Authenticator.*;
 import io.art.http.authentication.*;
+import io.art.http.authentication.Authenticator.*;
 import java.util.function.*;
 import lombok.*;
 import reactor.netty.http.server.*;
-import static io.art.core.constants.StringConstants.*;
 import static io.art.http.authentication.HttpAuthenticatorFactory.*;
 import static io.art.http.authentication.HttpAuthenticationRouter.*;
 
 public class HttpServerAuthenticationConfigurator {
     @Getter(value=AccessLevel.PROTECTED)
-    private final HttpAuthenticationRouter registry = httpAuthenticationRouter();
+    private final HttpAuthenticationRouter router = httpAuthenticationRouter();
 
     public HttpServerAuthenticationConfigurator custom(Authenticator<HttpServerRequest, HttpServerResponse> authenticator,
-                                                       UnaryOperator<AuthenticationMethod> configurator){
-        registry.add(authenticator, configurator);
+                                                       UnaryOperator<AuthenticationMethod> configurator) {
+        router.add(authenticator, configurator);
+        return this;
+    }
+
+    public HttpServerAuthenticationConfigurator custom(Function<HttpServerRequest, AuthenticationStatus> authenticationChecker,
+                                                      UnaryOperator<AuthenticationMethod> configurator){
+        router.add(customAuthentication(authenticationChecker), configurator);
+        return this;
+    }
+
+    public HttpServerAuthenticationConfigurator header(Predicate<String> credentialsChecker, UnaryOperator<String> headerDecoder,
+                                                      UnaryOperator<AuthenticationMethod> configurator){
+        router.add(customHeaderAuthentication(credentialsChecker, headerDecoder), configurator);
         return this;
     }
 
     public HttpServerAuthenticationConfigurator basic(Predicate<String> credentialsChecker,
                                                       String realm,
-                                                      UnaryOperator<HttpServerResponse> onAllow,
                                                       UnaryOperator<AuthenticationMethod> configurator){
-        registry.add(basicHttpAuthentication(credentialsChecker, realm, onAllow), configurator);
+        router.add(basicAuthentication(credentialsChecker, realm), configurator);
         return this;
     }
 
     public HttpServerAuthenticationConfigurator basic(Predicate<String> credentialsChecker,
-                                                      String realm,
                                                       UnaryOperator<AuthenticationMethod> configurator){
-        registry.add(basicHttpAuthentication(credentialsChecker, realm), configurator);
+        router.add(basicAuthentication(credentialsChecker), configurator);
         return this;
     }
 
-    public HttpServerAuthenticationConfigurator basic(Predicate<String> credentialsChecker,
-                                                      UnaryOperator<HttpServerResponse> onAllow,
-                                                      UnaryOperator<AuthenticationMethod> configurator){
-        return basic(credentialsChecker, EMPTY_STRING, onAllow, configurator);
+
+    public HttpServerAuthenticationConfigurator bearer(Predicate<String> credentialsChecker,
+                                                       UnaryOperator<AuthenticationMethod> configurator) {
+        router.add(bearerAuthentication(credentialsChecker), configurator);
+        return this;
     }
 
-    public HttpServerAuthenticationConfigurator basic(Predicate<String> credentialsChecker,
-                                                      UnaryOperator<AuthenticationMethod> configurator){
-        return basic(credentialsChecker, EMPTY_STRING, configurator);
-    }
 
     public HttpServerAuthenticationConfigurator allow(UnaryOperator<AuthenticationMethod> configurator){
         return custom(alwaysAllow(), configurator);
@@ -106,7 +112,7 @@ public class HttpServerAuthenticationConfigurator {
     }
 
     protected HttpServerAuthenticationConfigurator defaultAuthenticator(Authenticator<HttpServerRequest, HttpServerResponse> authenticator){
-        registry.defaultAuthenticator(authenticator);
+        router.defaultAuthenticator(authenticator);
         return this;
     }
 }

@@ -104,7 +104,7 @@ public class HttpRouter implements
 
     @Override
     public Publisher<Void> apply(HttpServerRequest request, HttpServerResponse response) {
-        Authenticator<HttpServerRequest, HttpServerResponse> authenticator = authenticationRouter.get(request.path());
+        Authenticator<HttpServerRequest, HttpServerResponse> authenticator = authenticationRouter.get(request.fullPath());
         Boolean isAuthenticated = authenticator.check(request);
         authenticator.apply(response);
 

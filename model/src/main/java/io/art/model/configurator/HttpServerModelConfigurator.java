@@ -226,7 +226,7 @@ public class HttpServerModelConfigurator {
                                 .build())
                 .exceptionsMapper(exceptionMapping.configure())
                 .tcpOptions(tcpOptions)
-                .authentication(authentication.getRegistry())
+                .authentication(authentication.getRouter())
                 .build();
     }
 
