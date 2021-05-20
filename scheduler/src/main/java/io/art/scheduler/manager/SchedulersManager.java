@@ -21,41 +21,29 @@ package io.art.scheduler.manager;
 import io.art.core.callable.*;
 import io.art.core.runnable.*;
 import io.art.scheduler.model.*;
-import lombok.*;
 import lombok.experimental.*;
-import org.apache.logging.log4j.*;
-import static io.art.core.constants.DateTimeConstants.*;
-import static io.art.logging.LoggingModule.*;
-import static io.art.scheduler.constants.SchedulerModuleConstants.LoggingMessages.*;
 import static io.art.scheduler.constants.SchedulerModuleConstants.PeriodicTaskMode.*;
 import static io.art.scheduler.factory.TaskFactory.*;
 import static io.art.scheduler.module.SchedulerModule.*;
-import static java.text.MessageFormat.*;
 import static java.time.LocalDateTime.*;
-import static lombok.AccessLevel.*;
 import java.time.*;
 import java.util.concurrent.*;
 
 @UtilityClass
 public class SchedulersManager {
-    @Getter(lazy = true, value = PRIVATE)
-    private final static Logger logger = logger(SchedulersManager.class);
-
-    public static <T> ForkJoinTask<? extends T> schedule(Callable<? extends T> task) {
+    public static <T> Future<? extends T> schedule(Callable<? extends T> task) {
         return deferredExecutor().submit(task, now());
     }
 
-    public static <T> ForkJoinTask<? extends T> schedule(Callable<? extends T> task, LocalDateTime startTime) {
-        getLogger().info(format(DEFERRED_TASK_SUBMITTED, startTime.format(YYYY_MM_DD_HH_MM_SS_24H_DASH_FORMAT)));
+    public static <T> Future<? extends T> schedule(Callable<? extends T> task, LocalDateTime startTime) {
         return deferredExecutor().submit(task, startTime);
     }
 
-    public static ForkJoinTask<?> schedule(Runnable task) {
+    public static Future<?> schedule(Runnable task) {
         return deferredExecutor().execute(task, now());
     }
 
-    public static ForkJoinTask<?> schedule(Runnable task, LocalDateTime startTime) {
-        getLogger().info(format(DEFERRED_TASK_SUBMITTED, startTime.format(YYYY_MM_DD_HH_MM_SS_24H_DASH_FORMAT)));
+    public static Future<?> schedule(Runnable task, LocalDateTime startTime) {
         return deferredExecutor().execute(task, startTime);
     }
 
@@ -89,7 +77,6 @@ public class SchedulersManager {
                 .period(period)
                 .mode(FIXED)
                 .build();
-        getLogger().info(format(PERIODIC_TASK_SUBMITTED, task.getId(), startTime.format(YYYY_MM_DD_HH_MM_SS_24H_DASH_FORMAT), period));
         periodicExecutor().submit(periodicTask);
     }
 
@@ -105,7 +92,6 @@ public class SchedulersManager {
                 .period(period)
                 .mode(FIXED)
                 .build();
-        getLogger().info(format(PERIODIC_TASK_SUBMITTED, task.getId(), startTime.format(YYYY_MM_DD_HH_MM_SS_24H_DASH_FORMAT), period));
         periodicExecutor().execute(periodicTask);
     }
 
@@ -139,7 +125,6 @@ public class SchedulersManager {
                 .period(period)
                 .mode(DELAYED)
                 .build();
-        getLogger().info(format(PERIODIC_TASK_SUBMITTED, task.getId(), startTime.format(YYYY_MM_DD_HH_MM_SS_24H_DASH_FORMAT), period));
         periodicExecutor().execute(periodicTask);
     }
 
@@ -155,7 +140,6 @@ public class SchedulersManager {
                 .period(period)
                 .mode(DELAYED)
                 .build();
-        getLogger().info(format(PERIODIC_TASK_SUBMITTED, task.getId(), startTime.format(YYYY_MM_DD_HH_MM_SS_24H_DASH_FORMAT), period));
         periodicExecutor().submit(periodicTask);
     }
 
@@ -165,7 +149,6 @@ public class SchedulersManager {
     }
 
     public static boolean cancelTask(String taskId) {
-        getLogger().info(format(PERIODIC_TASK_CANCELED, taskId));
         return periodicExecutor().cancelTask(taskId);
     }
 }

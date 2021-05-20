@@ -19,10 +19,9 @@
 package io.art.configurator.constants;
 
 import io.art.core.collection.*;
-import io.art.core.factory.*;
 import io.art.core.source.ConfigurationSource.*;
 import lombok.*;
-import static io.art.core.factory.ArrayFactory.immutableArrayOf;
+import static io.art.core.factory.ArrayFactory.*;
 
 public interface ConfiguratorModuleConstants {
     String DEFAULT_MODULE_CONFIGURATION_FILE = "module";
@@ -41,9 +40,7 @@ public interface ConfiguratorModuleConstants {
     }
 
     interface ConfiguratorKeys {
-        String MODULE_CONFIG_FILE_ENVIRONMENT = "MODULE_CONFIG_FILE";
         String MODULE_CONFIG_FILES_ENVIRONMENT = "MODULE_CONFIG_FILES";
-        String MODULE_CONFIG_FILE_PROPERTY = "module.config.file";
         String MODULE_CONFIG_FILES_PROPERTY = "module.config.files";
     }
 

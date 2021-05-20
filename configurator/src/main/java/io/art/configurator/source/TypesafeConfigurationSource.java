@@ -26,30 +26,36 @@ import static com.typesafe.config.ConfigFactory.*;
 import static io.art.core.checker.NullityChecker.*;
 import static io.art.core.collection.ImmutableArray.*;
 import static io.art.core.combiner.SectionCombiner.*;
+import static io.art.core.constants.StringConstants.*;
 import static io.art.core.extensions.CollectionExtensions.*;
 import static io.art.core.factory.ArrayFactory.*;
 import static io.art.core.factory.SetFactory.*;
-import static java.util.Objects.*;
 import java.io.*;
 import java.util.function.*;
 
 @Getter
 public class TypesafeConfigurationSource implements NestedConfiguration {
+    private final ConfigurationSourceParameters parameters;
     private final String section;
+    private final String path;
     private final ModuleConfigurationSourceType type;
     private Supplier<InputStream> inputStream;
     private Config typesafeConfiguration;
 
-    public TypesafeConfigurationSource(String section, ModuleConfigurationSourceType type, Supplier<InputStream> inputStream) {
-        this.section = section;
-        this.type = type;
-        this.inputStream = inputStream;
+    public TypesafeConfigurationSource(ConfigurationSourceParameters parameters) {
+        this.parameters = parameters;
+        this.section = parameters.getSection();
+        this.path = parameters.getPath();
+        this.type = parameters.getType();
+        this.inputStream = parameters.getInputStream();
         this.typesafeConfiguration = parseReader(new InputStreamReader(this.inputStream.get()));
     }
 
-    public TypesafeConfigurationSource(String section, ModuleConfigurationSourceType type, Config typesafeConfiguration) {
-        this.section = section;
-        this.type = type;
+    public TypesafeConfigurationSource(ConfigurationSourceParameters parameters, Config typesafeConfiguration) {
+        this.parameters = parameters;
+        this.section = parameters.getSection();
+        this.type = parameters.getType();
+        this.path = parameters.getPath();
         this.typesafeConfiguration = typesafeConfiguration;
     }
 
@@ -75,18 +81,18 @@ public class TypesafeConfigurationSource implements NestedConfiguration {
 
     @Override
     public NestedConfiguration getNested(String path) {
-        Config configuration = this.typesafeConfiguration.atPath(path);
-        if (isNull(configuration) || !this.typesafeConfiguration.hasPath(path) || configuration.isEmpty()) {
+        String newPath = combine(section, path);
+        if (!this.typesafeConfiguration.hasPath(newPath)) {
             return null;
         }
-        return new TypesafeConfigurationSource(combine(section, path), type, configuration);
+        return new TypesafeConfigurationSource(parameters.toBuilder().section(newPath).build(), typesafeConfiguration);
     }
 
     @Override
     public ImmutableArray<NestedConfiguration> asArray() {
         return orEmptyImmutableArray(section, typesafeConfiguration::hasPath, path -> immutableArrayOf(typesafeConfiguration.getConfigList(path)))
                 .stream()
-                .map(config -> new TypesafeConfigurationSource(section, type, config))
+                .map(config -> new TypesafeConfigurationSource(parameters, config))
                 .collect(immutableArrayCollector());
     }
 
@@ -94,7 +100,7 @@ public class TypesafeConfigurationSource implements NestedConfiguration {
     public <T> ImmutableArray<T> asArray(Function<NestedConfiguration, T> mapper) {
         return orEmptyImmutableArray(section, typesafeConfiguration::hasPath, path -> immutableArrayOf(typesafeConfiguration.getConfigList(path)))
                 .stream()
-                .map(config -> mapper.apply(new TypesafeConfigurationSource(section, type, config)))
+                .map(config -> mapper.apply(new TypesafeConfigurationSource(parameters.toBuilder().section(EMPTY_STRING).build(), config)))
                 .collect(immutableArrayCollector());
     }
 

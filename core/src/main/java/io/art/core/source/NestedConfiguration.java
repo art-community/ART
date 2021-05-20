@@ -18,7 +18,6 @@ public interface NestedConfiguration extends ConfigurationSource {
 
     String asString();
 
-
     default Integer asInt() {
         return letIfNotEmpty(asString(), Integer::parseInt);
     }

@@ -40,24 +40,35 @@ import java.io.*;
 import java.util.function.*;
 
 @Getter
-@AllArgsConstructor
 public class YamlConfigurationSource implements NestedConfiguration {
-    private static final YAMLMapper YAML_MAPPER = new YAMLMapper();
-
+    private final YAMLMapper YAML_MAPPER = new YAMLMapper();
     private final String section;
+    private final String path;
     private final ModuleConfigurationSourceType type;
     private final Supplier<InputStream> inputStream;
+    private final ConfigurationSourceParameters parameters;
     private JsonNode configuration;
 
-    public YamlConfigurationSource(String section, ModuleConfigurationSourceType type, Supplier<InputStream> inputStream) {
-        this.section = section;
-        this.type = type;
-        this.inputStream = inputStream;
+    public YamlConfigurationSource(ConfigurationSourceParameters parameters) {
+        this.parameters = parameters;
+        this.section = parameters.getSection();
+        this.type = parameters.getType();
+        this.inputStream = parameters.getInputStream();
+        this.path = parameters.getPath();
         try {
             configuration = YAML_MAPPER.readTree(inputStream.get());
         } catch (IOException exception) {
             throw new YamlConfigurationLoadingException(exception);
         }
+    }
+
+    public YamlConfigurationSource(ConfigurationSourceParameters parameters, JsonNode configuration) {
+        this.parameters = parameters;
+        this.configuration = configuration;
+        this.section = parameters.getSection();
+        this.type = parameters.getType();
+        this.inputStream = parameters.getInputStream();
+        this.path = parameters.getPath();
     }
 
     @Override
@@ -93,7 +104,7 @@ public class YamlConfigurationSource implements NestedConfiguration {
         }
         return stream(spliterator(configuration.elements(), configuration.size(), IMMUTABLE), false)
                 .filter(YamlConfigurationSource::isValid)
-                .map(node -> new YamlConfigurationSource(section, type, inputStream, node))
+                .map(node -> new YamlConfigurationSource(parameters.toBuilder().section(EMPTY_STRING).build(), node))
                 .collect(immutableArrayCollector());
     }
 
@@ -105,14 +116,15 @@ public class YamlConfigurationSource implements NestedConfiguration {
         }
         return stream(spliterator(configuration.elements(), configuration.size(), IMMUTABLE), false)
                 .filter(YamlConfigurationSource::isValid)
-                .map(node -> mapper.apply(new YamlConfigurationSource(section, type, inputStream, node)))
+                .map(node -> mapper.apply(new YamlConfigurationSource(parameters.toBuilder().section(EMPTY_STRING).build(), node)))
                 .collect(immutableArrayCollector());
     }
 
     @Override
     public NestedConfiguration getNested(String path) {
         JsonNode configNode = getYamlConfigNode(path);
-        return orNull(configNode, YamlConfigurationSource::isValid, node -> new YamlConfigurationSource(combine(section, path), type, inputStream, node));
+        ConfigurationSourceParameters newParameters = parameters.toBuilder().section(combine(section, path)).build();
+        return orNull(configNode, YamlConfigurationSource::isValid, node -> new YamlConfigurationSource(newParameters, node));
     }
 
     @Override

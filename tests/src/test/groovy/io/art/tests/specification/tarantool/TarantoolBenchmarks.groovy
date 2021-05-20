@@ -1,7 +1,7 @@
 
 package io.art.tests.specification.tarantool
 
-import io.art.tarantool.module.TarantoolModule
+
 import io.art.tarantool.space.TarantoolSpace
 import io.art.value.immutable.Entity
 import io.art.value.immutable.Value
@@ -11,7 +11,7 @@ import io.art.tarantool.model.operation.TarantoolUpdateFieldOperation
 import spock.lang.Specification
 
 
-import static io.art.launcher.ModuleLauncher.launch
+import static io.art.launcher.Launcher.launch
 import static io.art.model.configurator.ModuleModelConfigurator.*;
 
 

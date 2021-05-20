@@ -18,14 +18,15 @@
 
 package io.art.server.constants;
 
+import io.art.core.property.*;
 import reactor.core.scheduler.*;
 import static io.art.core.constants.ThreadConstants.*;
-import static java.lang.Short.*;
+import static io.art.core.property.LazyProperty.*;
 import static reactor.core.scheduler.Schedulers.*;
 
 public interface ServerModuleConstants {
     interface Defaults {
-        Scheduler DEFAULT_SERVICE_METHOD_BLOCKING_SCHEDULER = newBoundedElastic(DEFAULT_THREAD_POOL_SIZE, Integer.MAX_VALUE, "(b):service-method");
+        LazyProperty<Scheduler> DEFAULT_SERVICE_METHOD_BLOCKING_SCHEDULER = lazy(() -> newBoundedElastic(DEFAULT_THREAD_POOL_SIZE, Integer.MAX_VALUE, "(b):service-method"));
     }
 
     interface ConfigurationKeys {

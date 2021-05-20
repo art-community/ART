@@ -39,6 +39,10 @@ public class EmptinessChecker {
         return !isEmpty(value);
     }
 
+    public static boolean isNotEmpty(Iterable<?> value) {
+        return !isEmpty(value);
+    }
+
     public static boolean isNotEmpty(byte[] content) {
         return !isEmpty(content);
     }
@@ -108,6 +112,10 @@ public class EmptinessChecker {
     public static boolean isEmpty(Object value) {
         String valAsString;
         return isNull(value) || (valAsString = value.toString().trim()).isEmpty() || (valAsString.equalsIgnoreCase(NULL_STRING));
+    }
+
+    public static boolean isEmpty(Iterable<?> value) {
+        return isNull(value) || !value.iterator().hasNext();
     }
 
     public static boolean isEmpty(Object[] content) {

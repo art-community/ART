@@ -18,12 +18,12 @@
 
 package io.art.meta;
 
+import io.art.core.annotation.*;
 import lombok.*;
-import java.util.*;
 
+@UsedByGenerator
 @Value(staticConstructor = "metaMethod")
 public class MetaMethod<T> {
     String name;
     Class<T> returnType;
-    Map<String, MetaParameter<?>> parameters;
 }

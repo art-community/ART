@@ -24,15 +24,16 @@ import io.art.scheduler.executor.deferred.*;
 import io.art.scheduler.executor.periodic.*;
 import lombok.*;
 import static io.art.scheduler.constants.SchedulerModuleConstants.ConfigurationKeys.*;
+import static io.art.scheduler.executor.deferred.DeferredExecutor.*;
 import java.time.*;
 
 @Getter
 public class SchedulerModuleConfiguration implements ModuleConfiguration {
-    private final DeferredExecutor deferredExecutor = DeferredExecutor.builder()
-            .withExceptionHandler(new DeferredExecutorExceptionHandler())
+    private final DeferredExecutor deferredExecutor = deferredExecutor()
+            .exceptionHandler(new DefaultExceptionHandler())
             .build();
-    private final PeriodicExecutor periodicExecutor = new PeriodicExecutor(DeferredExecutor.builder()
-            .withExceptionHandler(new DeferredExecutorExceptionHandler())
+    private final PeriodicExecutor periodicExecutor = new PeriodicExecutor(deferredExecutor()
+            .exceptionHandler(new DefaultExceptionHandler())
             .build());
     private Duration refreshDuration;
 

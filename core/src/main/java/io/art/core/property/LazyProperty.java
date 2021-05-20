@@ -39,6 +39,10 @@ public class LazyProperty<T> implements Supplier<T> {
         return disposable.get();
     }
 
+    public T value() {
+        return disposable.value();
+    }
+
     @Override
     public int hashCode() {
         return get().hashCode();

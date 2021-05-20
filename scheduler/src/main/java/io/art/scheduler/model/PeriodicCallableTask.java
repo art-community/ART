@@ -11,4 +11,6 @@ public class PeriodicCallableTask<T> {
     private final CallableTask<? extends T> delegate;
     private final LocalDateTime startTime;
     private final Duration period;
+    private final int order;
+    private final Runnable decrement;
 }

@@ -33,6 +33,7 @@ import static java.text.MessageFormat.*;
 import static java.util.Objects.*;
 import java.io.*;
 import java.nio.*;
+import java.nio.charset.*;
 import java.util.*;
 
 public class ProtobufWriter implements Writer<io.art.value.immutable.Value> {
@@ -47,7 +48,7 @@ public class ProtobufWriter implements Writer<io.art.value.immutable.Value> {
     }
 
     @Override
-    public void write(io.art.value.immutable.Value value, OutputStream outputStream) {
+    public void write(io.art.value.immutable.Value value, OutputStream outputStream, Charset charset) {
         if (valueIsNull(value)) {
             return;
         }

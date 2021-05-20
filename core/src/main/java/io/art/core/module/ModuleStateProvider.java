@@ -18,12 +18,6 @@
 
 package io.art.core.module;
 
-import io.art.core.exception.*;
-import static io.art.core.constants.ExceptionMessages.*;
-import static java.text.MessageFormat.*;
-
-public interface ModuleStateProvider<State extends ModuleState> extends Module {
-    default State getState() {
-        throw new InternalRuntimeException(format(MODULE_HAS_NOT_STATE, getId()));
-    }
+public interface ModuleStateProvider<State extends ModuleState> {
+    State getState();
 }

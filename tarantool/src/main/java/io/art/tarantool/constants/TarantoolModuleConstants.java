@@ -61,7 +61,7 @@ public interface TarantoolModuleConstants {
         String UNABLE_TO_CONNECT_TO_TARANTOOL_RETRY = "Unable to connect to tarantool ''{0}'' with address ''{1}''. Retrying...\n";
         String RESULT_IS_INVALID = "Response ''{0}'' returned from Tarantool can`t be converted to Entity.";
         String UNABLE_TO_GET_RESPONSE = "Unable to get response from function call.";
-        String UNKNOWN_BALANCING_METHOD = "Unknown configure balancing method: ''{0}''";
+        String UNKNOWN_BALANCING_METHOD = "Unknown processInitialization balancing method: ''{0}''";
         String NULL_REQUEST_DATA_EXCEPTION = "Request data tuple is null.";
         String TRANSACTION_FAILED = "Transaction failed with error message: ''{0}''";
         String GET_RESULT_OF_NOT_COMMITTED_TRANSACTION = "Attempt to get result of not committed transaction. Commit first.";
@@ -87,7 +87,7 @@ public interface TarantoolModuleConstants {
         String UPSERT = "art.api.upsert";
         String AUTO_INCREMENT = "art.api.autoIncrement";
 
-        String CREATE_SPACE = "art.api.space.create";
+        String CREATE_SPACE = "art.api.space.createLogger";
         String FORMAT_SPACE = "art.api.space.format";
         String CREATE_INDEX = "art.api.space.createIndex";
         String DROP_INDEX = "art.api.space.dropIndex";

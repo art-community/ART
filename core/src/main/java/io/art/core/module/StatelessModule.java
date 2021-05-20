@@ -18,15 +18,6 @@
 
 package io.art.core.module;
 
-import static io.art.core.caster.Caster.*;
-import java.util.function.*;
-
 public interface StatelessModule<Configuration extends ModuleConfiguration, Configurator extends ModuleConfigurator<Configuration, Configurator>>
-        extends ModuleConfigurationProvider<Configuration> {
-    Configurator getConfigurator();
-
-    default StatelessModule<Configuration, Configurator> configure(UnaryOperator<Configurator> configurator) {
-        configurator.apply(cast(getConfigurator()));
-        return this;
-    }
+        extends ModuleConfigurationProvider<Configuration>, Module<Configuration, Configurator> {
 }

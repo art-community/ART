@@ -27,11 +27,39 @@ import java.util.function.*;
 @UtilityClass
 public class ThreadExtensions {
     public static void thread(String name, Runnable runnable) {
-        new Thread(runnable, name).start();
+        newThread(name, runnable).start();
     }
 
     public static void thread(Runnable runnable) {
-        new Thread(runnable).start();
+        newThread(runnable).start();
+    }
+
+    public static Thread newThread(String name, Runnable runnable) {
+        return new Thread(runnable, name);
+    }
+
+    public static Thread newThread(Runnable runnable) {
+        return new Thread(runnable);
+    }
+
+    public static Thread newDaemon(String name, Runnable runnable) {
+        Thread thread = new Thread(runnable, name);
+        thread.setDaemon(true);
+        return thread;
+    }
+
+    public static Thread newDaemon(Runnable runnable) {
+        Thread thread = new Thread(runnable);
+        thread.setDaemon(true);
+        return thread;
+    }
+
+    public static void daemon(String name, Runnable runnable) {
+        newDaemon(name, runnable).start();
+    }
+
+    public static void daemon(Runnable runnable) {
+        newDaemon(runnable).start();
     }
 
     public static void block() {

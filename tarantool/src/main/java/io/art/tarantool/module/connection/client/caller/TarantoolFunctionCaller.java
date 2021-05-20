@@ -3,12 +3,12 @@ package io.art.tarantool.module.connection.client.caller;
 import io.art.tarantool.exception.TarantoolDaoException;
 import io.tarantool.driver.api.TarantoolClient;
 import lombok.Getter;
-import org.apache.logging.log4j.Logger;
+import io.art.logging.logger.Logger;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import static io.art.logging.LoggingModule.logger;
+import static io.art.logging.module.LoggingModule.logger;
 import static io.art.tarantool.constants.TarantoolModuleConstants.LoggingMessages.*;
 import static io.art.tarantool.module.TarantoolModule.tarantoolModule;
 import static java.text.MessageFormat.format;

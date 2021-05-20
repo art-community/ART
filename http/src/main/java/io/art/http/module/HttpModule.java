@@ -24,12 +24,12 @@ import io.art.http.configuration.*;
 import io.art.http.refresher.*;
 import io.art.http.manager.*;
 import io.art.http.state.*;
+import io.art.logging.logger.*;
 import lombok.*;
-import org.apache.logging.log4j.*;
 import reactor.netty.http.server.*;
 
 import static io.art.core.context.Context.*;
-import static io.art.logging.LoggingModule.*;
+import static io.art.logging.module.LoggingModule.*;
 import static io.art.http.configuration.HttpModuleConfiguration.*;
 import static lombok.AccessLevel.*;
 

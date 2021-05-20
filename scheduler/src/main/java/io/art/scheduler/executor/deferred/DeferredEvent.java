@@ -19,10 +19,11 @@
 package io.art.scheduler.executor.deferred;
 
 import lombok.*;
-import static io.art.core.constants.CompilerSuppressingWarnings.*;
 import static java.lang.System.*;
 import static java.time.ZoneId.*;
 import static java.util.Comparator.*;
+import static java.util.Objects.*;
+import static lombok.AccessLevel.*;
 import java.time.*;
 import java.util.concurrent.*;
 import java.util.function.*;
@@ -30,32 +31,29 @@ import java.util.function.*;
 class DeferredEvent<EventResultType> implements Delayed {
     @Getter
     private final Future<EventResultType> task;
-    private final long triggerDateTime;
+
+    @Getter(value = PACKAGE)
+    private final long trigger;
+
+    @Getter(value = PACKAGE)
     private final int order;
 
     DeferredEvent(Future<EventResultType> task, LocalDateTime triggerDateTime, int order) {
         this.task = task;
-        this.triggerDateTime = triggerDateTime.atZone(systemDefault()).toInstant().toEpochMilli();
+        this.trigger = triggerDateTime.atZone(systemDefault()).toInstant().toEpochMilli();
         this.order = order;
     }
 
     @Override
     public long getDelay(TimeUnit unit) {
-        return unit.toNanos(triggerDateTime - currentTimeMillis());
+        return unit.toNanos(trigger - currentTimeMillis());
     }
 
     @Override
-    public int compareTo(@SuppressWarnings(NULLABLE_PROBLEMS) Delayed other) {
-        return comparingLong((ToLongFunction<DeferredEvent<?>>) DeferredEvent::getTriggerDateTime)
+    public int compareTo(Delayed other) {
+        if (isNull(other)) return 1;
+        return comparingLong((ToLongFunction<DeferredEvent<?>>) DeferredEvent::getTrigger)
                 .thenComparingInt(DeferredEvent::getOrder)
                 .compare(this, (DeferredEvent<?>) other);
-    }
-
-    long getTriggerDateTime() {
-        return triggerDateTime;
-    }
-
-    private int getOrder() {
-        return order;
     }
 }

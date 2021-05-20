@@ -66,6 +66,12 @@ public class ConfiguratorModuleConfiguration implements ModuleConfiguration {
         private final ConfiguratorModuleConfiguration configuration;
 
         @Override
+        public Configurator initialize(ConfiguratorModuleConfiguration configuration) {
+            ifNotEmpty(configuration.getCustomConfigurations(), configurations -> this.configuration.customConfigurations = configurations);
+            return this;
+        }
+
+        @Override
         public Configurator from(ConfigurationSource source) {
             configuration.sources = ImmutableMap.<ModuleConfigurationSourceType, ConfigurationSource>immutableMapBuilder()
                     .putAll(configuration.sources)
@@ -74,11 +80,5 @@ public class ConfiguratorModuleConfiguration implements ModuleConfiguration {
             return this;
         }
 
-
-        @Override
-        public Configurator configure(ConfiguratorModuleConfiguration configuration) {
-            ifNotEmpty(configuration.getCustomConfigurations(), configurations -> this.configuration.customConfigurations = configurations);
-            return this;
-        }
     }
 }

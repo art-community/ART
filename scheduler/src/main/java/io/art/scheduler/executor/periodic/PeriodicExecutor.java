@@ -19,11 +19,9 @@
 package io.art.scheduler.executor.periodic;
 
 
-import io.art.logging.*;
 import io.art.scheduler.executor.deferred.*;
 import io.art.scheduler.model.*;
 import lombok.*;
-import org.apache.logging.log4j.*;
 import static io.art.core.caster.Caster.*;
 import static io.art.core.checker.NullityChecker.*;
 import static io.art.core.factory.MapFactory.*;
@@ -31,25 +29,33 @@ import static java.util.Objects.*;
 import java.time.*;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
 import java.util.function.*;
 
 @RequiredArgsConstructor
 public class PeriodicExecutor {
-    private final Map<String, ForkJoinTask<?>> executingTasks = concurrentMap();
-    private final Map<String, ForkJoinTask<?>> cancelledTasks = concurrentMap();
+    private final Map<String, Future<?>> executingTasks = concurrentMap();
+    private final Map<String, Future<?>> cancelledTasks = concurrentMap();
     private final DeferredExecutor deferredExecutor;
-    @Getter(lazy = true)
-    private final Logger logger = LoggingModule.logger(PeriodicExecutor.class);
+    private final AtomicInteger counter = new AtomicInteger();
 
     public <T> void submit(PeriodicCallableTask<? extends T> task) {
-        ForkJoinTask<? extends T> deferred = cast(executingTasks.get(task.getDelegate().getId()));
+        Future<? extends T> deferred = cast(executingTasks.get(task.getDelegate().getId()));
         if (nonNull(deferred)) return;
+        task = task.toBuilder()
+                .decrement(counter::decrementAndGet)
+                .order(counter.incrementAndGet())
+                .build();
         submitTask(task);
     }
 
     public void execute(PeriodicRunnableTask task) {
-        ForkJoinTask<?> deferred = cast(executingTasks.get(task.getDelegate().getId()));
+        Future<?> deferred = cast(executingTasks.get(task.getDelegate().getId()));
         if (nonNull(deferred)) return;
+        task = task.toBuilder()
+                .decrement(counter::decrementAndGet)
+                .order(counter.incrementAndGet())
+                .build();
         executeTask(task);
     }
 
@@ -58,7 +64,7 @@ public class PeriodicExecutor {
     }
 
     public boolean cancelTask(String taskId) {
-        ForkJoinTask<?> current = executingTasks.remove(taskId);
+        Future<?> current = executingTasks.remove(taskId);
         if (isNull(current)) return true;
         apply(cancelledTasks.put(taskId, current), task -> task.cancel(false));
         return current.cancel(false);
@@ -66,6 +72,8 @@ public class PeriodicExecutor {
 
     public void shutdown() {
         deferredExecutor.shutdown();
+        executingTasks.clear();
+        cancelledTasks.clear();
     }
 
     private void executeTask(PeriodicRunnableTask task) {
@@ -73,7 +81,7 @@ public class PeriodicExecutor {
         Consumer<LocalDateTime> repeat = time -> repeat(task, time);
         Supplier<Boolean> validate = () -> validate(id);
         RepeatableRunnable runnable = new RepeatableRunnable(validate, repeat, task);
-        executingTasks.put(id, deferredExecutor.execute(runnable, task.getStartTime()));
+        executingTasks.put(id, deferredExecutor.execute(runnable, task.getStartTime(), task.getOrder()));
     }
 
     private <T> void submitTask(PeriodicCallableTask<? extends T> task) {
@@ -81,21 +89,27 @@ public class PeriodicExecutor {
         Consumer<LocalDateTime> repeat = time -> repeat(task, time);
         Supplier<Boolean> validate = () -> validate(id);
         RepeatableCallable<? extends T> callable = new RepeatableCallable<>(validate, repeat, task);
-        executingTasks.put(id, deferredExecutor.submit(callable, task.getStartTime()));
+        executingTasks.put(id, deferredExecutor.submit(callable, task.getStartTime(), task.getOrder()));
     }
 
     private boolean validate(String id) {
-        ForkJoinTask<?> task;
+        Future<?> task;
         return isNull(task = cancelledTasks.remove(id)) || !task.isCancelled();
     }
 
     private void repeat(PeriodicRunnableTask task, LocalDateTime time) {
-        if (!validate(task.getDelegate().getId())) return;
+        if (!validate(task.getDelegate().getId())) {
+            task.getDecrement().run();
+            return;
+        }
         executeTask(task.toBuilder().startTime(time.plus(task.getPeriod())).build());
     }
 
     private void repeat(PeriodicCallableTask<?> task, LocalDateTime time) {
-        if (!validate(task.getDelegate().getId())) return;
+        if (!validate(task.getDelegate().getId())) {
+            task.getDecrement().run();
+            return;
+        }
         submitTask(task.toBuilder().startTime(time.plus(task.getPeriod())).build());
     }
 }

@@ -10,7 +10,7 @@ import io.art.tarantool.model.operation.TarantoolUpdateFieldOperation
 
 import spock.lang.Specification
 
-import static io.art.launcher.ModuleLauncher.launch
+import static io.art.launcher.Launcher.launch
 import static io.art.model.configurator.ModuleModelConfigurator.*;
 import static io.art.tarantool.configuration.space.TarantoolSpaceFormat.tarantoolSpaceFormat
 import static io.art.tarantool.configuration.space.TarantoolSpaceIndex.tarantoolSpaceIndex

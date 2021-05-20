@@ -40,4 +40,7 @@ public interface ExceptionMessages {
     String DUPLICATE_KEY = "Duplicate key {0}";
     String IMPOSSIBLE_MESSAGE = "Occurred impossible situation. Possible bug inside core or generation mechanism";
     String MANAGED_VALUE_IS_NULL = "Managed loaded value is null";
+    String UNKNOWN_PROCESSOR_ARCHITECTURE = "Unknown processor architecture: {0}";
+    String CONTEXT_NOT_INITIALIZED = "Context is not initialized";
+    String EXECUTOR_SERVICE_WAS_NOT_TERMINATED = "Executor service was not terminated during: {0}";
 }

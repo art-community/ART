@@ -21,6 +21,7 @@ dependencies {
     val vavrVersion: String by project
     val nettyVersion: String by project
     val reactorVersion: String by project
+    val jctoolsVersion: String by project
 
     api("com.google.guava", "guava", guavaVersion)
             .exclude("org.slf4j")
@@ -30,6 +31,9 @@ dependencies {
             .exclude("com.google.guava")
             .exclude("org.slf4j")
     api("io.projectreactor", "reactor-core", reactorVersion)
+            .exclude("com.google.guava")
+            .exclude("org.slf4j")
+    api("org.jctools", "jctools-core", jctoolsVersion)
             .exclude("com.google.guava")
             .exclude("org.slf4j")
 }

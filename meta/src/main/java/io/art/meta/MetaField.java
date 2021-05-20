@@ -18,10 +18,28 @@
 
 package io.art.meta;
 
+import io.art.core.annotation.*;
 import lombok.*;
+import static io.art.core.caster.Caster.*;
+import static io.art.core.extensions.CollectionExtensions.*;
+import static io.art.core.factory.MapFactory.*;
+import java.util.*;
 
-@Value(staticConstructor = "metaField")
+@Getter
+@ToString
+@EqualsAndHashCode
+@RequiredArgsConstructor(staticName = "metaField")
+@AllArgsConstructor(staticName = "metaField")
+@UsedByGenerator
 public class MetaField<T> {
-    String name;
-    Class<T> type;
+    private final String name;
+    private Class<T> type;
+
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private final Map<Class<?>, MetaField<?>> GENERIC_CACHE = map();
+
+    public <R> MetaField<R> reified(Class<R> generic) {
+        return cast(putIfAbsent(GENERIC_CACHE, generic, () -> metaField(name, generic)));
+    }
 }

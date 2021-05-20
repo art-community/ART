@@ -29,6 +29,7 @@ import static io.art.core.caster.Caster.*;
 import static io.art.value.immutable.Value.*;
 import java.io.*;
 import java.nio.*;
+import java.nio.charset.*;
 import java.util.*;
 
 @AllArgsConstructor
@@ -46,11 +47,11 @@ public class YamlWriter implements Writer<Value> {
     }
 
     @Override
-    public void write(Value value, OutputStream outputStream) {
+    public void write(Value value, OutputStream outputStream, Charset charset) {
         if (valueIsNull(value)) {
             return;
         }
-        try (YAMLGenerator generator = yamlFactory.createGenerator(outputStream)) {
+        try (YAMLGenerator generator = yamlFactory.createGenerator(new OutputStreamWriter(outputStream, charset))) {
             switch (value.getType()) {
                 case ENTITY:
                     writeYamlEntity(generator, asEntity(value));
@@ -59,28 +60,28 @@ public class YamlWriter implements Writer<Value> {
                     writeArray(generator, asArray(value));
                     return;
                 case BINARY:
-                    outputStream.write(Arrays.toString(asBinary(value).getContent()).getBytes());
+                    generator.writeBinary(asBinary(value).getContent());
                     return;
                 case STRING:
-                    outputStream.write(asPrimitive(value).getString().getBytes());
+                    generator.writeString(asPrimitive(value).getString());
                     return;
                 case LONG:
-                    outputStream.write(asPrimitive(value).getLong().toString().getBytes());
+                    generator.writeNumber(asPrimitive(value).getLong());
                     return;
                 case DOUBLE:
-                    outputStream.write(asPrimitive(value).getDouble().toString().getBytes());
+                    generator.writeNumber(asPrimitive(value).getDouble());
                     return;
                 case FLOAT:
-                    outputStream.write(asPrimitive(value).getFloat().toString().getBytes());
+                    generator.writeNumber(asPrimitive(value).getFloat());
                     return;
                 case INT:
-                    outputStream.write(asPrimitive(value).getInt().toString().getBytes());
+                    generator.writeNumber(asPrimitive(value).getInt());
                     return;
                 case BOOL:
-                    outputStream.write(asPrimitive(value).getBool().toString().getBytes());
+                    generator.writeBoolean(asPrimitive(value).getBool());
                     return;
                 case BYTE:
-                    outputStream.write(asPrimitive(value).getByte().toString().getBytes());
+                    generator.writeNumber(asPrimitive(value).getByte());
             }
         } catch (IOException ioException) {
             throw new YamlException(ioException);

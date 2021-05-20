@@ -19,13 +19,14 @@
 package io.art.core.parser;
 
 import lombok.experimental.*;
+import static io.art.core.checker.EmptinessChecker.*;
 import static java.lang.Boolean.*;
+import static java.lang.Byte.*;
 import static java.lang.Double.*;
 import static java.lang.Float.*;
 import static java.lang.Integer.*;
 import static java.lang.Long.*;
-import static io.art.core.checker.EmptinessChecker.*;
-import static java.lang.Short.parseShort;
+import static java.lang.Short.*;
 
 @UtilityClass
 public class PrimitiveParser {
@@ -91,7 +92,7 @@ public class PrimitiveParser {
         }
         return parseBoolean(string);
     }
-    
+
     public static short parseOrElse(String string, Short orElse) {
         if (isEmpty(string)) {
             return orElse;
@@ -260,7 +261,7 @@ public class PrimitiveParser {
             return null;
         }
         try {
-            return tryParseByte(string);
+            return parseByte(string);
         } catch (Throwable throwable) {
             return null;
         }
@@ -271,7 +272,7 @@ public class PrimitiveParser {
             return null;
         }
         try {
-            return tryParseShort(string);
+            return parseShort(string);
         } catch (Throwable throwable) {
             return null;
         }

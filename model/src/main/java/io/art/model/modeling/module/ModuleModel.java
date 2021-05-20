@@ -18,14 +18,12 @@
 
 package io.art.model.modeling.module;
 
-import io.art.model.customizer.*;
 import io.art.model.modeling.communicator.*;
 import io.art.model.modeling.configurator.*;
 import io.art.model.modeling.server.*;
-import io.art.model.modeling.storage.StorageModuleModel;
+import io.art.model.modeling.storage.*;
 import io.art.model.modeling.value.*;
 import lombok.*;
-import java.util.function.*;
 
 @Getter
 @Builder
@@ -40,12 +38,4 @@ public class ModuleModel {
     private final Runnable onUnload;
     private final Runnable beforeReload;
     private final Runnable afterReload;
-
-    @Builder.Default
-    private ModuleCustomizer customizer = new ModuleCustomizer();
-
-    public ModuleModel customize(UnaryOperator<ModuleCustomizer> customizer) {
-        this.customizer = customizer.apply(new ModuleCustomizer());
-        return this;
-    }
 }

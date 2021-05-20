@@ -47,11 +47,12 @@ public class JsonWriter implements Writer<Value> {
     }
 
     @Override
-    public void write(Value value, OutputStream outputStream) {
+    public void write(Value value, OutputStream outputStream, Charset charset) {
         if (valueIsNull(value)) {
             return;
         }
-        try (JsonGenerator generator = jsonFactory.createGenerator(outputStream)) {
+
+        try (JsonGenerator generator = jsonFactory.createGenerator(new OutputStreamWriter(outputStream, charset))) {
             switch (value.getType()) {
                 case ENTITY:
                     writeJsonEntity(generator, asEntity(value));

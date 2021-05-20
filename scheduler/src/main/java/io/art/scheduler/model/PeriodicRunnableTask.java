@@ -11,4 +11,6 @@ public class PeriodicRunnableTask {
     private final RunnableTask delegate;
     private final LocalDateTime startTime;
     private final Duration period;
+    private final int order;
+    private final Runnable decrement;
 }

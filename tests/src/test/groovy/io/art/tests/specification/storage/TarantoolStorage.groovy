@@ -11,7 +11,7 @@ import spock.lang.Specification
 import java.util.function.UnaryOperator
 
 import static io.art.core.constants.EmptyFunctions.emptyFunction
-import static io.art.launcher.ModuleLauncher.launch
+import static io.art.launcher.Launcher.launch
 import static io.art.model.configurator.ModuleModelConfigurator.module
 import static io.art.tarantool.configuration.space.TarantoolSpaceConfig.tarantoolSpaceConfig
 import static io.art.tarantool.configuration.space.TarantoolSpaceFormat.tarantoolSpaceFormat
@@ -40,7 +40,7 @@ class TarantoolStorage extends Specification {
         def supplier = moduleModel.storageModel.getStorages().get("Value").implement({ value -> value }, { value -> value }, { value -> value })
         def registry = new StorageSpacesRegistry()
         registry.register("Value", supplier)
-        moduleModel.customize({ custom -> custom.storage({ storage -> storage.registry(registry) }) })
+        moduleModel.initialize({ custom -> custom.storage({ storage -> storage.registry(registry) }) })
         launch moduleModel
     }
 

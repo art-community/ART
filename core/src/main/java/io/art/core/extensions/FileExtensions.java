@@ -27,6 +27,7 @@ import static io.art.core.constants.BufferConstants.*;
 import static io.art.core.constants.ExceptionMessages.*;
 import static io.art.core.constants.StringConstants.*;
 import static io.art.core.context.Context.*;
+import static io.art.core.wrapper.ExceptionWrapper.*;
 import static java.lang.System.*;
 import static java.nio.ByteBuffer.*;
 import static java.nio.channels.Channels.newInputStream;
@@ -104,21 +105,7 @@ public class FileExtensions {
     }
 
     public static String readFile(Path path, ByteBuffer buffer) {
-        StringBuilder result = new StringBuilder(EMPTY_STRING);
-        CharsetDecoder decoder = context().configuration().getCharset().newDecoder();
-        try (FileChannel fileChannel = open(path)) {
-            do {
-                fileChannel.read(buffer);
-                buffer.flip();
-                if (buffer.limit() > 1) {
-                    result.append(decoder.decode(buffer));
-                }
-                buffer.clear();
-            } while (fileChannel.position() < fileChannel.size());
-            return result.toString();
-        } catch (IOException ioException) {
-            throw new InternalRuntimeException(ioException);
-        }
+        return readFile(path, buffer, context().configuration().getCharset());
     }
 
 
@@ -315,7 +302,24 @@ public class FileExtensions {
 
     public static InputStream fileInputStream(File file) {
         try {
-            return newInputStream(open(file.toPath()));
+            return newInputStream(open(file.toPath(), READ));
+        } catch (IOException ioException) {
+            throw new InternalRuntimeException(ioException);
+        }
+    }
+
+
+    public static OutputStream fileOutputStream(String path, OpenOption... options) {
+        return fileOutputStream(get(path), options);
+    }
+
+    public static OutputStream fileOutputStream(Path path, OpenOption... options) {
+        return fileOutputStream(path.toFile(), options);
+    }
+
+    public static OutputStream fileOutputStream(File file, OpenOption... options) {
+        try {
+            return newOutputStream(open(file.toPath(), options));
         } catch (IOException ioException) {
             throw new InternalRuntimeException(ioException);
         }
@@ -323,16 +327,16 @@ public class FileExtensions {
 
 
     public static OutputStream fileOutputStream(String path) {
-        return fileOutputStream(get(path));
+        return fileOutputStream(get(path), CREATE, WRITE);
     }
 
     public static OutputStream fileOutputStream(Path path) {
-        return fileOutputStream(path.toFile());
+        return fileOutputStream(path.toFile(), CREATE, WRITE);
     }
 
     public static OutputStream fileOutputStream(File file) {
         try {
-            return newOutputStream(open(file.toPath(), CREATE, TRUNCATE_EXISTING, WRITE));
+            return newOutputStream(open(file.toPath(), CREATE, WRITE));
         } catch (IOException ioException) {
             throw new InternalRuntimeException(ioException);
         }
@@ -352,8 +356,16 @@ public class FileExtensions {
         writeFileQuietly(path, content.getBytes());
     }
 
+    public static void writeFile(Path path, String content, Charset charset) {
+        writeFileQuietly(path, content.getBytes(charset));
+    }
+
     public static void writeFileQuietly(Path path, String content) {
         writeFileQuietly(path, content.getBytes());
+    }
+
+    public static void writeFileQuietly(Path path, String content, Charset charset) {
+        writeFileQuietly(path, content.getBytes(charset));
     }
 
 

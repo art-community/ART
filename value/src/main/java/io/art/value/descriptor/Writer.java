@@ -27,6 +27,7 @@ import static io.art.core.extensions.NioBufferExtensions.*;
 import static java.nio.ByteBuffer.*;
 import java.io.*;
 import java.nio.*;
+import java.nio.charset.*;
 import java.util.function.*;
 
 public interface Writer<T extends Value> {
@@ -60,17 +61,27 @@ public interface Writer<T extends Value> {
         return toByteArray(buffer);
     }
 
-
     default String writeToString(T value) {
-        return new String(writeToBytes(value), context().configuration().getCharset());
+        return writeToString(value, context().configuration().getCharset());
     }
 
     default String writeToString(T value, ByteBuffer buffer) {
-        return new String(writeToBytes(value, buffer), context().configuration().getCharset());
+        return writeToString(value, buffer, context().configuration().getCharset());
     }
 
+    default String writeToString(T value, Charset charset) {
+        return new String(writeToBytes(value), charset);
+    }
 
-    void write(T value, OutputStream outputStream);
+    default String writeToString(T value, ByteBuffer buffer, Charset charset) {
+        return new String(writeToBytes(value, buffer), charset);
+    }
+
+    default void write(T value, OutputStream outputStream) {
+        write(value, outputStream, context().configuration().getCharset());
+    }
+
+    void write(T value, OutputStream outputStream, Charset charset);
 
     void write(T value, ByteBuffer buffer);
 

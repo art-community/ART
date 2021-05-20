@@ -3,6 +3,7 @@ package io.art.core.factory;
 import io.art.core.collection.*;
 import lombok.experimental.*;
 import static io.art.core.checker.EmptinessChecker.*;
+import static io.art.core.collection.ImmutableMap.*;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -10,6 +11,10 @@ import java.util.concurrent.*;
 public class MapFactory {
     public static <K, V> Map<K, V> map() {
         return new LinkedHashMap<>();
+    }
+
+    public static <K, V> Map<K, V> map(int capacity) {
+        return new LinkedHashMap<>(capacity);
     }
 
     public static <K, V> Map<K, V> mapOf(K key, V value) {
@@ -36,6 +41,10 @@ public class MapFactory {
         return new ImmutableMapImplementation<>(map);
     }
 
+    public static ImmutableMap<String, String> immutableMapOf(Properties properties) {
+        return properties.entrySet().stream().collect(immutableMapCollector(entry -> entry.getKey().toString(), entry -> entry.getValue().toString()));
+    }
+
     public static <K, V> ImmutableMap<K, V> immutableMapOf(ImmutableMap<K, V> map) {
         return new ImmutableMapImplementation<>(map);
     }
@@ -43,6 +52,10 @@ public class MapFactory {
 
     public static <K, V> Map<K, V> concurrentMap() {
         return new ConcurrentHashMap<>();
+    }
+
+    public static <K, V> Map<K, V> concurrentMap(int initialCapacity) {
+        return new ConcurrentHashMap<>(initialCapacity);
     }
 
     public static <K, V> Map<K, V> concurrentMapOf(K key, V value) {

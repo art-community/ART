@@ -184,6 +184,8 @@ public interface ConfigurationSource {
 
     String dump();
 
+    String getPath();
+
     interface ModuleConfigurationSourceType {
         int getOrder();
     }

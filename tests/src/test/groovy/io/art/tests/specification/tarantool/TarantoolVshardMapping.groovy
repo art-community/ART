@@ -3,13 +3,10 @@ package io.art.tests.specification.tarantool
 
 import io.art.tarantool.space.TarantoolSpace
 import io.art.tarantool.instance.TarantoolInstance
-
-import io.art.tarantool.model.operation.TarantoolUpdateFieldOperation
 import io.art.value.immutable.Entity
-import io.art.value.immutable.Value
 import spock.lang.Specification
 
-import static io.art.launcher.ModuleLauncher.launch
+import static io.art.launcher.Launcher.launch
 import static io.art.model.configurator.ModuleModelConfigurator.*;
 import static io.art.tarantool.configuration.space.TarantoolSpaceConfig.tarantoolSpaceConfig
 import static io.art.tarantool.configuration.space.TarantoolSpaceFormat.tarantoolSpaceFormat

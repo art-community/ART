@@ -20,7 +20,10 @@ package io.art.core.constants;
 
 import static java.lang.Math.*;
 import static java.lang.Runtime.*;
+import static java.time.Duration.*;
+import java.time.*;
 
 public interface ThreadConstants {
     int DEFAULT_THREAD_POOL_SIZE = max(getRuntime().availableProcessors() - 1, 2);
+    Duration DEFAULT_EXECUTOR_TERMINATION_TIMEOUT = ofMinutes(1);
 }

@@ -18,10 +18,12 @@
 
 package io.art.scheduler.exception;
 
-import lombok.*;
-
 public class SchedulerModuleException extends RuntimeException {
     public SchedulerModuleException(String message) {
         super(message);
+    }
+
+    public SchedulerModuleException(Throwable throwable) {
+        super(throwable.getMessage(), throwable);
     }
 }

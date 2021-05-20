@@ -18,8 +18,10 @@
 
 package io.art.rsocket.server;
 
+import io.art.core.exception.*;
 import io.art.core.property.*;
 import io.art.core.runnable.*;
+import io.art.logging.logger.*;
 import io.art.rsocket.configuration.*;
 import io.art.rsocket.interceptor.*;
 import io.art.rsocket.refresher.*;
@@ -31,18 +33,24 @@ import io.rsocket.plugins.*;
 import io.rsocket.transport.*;
 import io.rsocket.transport.netty.server.*;
 import lombok.*;
-import org.apache.logging.log4j.*;
 import reactor.core.*;
 import reactor.core.publisher.*;
+import reactor.netty.http.server.*;
+import reactor.netty.tcp.*;
 import static io.art.core.checker.NullityChecker.*;
 import static io.art.core.property.Property.*;
 import static io.art.core.wrapper.ExceptionWrapper.*;
-import static io.art.logging.LoggingModule.*;
+import static io.art.logging.module.LoggingModule.*;
 import static io.art.rsocket.constants.RsocketModuleConstants.LoggingMessages.*;
 import static io.art.rsocket.constants.RsocketModuleConstants.*;
 import static io.art.rsocket.constants.RsocketModuleConstants.TransportMode.*;
 import static io.art.rsocket.manager.RsocketManager.*;
+import static java.text.MessageFormat.*;
+import static java.util.Optional.*;
 import static lombok.AccessLevel.*;
+import java.net.*;
+import java.util.*;
+import java.util.function.*;
 
 @RequiredArgsConstructor
 public class RsocketServer implements Server {
@@ -85,6 +93,9 @@ public class RsocketServer implements Server {
             server.fragment(fragmentationMtu);
         }
         apply(configuration.getResume(), resume -> server.resume(resume.toResume()));
+        Optional<SocketAddress> tcpAddress = ofNullable(configuration.getTcpServer()).map(TcpServer::configuration).map(TcpServerConfig::bindAddress).map(Supplier::get);
+        Optional<SocketAddress> webAddress = ofNullable(configuration.getHttpWebSocketServer()).map(HttpServer::configuration).map(HttpServerConfig::bindAddress).map(Supplier::get);
+        SocketAddress address = transportMode == TCP ? tcpAddress.orElseThrow(ImpossibleSituationException::new) : webAddress.orElseThrow(ImpossibleSituationException::new);
         ServerTransport<CloseableChannel> transport = transportMode == TCP
                 ? TcpServerTransport.create(configuration.getTcpServer(), configuration.getTcpMaxFrameLength())
                 : WebsocketServerTransport.create(configuration.getHttpWebSocketServer());
@@ -94,7 +105,7 @@ public class RsocketServer implements Server {
                 .bind(transport);
         if (configuration.isLogging()) {
             bind = bind
-                    .doOnSubscribe(subscription -> getLogger().info(SERVER_STARTED))
+                    .doOnSubscribe(subscription -> getLogger().info(format(SERVER_STARTED, address)))
                     .doOnError(throwable -> getLogger().error(throwable.getMessage(), throwable));
         }
         return bind.block();

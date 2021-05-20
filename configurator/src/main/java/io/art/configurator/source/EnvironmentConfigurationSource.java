@@ -18,17 +18,81 @@
 
 package io.art.configurator.source;
 
+import io.art.core.collection.*;
 import io.art.core.source.*;
 import lombok.*;
-import lombok.experimental.Delegate;
-import static com.typesafe.config.ConfigFactory.*;
 import static io.art.configurator.constants.ConfiguratorModuleConstants.ConfigurationSourceType.*;
+import static io.art.core.checker.EmptinessChecker.*;
+import static io.art.core.checker.NullityChecker.*;
+import static io.art.core.collection.ImmutableArray.*;
+import static io.art.core.collection.ImmutableSet.*;
 import static io.art.core.constants.StringConstants.*;
+import static io.art.core.context.Context.*;
+import static io.art.core.factory.ArrayFactory.*;
+import static io.art.core.factory.SetFactory.*;
+import static io.art.core.handler.ExceptionHandler.*;
+import static java.lang.Integer.*;
+import static java.util.Objects.*;
+import static java.util.stream.Collectors.*;
+import java.util.*;
+import java.util.function.*;
 
 @Getter
+@AllArgsConstructor
 public class EnvironmentConfigurationSource implements NestedConfiguration {
+    private final String section;
     private final ModuleConfigurationSourceType type = ENVIRONMENT;
-    @Delegate
-    private final TypesafeConfigurationSource typesafeConfigurationSource = new TypesafeConfigurationSource(EMPTY_STRING, ENVIRONMENT, systemEnvironment());
+    private final String path = type.toString();
+    private final ImmutableMap<String, String> environment = context().configuration().getEnvironment();
 
+    @Override
+    public ImmutableSet<String> getKeys() {
+        if (isEmpty(section)) {
+            return immutableSetOf(context().configuration().getEnvironment().keySet());
+        }
+        return environment.keySet().stream().filter(key -> key.startsWith(section + DASH)).collect(immutableSetCollector());
+    }
+
+    @Override
+    public NestedConfiguration getNested(String path) {
+        String newSection = path.replace(DOT, DASH);
+        if (getKeys().contains(newSection)) {
+            return new EnvironmentConfigurationSource(newSection);
+        }
+        return null;
+    }
+
+    @Override
+    public String dump() {
+        return environment.entrySet().stream().map(entry -> entry.getKey() + EQUAL + entry.getValue()).collect(joining(NEW_LINE));
+    }
+
+    @Override
+    public Boolean asBool() {
+        return let(environment.get(section), Boolean::valueOf);
+    }
+
+    @Override
+    public String asString() {
+        return environment.get(section);
+    }
+
+    @Override
+    public ImmutableArray<NestedConfiguration> asArray() {
+        List<NestedConfiguration> array = dynamicArray();
+        for (String key : environment.keySet()) {
+            if (isEmpty(section) || key.startsWith(section)) {
+                Integer index = nullIfException(() -> parseInt(key.substring(key.lastIndexOf(DASH) + 1)));
+                if (nonNull(index)) {
+                    array.add(index, getNested(key));
+                }
+            }
+        }
+        return immutableArrayOf(array);
+    }
+
+    @Override
+    public <T> ImmutableArray<T> asArray(Function<NestedConfiguration, T> mapper) {
+        return asArray().stream().map(mapper).collect(immutableArrayCollector());
+    }
 }

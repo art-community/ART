@@ -114,6 +114,9 @@ public class Property<T> implements Supplier<T> {
         changeConsumers.forEach(consumer -> consumer.accept(value));
     }
 
+    public T value() {
+        return disposable.value();
+    }
 
     @Override
     public T get() {

@@ -21,14 +21,16 @@ package io.art.core.context;
 import io.art.core.collection.*;
 import io.art.core.configuration.*;
 import io.art.core.exception.*;
-import io.art.core.module.*;
 import io.art.core.module.Module;
+import io.art.core.module.*;
 import static io.art.core.caster.Caster.*;
 import static io.art.core.checker.EmptinessChecker.*;
 import static io.art.core.checker.NullityChecker.*;
+import static io.art.core.constants.ContextConstants.UNLOAD_THREAD;
 import static io.art.core.constants.ExceptionMessages.*;
 import static io.art.core.constants.LoggingMessages.*;
 import static io.art.core.constants.StringConstants.*;
+import static io.art.core.extensions.ThreadExtensions.*;
 import static io.art.core.factory.ListFactory.*;
 import static io.art.core.factory.MapFactory.*;
 import static io.art.core.factory.SetFactory.*;
@@ -40,10 +42,8 @@ import java.util.*;
 import java.util.function.*;
 
 public class Context {
-    private static final Context DEFAULT_INSTANCE = new Context(ContextConfiguration.builder().build(), System.out::println);
     private static Context INSTANCE;
-    private final Map<String, Module> modules = map();
-    private final Map<String, ModuleDecorator<?>> configurators = map();
+    private final Map<String, Module<?, ?>> modules = map();
     private final ContextConfiguration configuration;
     private final Consumer<String> printer;
     private final Service service;
@@ -54,33 +54,34 @@ public class Context {
         this.service = new Context.Service();
     }
 
-    public static void initialize(ContextConfiguration configuration, ImmutableMap<ModuleFactory<?>, ModuleDecorator<?>> initializers, Consumer<String> printer) {
+    public static void prepareInitialization(ContextConfiguration configuration, Consumer<String> printer) {
         if (nonNull(INSTANCE)) {
             throw new InternalRuntimeException(CONTEXT_ALREADY_INITIALIZED);
         }
-        Context context = new Context(configuration, printer);
-        context.load(initializers);
-        getRuntime().addShutdownHook(new Thread(context::unload));
+        INSTANCE = new Context(configuration, printer);
+        getRuntime().addShutdownHook(newThread(UNLOAD_THREAD, INSTANCE::unload));
+    }
+
+    public static void processInitialization(ImmutableSet<Module<?, ?>> modules) {
+        if (isNull(INSTANCE)) {
+            throw new InternalRuntimeException(CONTEXT_NOT_INITIALIZED);
+        }
+        INSTANCE.load(modules);
     }
 
     public static Context context() {
         if (isNull(INSTANCE)) {
-            return DEFAULT_INSTANCE;
+            throw new InternalRuntimeException(CONTEXT_NOT_INITIALIZED);
         }
         return INSTANCE;
     }
 
-
     public <C extends ModuleConfiguration> StatelessModuleProxy<C> getStatelessModule(String moduleId) {
-        Module module = modules.get(moduleId);
-        if (isNull(module)) throw new InternalRuntimeException(format(MODULE_WAS_NOT_FOUND, moduleId));
-        return new StatelessModuleProxy<>(cast(module));
+        return new StatelessModuleProxy<>(cast(getModule(moduleId)));
     }
 
     public <C extends ModuleConfiguration, S extends ModuleState> StatefulModuleProxy<C, S> getStatefulModule(String moduleId) {
-        Module module = modules.get(moduleId);
-        if (isNull(module)) throw new InternalRuntimeException(format(MODULE_WAS_NOT_FOUND, moduleId));
-        return new StatefulModuleProxy<>(cast(module));
+        return new StatefulModuleProxy<>(cast(getModule(moduleId)));
     }
 
     public Set<String> getModuleNames() {
@@ -99,17 +100,23 @@ public class Context {
     }
 
 
-    private void load(ImmutableMap<ModuleFactory<?>, ModuleDecorator<?>> modules) {
-        INSTANCE = this;
+    private Module<?, ?> getModule(String moduleId) {
+        Module<?, ?> module = modules.get(moduleId);
+        if (nonNull(module)) {
+            return module;
+        }
+        throw new InternalRuntimeException(format(MODULE_WAS_NOT_FOUND, moduleId));
+    }
+
+    private void load(ImmutableSet<Module<?, ?>> modules) {
         Set<String> messages = setOf(ART_BANNER);
-        for (Map.Entry<ModuleFactory<?>, ModuleDecorator<?>> entry : modules.entrySet()) {
-            Module module = entry.getKey().get();
-            messages.add(format(MODULE_LOADED_MESSAGE, module.getId()));
-            this.modules.put(module.getId(), entry.getValue().apply(cast(module)));
-            this.configurators.put(module.getId(), entry.getValue());
+        for (Module<?, ?> module : modules) {
+            String moduleId = module.getId();
+            messages.add(format(MODULE_LOADED_MESSAGE, moduleId));
+            this.modules.put(moduleId, module);
         }
         messages.forEach(printer);
-        for (Module module : this.modules.values()) {
+        for (Module<?, ?> module : this.modules.values()) {
             module.onLoad(service);
             ifNotEmpty(module.print(), printer);
         }
@@ -117,29 +124,29 @@ public class Context {
     }
 
     private void unload() {
-        List<Module> modules = linkedListOf(this.modules.values());
+        List<Module<?, ?>> modules = linkedListOf(this.modules.values());
         reverse(modules);
-        for (Module module : modules) {
+        for (Module<?, ?> module : modules) {
             printer.accept(format(MODULE_UNLOADED_MESSAGE, module.getId()));
             module.onUnload(service);
             this.modules.remove(module.getId());
         }
-
         apply(configuration.getOnUnload(), Runnable::run);
         INSTANCE = null;
     }
 
     public class Service {
         public void reload() {
-            for (Map.Entry<String, Module> entry : modules.entrySet()) {
-                Module module = entry.getValue();
+            for (Map.Entry<String, Module<?, ?>> entry : modules.entrySet()) {
+                Module<?, ?> module = entry.getValue();
                 printer.accept(format(MODULE_RELOADING_START_MESSAGE, module.getId()));
                 module.beforeReload(service);
-                configurators.get(entry.getKey()).apply(cast(module));
             }
             apply(configuration.getBeforeReload(), Runnable::run);
 
-            for (Module module : modules.values()) {
+            for (Module<?, ?> module : modules.values()) {
+                configuration.getReload().accept(module);
+
                 module.afterReload(service);
                 printer.accept(format(MODULE_RELOADING_END_MESSAGE, module.getId()));
             }

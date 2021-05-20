@@ -41,6 +41,10 @@ public class NettyBufferExtensions {
         return from(value.getBytes());
     }
 
+    public static ByteBuf from(String value, Charset charset) {
+        return from(value.getBytes(charset));
+    }
+
     public static ByteBuf from(byte[] array) {
         if (isEmpty(array)) {
             return EMPTY_BUFFER;

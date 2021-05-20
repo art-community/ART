@@ -35,10 +35,17 @@ class RepeatableCallable<T> implements Callable<T> {
     @Override
     public T call() {
         if (!predicate.get()) return null;
-        LocalDateTime now = now();
+        LocalDateTime now = periodicTask.getStartTime();
         T result = periodicTask.getDelegate().getAction().apply(periodicTask.getDelegate().getId());
-        if (periodicTask.getMode() == FIXED) repeat.accept(now);
-        if (periodicTask.getMode() == DELAYED) repeat.accept(now());
+        if (periodicTask.getMode() == FIXED) {
+            repeat.accept(now);
+            return result;
+        }
+        if (periodicTask.getMode() == DELAYED) {
+            repeat.accept(now());
+            return result;
+        }
+        periodicTask.getDecrement().run();
         return result;
     }
 }

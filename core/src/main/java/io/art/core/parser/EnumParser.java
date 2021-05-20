@@ -19,7 +19,7 @@
 package io.art.core.parser;
 
 import lombok.experimental.*;
-import static io.art.core.checker.EmptinessChecker.isEmpty;
+import static io.art.core.checker.EmptinessChecker.*;
 import java.util.function.*;
 
 @UtilityClass

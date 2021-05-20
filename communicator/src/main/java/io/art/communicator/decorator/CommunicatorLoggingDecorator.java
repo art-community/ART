@@ -23,8 +23,8 @@ import io.art.communicator.configuration.*;
 import io.art.core.constants.*;
 import io.art.core.model.*;
 import io.art.core.property.*;
+import io.art.logging.logger.*;
 import lombok.*;
-import org.apache.logging.log4j.*;
 import reactor.core.publisher.*;
 import static io.art.communicator.constants.CommunicatorModuleConstants.LoggingMessages.*;
 import static io.art.communicator.module.CommunicatorModule.*;
@@ -32,10 +32,9 @@ import static io.art.core.constants.CompilerSuppressingWarnings.*;
 import static io.art.core.constants.StringConstants.*;
 import static io.art.core.model.CommunicatorActionIdentifier.*;
 import static io.art.core.property.Property.*;
-import static io.art.logging.LoggingModule.*;
+import static io.art.logging.module.LoggingModule.*;
 import static java.text.MessageFormat.*;
 import static lombok.AccessLevel.*;
-import java.util.*;
 import java.util.function.*;
 
 public class CommunicatorLoggingDecorator implements UnaryOperator<Flux<Object>> {

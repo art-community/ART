@@ -1,16 +1,16 @@
 package io.art.tarantool.module.connection.client.connector;
 
+import io.art.logging.logger.*;
 import io.tarantool.driver.StandaloneTarantoolClient;
 import io.tarantool.driver.TarantoolClientConfig;
 import io.tarantool.driver.TarantoolServerAddress;
 import io.tarantool.driver.auth.SimpleTarantoolCredentials;
 import io.tarantool.driver.exceptions.*;
 import lombok.*;
-import org.apache.logging.log4j.*;
 import io.tarantool.driver.api.TarantoolClient;
 import io.art.tarantool.configuration.*;
 import io.art.tarantool.exception.*;
-import static io.art.logging.LoggingModule.*;
+import static io.art.logging.module.LoggingModule.*;
 import static io.art.tarantool.constants.TarantoolModuleConstants.LoggingMessages.TARANTOOL_CLIENT_CREATED;
 import static java.text.MessageFormat.*;
 import static lombok.AccessLevel.*;

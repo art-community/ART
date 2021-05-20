@@ -20,14 +20,14 @@ package io.art.server.decorator;
 
 import io.art.core.model.*;
 import io.art.core.property.*;
+import io.art.logging.logger.*;
 import io.art.server.configuration.*;
 import io.art.server.specification.*;
 import lombok.*;
-import org.apache.logging.log4j.*;
 import reactor.core.publisher.*;
 import static io.art.core.model.ServiceMethodIdentifier.*;
 import static io.art.core.property.Property.*;
-import static io.art.logging.LoggingModule.*;
+import static io.art.logging.module.LoggingModule.*;
 import static io.art.server.module.ServerModule.*;
 import static lombok.AccessLevel.*;
 import java.util.function.*;

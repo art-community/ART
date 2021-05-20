@@ -35,9 +35,9 @@ import java.util.function.*;
 @Getter
 @RequiredArgsConstructor
 public class ValueConfigurationSource implements NestedConfiguration {
-    @Getter
     private final String section;
     private final ModuleConfigurationSourceType type = ENTITY;
+    private final String path = type.toString();
     private final Value value;
 
     @Override

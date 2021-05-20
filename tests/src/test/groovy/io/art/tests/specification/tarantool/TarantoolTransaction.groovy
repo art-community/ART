@@ -7,7 +7,7 @@ import io.art.value.immutable.Entity
 import io.art.value.immutable.Value
 import spock.lang.Specification
 
-import static io.art.launcher.ModuleLauncher.launch
+import static io.art.launcher.Launcher.launch
 import static io.art.model.configurator.ModuleModelConfigurator.module
 import static io.art.tarantool.configuration.space.TarantoolSpaceConfig.tarantoolSpaceConfig
 import static io.art.tarantool.configuration.space.TarantoolSpaceFormat.tarantoolSpaceFormat

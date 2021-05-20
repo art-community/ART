@@ -21,7 +21,6 @@ public class DisposableProperty<T> implements Supplier<T> {
     private final List<Consumer<T>> initializationConsumers = linkedList();
     private final List<Consumer<T>> disposeConsumers = linkedList();
 
-
     public DisposableProperty<T> initialize() {
         get();
         return this;
@@ -63,7 +62,6 @@ public class DisposableProperty<T> implements Supplier<T> {
         }
     }
 
-
     @Override
     public T get() {
         while (isNull(value)) {
@@ -73,6 +71,10 @@ public class DisposableProperty<T> implements Supplier<T> {
                 initializationConsumers.forEach(consumer -> consumer.accept(value));
             }
         }
+        return value;
+    }
+
+    public T value() {
         return value;
     }
 

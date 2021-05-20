@@ -34,9 +34,16 @@ class RepeatableRunnable implements Runnable {
     @Override
     public void run() {
         if (!predicate.get()) return;
-        LocalDateTime now = now();
+        LocalDateTime now = periodicTask.getStartTime();
         periodicTask.getDelegate().getAction().accept(periodicTask.getDelegate().getId());
-        if (periodicTask.getMode() == FIXED) repeat.accept(now);
-        if (periodicTask.getMode() == DELAYED) repeat.accept(now());
+        if (periodicTask.getMode() == FIXED) {
+            repeat.accept(now);
+            return;
+        }
+        if (periodicTask.getMode() == DELAYED) {
+            repeat.accept(now());
+            return;
+        }
+        periodicTask.getDecrement().run();
     }
 }

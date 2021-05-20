@@ -25,12 +25,14 @@ import io.netty.buffer.*;
 import org.msgpack.core.*;
 import static io.art.message.pack.constants.MessagePackConstants.ExceptionMessages.*;
 import static io.art.value.immutable.Value.*;
+import static java.nio.channels.Channels.*;
 import static java.text.MessageFormat.*;
 import static java.util.Objects.*;
 import static org.msgpack.core.MessagePack.*;
 import static org.msgpack.value.ValueFactory.*;
 import java.io.*;
 import java.nio.*;
+import java.nio.charset.*;
 import java.util.*;
 
 public class MessagePackWriter implements Writer<Value> {
@@ -45,11 +47,11 @@ public class MessagePackWriter implements Writer<Value> {
     }
 
     @Override
-    public void write(Value value, OutputStream outputStream) {
+    public void write(Value value, OutputStream outputStream, Charset charset) {
         if (Value.valueIsNull(value)) {
             return;
         }
-        try (MessagePacker packer = newDefaultPacker(outputStream)) {
+        try (MessagePacker packer = newDefaultPacker(newChannel(outputStream))) {
             packer.packValue(write(value));
         } catch (Throwable throwable) {
             throw new MessagePackException(throwable);

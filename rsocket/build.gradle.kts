@@ -29,11 +29,13 @@ dependencies {
     implementation(project(":communicator"))
 
     api("io.rsocket", "rsocket-transport-netty", rsocketVersion)
+            .exclude("io.zipkin.brave")
             .exclude("io.netty")
             .exclude("io.projectreactor", "reactor-core")
             .exclude("org.slf4j")
 
     api("io.projectreactor.netty", "reactor-netty", reactorNettyVersion)
+            .exclude("io.zipkin.brave")
             .exclude("io.netty")
             .exclude("io.projectreactor", "reactor-core")
             .exclude("org.slf4j")

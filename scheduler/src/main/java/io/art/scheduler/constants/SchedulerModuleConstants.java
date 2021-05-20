@@ -19,26 +19,25 @@
 package io.art.scheduler.constants;
 
 import lombok.*;
-import static java.lang.Integer.*;
+import static io.art.core.constants.ThreadConstants.*;
+import static java.lang.Math.*;
+import static java.time.Duration.*;
+import java.time.*;
 
 public interface SchedulerModuleConstants {
     String REFRESHER_TASK = "REFRESHER_TASK";
+    String SCHEDULER_NAME = "scheduler";
+    String SCHEDULER_THREAD_NAME = "thread";
 
     enum PeriodicTaskMode {
         FIXED,
         DELAYED
     }
 
-
     interface Defaults {
-        int DEFAULT_MAX_QUEUE_SIZE = MAX_VALUE - 8;
-        long DEFAULT_SHUTDOWN_TIMEOUT = 60 * 1000;
-    }
-
-    interface LoggingMessages {
-        String DEFERRED_TASK_SUBMITTED = "Deferred task submitted at {0}";
-        String PERIODIC_TASK_SUBMITTED = "Periodic task submitted: {0} - at {1} every {2}";
-        String PERIODIC_TASK_CANCELED = "Periodic task canceled: {0}";
+        int DEFAULT_PENDING_INITIAL_CAPACITY = 11;
+        int DEFAULT_SCHEDULER_POOL_SIZE = (int) max(ceil(DEFAULT_THREAD_POOL_SIZE * 0.25), 2);
+        Duration DEFAULT_TASK_EXECUTION_TIMEOUT = ofMinutes(1);
     }
 
     interface ConfigurationKeys {
@@ -46,8 +45,10 @@ public interface SchedulerModuleConstants {
     }
 
     interface ExceptionMessages {
-        String EXCEPTION_OCCURRED_DURING = "Exception occurred during ''{0}'': {1}";
+        String EXCEPTION_OCCURRED_DURING = "Exception occurred during {0} on thread {1}: {2}";
         String AWAIT_TERMINATION_EXCEPTION = "Await termination failed";
+        String SCHEDULER_TERMINATED = "Scheduler terminated";
+        String REJECTED_EXCEPTION = "Thread pool rejected task";
 
         @Getter
         @AllArgsConstructor

@@ -43,6 +43,7 @@ import static io.rsocket.frame.FrameLengthCodec.*;
 import static io.rsocket.frame.decoder.PayloadDecoder.ZERO_COPY;
 
 @Getter
+@Builder(toBuilder = true)
 public class RsocketServerConfiguration {
     private TcpServer tcpServer;
     private HttpServer httpWebSocketServer;
@@ -59,7 +60,7 @@ public class RsocketServerConfiguration {
     private DataFormat defaultMetaDataFormat;
 
     public static RsocketServerConfiguration defaults() {
-        RsocketServerConfiguration configuration = new RsocketServerConfiguration();
+        RsocketServerConfiguration configuration = RsocketServerConfiguration.builder().build();
         configuration.defaultDataFormat = JSON;
         configuration.defaultMetaDataFormat = JSON;
         configuration.logging = false;
@@ -73,7 +74,7 @@ public class RsocketServerConfiguration {
     }
 
     public static RsocketServerConfiguration from(RsocketModuleRefresher refresher, ConfigurationSource source) {
-        RsocketServerConfiguration configuration = new RsocketServerConfiguration();
+        RsocketServerConfiguration configuration = RsocketServerConfiguration.builder().build();
 
         ChangesListener serverListener = refresher.serverListener();
         ChangesListener serverLoggingListener = refresher.serverLoggingListener();

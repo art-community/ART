@@ -19,9 +19,11 @@
 package io.art.core.module;
 
 import io.art.core.context.*;
+import static io.art.core.caster.Caster.*;
 import static io.art.core.constants.StringConstants.*;
+import java.util.function.*;
 
-public interface Module {
+public interface Module<Configuration extends ModuleConfiguration, Configurator extends ModuleConfigurator<Configuration, Configurator>> {
     String getId();
 
     default void onLoad(Context.Service contextService) {
@@ -38,5 +40,11 @@ public interface Module {
 
     default String print() {
         return EMPTY_STRING;
+    }
+
+    Configurator getConfigurator();
+
+    default void configure(UnaryOperator<Configurator> configurator) {
+        configurator.apply(cast(getConfigurator()));
     }
 }

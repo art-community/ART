@@ -19,7 +19,5 @@
 package io.art.graal.constants;
 
 public interface GraalConstants {
-    String LOG4j_SCRIPT_MANAGER_MESSAGE = "Log4j Script manager not available in GraalVM";
-
 
 }

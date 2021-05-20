@@ -133,7 +133,7 @@ public class ServerModuleConfiguration implements ModuleConfiguration {
 
         @Override
         public Configurator from(ConfigurationSource source) {
-            configuration.blockingScheduler = DEFAULT_SERVICE_METHOD_BLOCKING_SCHEDULER;
+            configuration.blockingScheduler = DEFAULT_SERVICE_METHOD_BLOCKING_SCHEDULER.get();
             configuration.reader = TransportPayloadReader::new;
             configuration.writer = TransportPayloadWriter::new;
             configuration.configurations = ofNullable(source.getNested(SERVER_SECTION))
@@ -144,7 +144,7 @@ public class ServerModuleConfiguration implements ModuleConfiguration {
         }
 
         @Override
-        public Configurator configure(ServerModuleConfiguration configuration) {
+        public Configurator initialize(ServerModuleConfiguration configuration) {
             apply(configuration.getRegistry(), registry -> this.configuration.registry = registry);
             return this;
         }

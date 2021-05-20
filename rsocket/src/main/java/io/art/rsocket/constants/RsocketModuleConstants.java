@@ -19,14 +19,16 @@
 package io.art.rsocket.constants;
 
 import io.art.communicator.constants.CommunicatorModuleConstants.*;
+import io.art.core.property.*;
 import io.rsocket.util.*;
 import lombok.*;
 import reactor.core.publisher.*;
+import static io.art.core.property.LazyProperty.*;
 import java.time.*;
 
 public interface RsocketModuleConstants {
-    public static final EmptyPayload EMPTY_PAYLOAD = EmptyPayload.INSTANCE;
-    public static final Mono<EmptyPayload> EMPTY_PAYLOAD_MONO = Mono.just(EmptyPayload.INSTANCE);
+    EmptyPayload EMPTY_PAYLOAD = EmptyPayload.INSTANCE;
+    LazyProperty<Mono<EmptyPayload>> EMPTY_PAYLOAD_MONO = lazy(() -> Mono.just(EmptyPayload.INSTANCE));
 
     interface ExceptionMessages {
         String SPECIFICATION_NOT_FOUND = "Specification was not found for service method identifiers: {0}";
@@ -35,7 +37,7 @@ public interface RsocketModuleConstants {
 
     interface LoggingMessages {
         String RSOCKET_DISPOSING = "Disposing RSocket";
-        String SERVER_STARTED = "RSocket server started";
+        String SERVER_STARTED = "RSocket server started: {0}";
         String SERVER_STOPPED = "RSocket server stopped";
         String COMMUNICATOR_STARTED = "RSocket communicator started\nConnector: {0}";
         String COMMUNICATOR_STOPPED = "RSocket communicator stopped\nConnector: {0}";

@@ -34,7 +34,7 @@ public class RsocketModuleConfiguration implements ModuleConfiguration {
     private final RsocketModuleRefresher.Consumer consumer = refresher.consumer();
 
     @Getter
-    private RsocketServerConfiguration serverConfiguration;
+    private RsocketServerConfiguration serverConfiguration = RsocketServerConfiguration.defaults();
 
     @Getter
     private RsocketCommunicatorConfiguration communicatorConfiguration;
@@ -66,9 +66,10 @@ public class RsocketModuleConfiguration implements ModuleConfiguration {
         }
 
         @Override
-        public Configurator configure(RsocketModuleConfiguration configuration) {
+        public Configurator initialize(RsocketModuleConfiguration configuration) {
             this.configuration.activateCommunicator = configuration.isActivateCommunicator();
             this.configuration.activateServer = configuration.isActivateServer();
+            this.configuration.serverConfiguration = configuration.getServerConfiguration();
             return this;
         }
     }

@@ -22,16 +22,19 @@ import java.time.*;
 import java.util.concurrent.*;
 
 public interface DeferredExecutor {
-    <EventResultType> ForkJoinTask<? extends EventResultType> submit(Callable<? extends EventResultType> eventTask, LocalDateTime triggerTime);
+    <EventResultType> Future<? extends EventResultType> submit(Callable<? extends EventResultType> eventTask, LocalDateTime triggerTime);
 
-    ForkJoinTask<?> execute(Runnable task, LocalDateTime triggerTime);
+    Future<?> execute(Runnable task, LocalDateTime triggerTime);
+
+    <EventResultType> Future<? extends EventResultType> submit(Callable<? extends EventResultType> eventTask, LocalDateTime triggerTime, int order);
+
+    Future<?> execute(Runnable task, LocalDateTime triggerTime, int order);
 
     void shutdown();
 
     void clear();
 
-    static DeferredExecutorBuilder builder() {
-        return new DeferredExecutorBuilder();
+    static DeferredExecutorImplementation.DeferredExecutorImplementationBuilder deferredExecutor() {
+        return DeferredExecutorImplementation.builder();
     }
-
 }

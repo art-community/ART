@@ -12,13 +12,13 @@ import io.art.value.immutable.Value;
 import io.art.value.mapper.*;
 import lombok.Builder;
 import lombok.Getter;
-import org.apache.logging.log4j.Logger;
+import io.art.logging.logger.Logger;
 
 import java.util.Set;
 import java.util.function.*;
 
 import static io.art.core.caster.Caster.cast;
-import static io.art.logging.LoggingModule.logger;
+import static io.art.logging.module.LoggingModule.logger;
 import static io.art.tarantool.constants.TarantoolModuleConstants.Functions.*;
 import static lombok.AccessLevel.PRIVATE;
 

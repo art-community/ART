@@ -22,5 +22,5 @@ import static io.art.scheduler.constants.SchedulerModuleConstants.ExceptionMessa
 
 @FunctionalInterface
 interface ExceptionHandler {
-    void onException(ExceptionEvent event, Throwable throwable);
+    void onException(Thread thread, ExceptionEvent event, Throwable throwable);
 }

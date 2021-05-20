@@ -20,4 +20,6 @@ package io.art.core.constants;
 
 public interface SystemProperties {
     String OS_NAME_PROPERTY = "os.name";
+    String OS_ARCH_PROPERTY = "os.arch";
+    String USER_DIR_PROPERTY = "user.dir";
 }

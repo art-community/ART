@@ -38,6 +38,7 @@ public final class CollectionExtensions {
         return condition.test(value) ? action.apply(value) : emptyList();
     }
 
+
     public static <T, R> ImmutableArray<R> orEmptyImmutableArray(T value, Predicate<T> condition, Function<T, ImmutableArray<R>> action) {
         return condition.test(value) ? immutableArrayOf(action.apply(value)) : ImmutableArray.emptyImmutableArray();
     }
@@ -50,9 +51,11 @@ public final class CollectionExtensions {
         return value != null ? immutableMapOf(action.apply(value)) : ImmutableMap.emptyImmutableMap();
     }
 
+
     public static boolean areAllUnique(Collection<?> collection) {
         return duplicates(collection, identity()).isEmpty();
     }
+
 
     public static <T> boolean hasDuplicates(Collection<T> collection, Function<T, Object> keyExtractor) {
         return !duplicates(collection, keyExtractor).isEmpty();
@@ -61,6 +64,7 @@ public final class CollectionExtensions {
     public static <T> boolean hasDuplicates(T[] array, Function<T, Object> keyExtractor) {
         return !duplicates(array, keyExtractor).isEmpty();
     }
+
 
     public static <T, K> Set<K> duplicates(T[] array, Function<T, K> keyExtractor) {
         return duplicates(fixedArrayOf(array), keyExtractor);
@@ -75,6 +79,7 @@ public final class CollectionExtensions {
                 .collect(setCollector());
     }
 
+
     public static <T> List<T> addFirstToList(T element, Collection<T> source) {
         List<T> list = dynamicArrayOf(element);
         list.addAll(source);
@@ -87,12 +92,34 @@ public final class CollectionExtensions {
         return list;
     }
 
+
+    public static <T> Set<T> addFirstToSet(T element, Collection<T> source) {
+        Set<T> set = setOf(element);
+        set.addAll(source);
+        return set;
+    }
+
+    public static <T> Set<T> addLastToSet(Collection<T> source, T element) {
+        Set<T> set = setOf(source);
+        set.add(element);
+        return set;
+    }
+
+
     @SafeVarargs
     public static <T> Set<T> addToSet(Set<T> source, T... elements) {
         Set<T> set = setOf(elements);
         set.addAll(source);
         return set;
     }
+
+    @SafeVarargs
+    public static <T> List<T> addToList(List<T> source, T... elements) {
+        List<T> list = dynamicArrayOf(elements);
+        list.addAll(source);
+        return list;
+    }
+
 
     @SafeVarargs
     public static <T> List<T> combineToList(Collection<T>... collections) {
@@ -108,6 +135,7 @@ public final class CollectionExtensions {
         return set;
     }
 
+
     public static <K, V> V putIfAbsent(Map<K, V> map, K key, Supplier<V> value) {
         V current = map.get(key);
         if (isNull(current)) {
@@ -117,6 +145,7 @@ public final class CollectionExtensions {
         }
         return current;
     }
+
 
     public static <T> void erase(Queue<T> queue, Consumer<T> elementConsumer) {
         T element;

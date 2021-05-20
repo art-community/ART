@@ -49,7 +49,7 @@ public class ServiceConfiguration {
         configuration.deactivated = deactivationListener.emit(orElse(source.getBool(DEACTIVATED_KEY), false));
         configuration.logging = loggingListener.emit(orElse(source.getBool(LOGGING_KEY), true));
         configuration.validating = validationListener.emit(orElse(source.getBool(VALIDATING_KEY), true));
-        configuration.blockingScheduler = DEFAULT_SERVICE_METHOD_BLOCKING_SCHEDULER;
+        configuration.blockingScheduler = DEFAULT_SERVICE_METHOD_BLOCKING_SCHEDULER.get();
         configuration.methods = source.getNestedMap(METHODS_KEY, method -> ServiceMethodConfiguration.from(refresher, source));
         configuration.reader = TransportPayloadReader::new;
         configuration.writer = TransportPayloadWriter::new;

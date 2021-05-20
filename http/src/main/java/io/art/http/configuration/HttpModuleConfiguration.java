@@ -66,7 +66,7 @@ public class HttpModuleConfiguration implements ModuleConfiguration {
         }
 
         @Override
-        public Configurator configure(HttpModuleConfiguration configuration) {
+        public Configurator initialize(HttpModuleConfiguration configuration) {
             this.configuration.serverConfiguration = configuration.getServerConfiguration();
             this.configuration.activateCommunicator = configuration.isActivateCommunicator();
             this.configuration.activateServer = configuration.isActivateServer();

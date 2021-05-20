@@ -75,4 +75,7 @@ public interface StringConstants {
     String MORE = ">";
     String JAVA_SOURCE_FILE_EXTENSION = ".java";
     String JAVA_CLASS_FILE_EXTENSION = ".class";
+    String FORMAT_REGEX = "\\{}";
+    Pattern FORMAT_REGEX_PATTERN = compile(FORMAT_REGEX);
+    String NEXT_ARROW = "->";
 }

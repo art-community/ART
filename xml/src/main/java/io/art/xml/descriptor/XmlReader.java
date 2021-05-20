@@ -19,14 +19,14 @@
 package io.art.xml.descriptor;
 
 import io.art.core.collection.*;
+import io.art.logging.logger.*;
 import io.art.value.descriptor.Reader;
 import io.art.value.immutable.*;
 import io.art.xml.exception.*;
 import lombok.*;
-import org.apache.logging.log4j.*;
 import static io.art.core.checker.EmptinessChecker.*;
 import static io.art.core.collection.ImmutableMap.*;
-import static io.art.logging.LoggingModule.*;
+import static io.art.logging.module.LoggingModule.*;
 import static io.art.value.immutable.XmlEntity.*;
 import static io.art.xml.constants.XmlMappingExceptionMessages.*;
 import static java.util.Objects.*;

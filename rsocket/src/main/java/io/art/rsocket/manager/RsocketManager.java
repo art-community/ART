@@ -20,15 +20,15 @@ package io.art.rsocket.manager;
 
 
 import io.art.communicator.action.*;
+import io.art.logging.logger.*;
 import io.art.rsocket.configuration.*;
 import io.art.rsocket.refresher.*;
 import io.art.rsocket.server.*;
 import lombok.*;
-import org.apache.logging.log4j.*;
 import reactor.core.*;
 import static io.art.communicator.module.CommunicatorModule.*;
 import static io.art.core.wrapper.ExceptionWrapper.*;
-import static io.art.logging.LoggingModule.*;
+import static io.art.logging.module.LoggingModule.*;
 import static io.art.rsocket.constants.RsocketModuleConstants.RsocketProtocol.*;
 import static lombok.AccessLevel.*;
 

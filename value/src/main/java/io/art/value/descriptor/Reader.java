@@ -40,7 +40,11 @@ public interface Reader<T extends Value> {
     }
 
     default T read(String string) {
-        return read(string.getBytes(context().configuration().getCharset()));
+        return read(string, context().configuration().getCharset());
+    }
+
+    default T read(String string, Charset charset) {
+        return read(string.getBytes(charset));
     }
 
     T read(InputStream input);

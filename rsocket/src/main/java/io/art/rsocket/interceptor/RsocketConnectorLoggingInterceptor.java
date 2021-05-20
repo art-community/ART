@@ -19,14 +19,14 @@
 package io.art.rsocket.interceptor;
 
 import io.art.core.property.*;
+import io.art.logging.logger.*;
 import io.art.rsocket.configuration.*;
 import io.rsocket.*;
 import io.rsocket.plugins.*;
 import lombok.*;
-import org.apache.logging.log4j.*;
 import static io.art.core.checker.NullityChecker.*;
 import static io.art.core.property.Property.*;
-import static io.art.logging.LoggingModule.*;
+import static io.art.logging.module.LoggingModule.*;
 import static io.art.rsocket.module.RsocketModule.*;
 import static lombok.AccessLevel.*;
 

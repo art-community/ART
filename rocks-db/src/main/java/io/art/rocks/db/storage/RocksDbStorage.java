@@ -83,7 +83,7 @@ public class RocksDbStorage {
         try {
             return ofNullable(messagePackModule().configuration().getReader().read(bytes));
         } catch (Throwable throwable) {
-            throw new RocksDbOperationException(MESSAGE_PACK_PARSING_ERROR, throwable);
+            throw new RocksDbException(MESSAGE_PACK_PARSING_ERROR, throwable);
         }
     }
 

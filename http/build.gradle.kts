@@ -28,6 +28,7 @@ dependencies {
     implementation(project(":communicator"))
 
     api("io.projectreactor.netty", "reactor-netty", reactorNettyVersion)
+            .exclude("io.zipkin.brave")
             .exclude("io.netty")
             .exclude("io.projectreactor", "reactor-core")
             .exclude("org.slf4j")

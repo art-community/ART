@@ -22,13 +22,13 @@ import io.art.communicator.action.*;
 import io.art.communicator.configuration.*;
 import io.art.core.model.*;
 import io.art.core.property.*;
+import io.art.logging.logger.*;
 import lombok.*;
-import org.apache.logging.log4j.*;
 import reactor.core.publisher.*;
 import static io.art.communicator.module.CommunicatorModule.*;
 import static io.art.core.model.CommunicatorActionIdentifier.*;
 import static io.art.core.property.Property.*;
-import static io.art.logging.LoggingModule.*;
+import static io.art.logging.module.LoggingModule.*;
 import static lombok.AccessLevel.*;
 import java.util.function.*;
 

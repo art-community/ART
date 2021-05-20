@@ -26,11 +26,11 @@ import io.art.core.model.*;
 import io.art.core.property.*;
 import io.art.http.configuration.*;
 import io.art.http.refresher.*;
+import io.art.logging.logger.*;
 import io.art.transport.payload.*;
 import io.art.value.immutable.Value;
 import io.netty.handler.codec.http.*;
 import lombok.*;
-import org.apache.logging.log4j.*;
 import reactor.core.publisher.*;
 import reactor.netty.http.client.*;
 import static io.art.communicator.module.CommunicatorModule.*;
@@ -38,7 +38,7 @@ import static io.art.core.constants.CompilerSuppressingWarnings.*;
 import static io.art.core.property.Property.*;
 import static io.art.http.constants.HttpModuleConstants.HttpProtocol.*;
 import static io.art.http.module.HttpModule.*;
-import static io.art.logging.LoggingModule.*;
+import static io.art.logging.module.LoggingModule.*;
 import static io.art.value.mime.MimeTypeDataFormatMapper.*;
 import static io.netty.handler.codec.http.HttpHeaderNames.*;
 import static io.netty.handler.codec.http.HttpMethod.*;
@@ -50,7 +50,7 @@ public class HttpCommunicatorAction implements CommunicatorActionImplementation 
     private final CommunicatorActionIdentifier communicatorActionId;
 
     @Getter(lazy = true, value = PRIVATE)
-    private final Logger logger = logger(HttpCommunicatorAction.class);
+    private final static Logger logger = logger(HttpCommunicatorAction.class);
 
     @Getter(lazy = true, value = PRIVATE)
     private final CommunicatorAction communicatorAction = communicatorAction();

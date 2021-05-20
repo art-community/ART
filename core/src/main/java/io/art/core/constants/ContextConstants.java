@@ -21,4 +21,5 @@ package io.art.core.constants;
 public interface ContextConstants {
     String DEFAULT_MAIN_MODULE_ID = "main-module";
     String DEFAULT_MODULE_JAR = "module.jar";
+    String UNLOAD_THREAD = "unload";
 }

@@ -28,6 +28,7 @@ dependencies {
     implementation(project(":protobuf"))
     implementation(project(":message-pack"))
     implementation(project(":xml"))
+    implementation(project(":transport"))
     implementation(project(":server"))
     implementation(project(":communicator"))
     implementation(project(":rsocket"))
@@ -36,4 +37,5 @@ dependencies {
     implementation(project(":tarantool"))
     implementation(project(":rocks-db"))
     implementation(project(":storage"))
+    implementation(project(":resilience"))
 }

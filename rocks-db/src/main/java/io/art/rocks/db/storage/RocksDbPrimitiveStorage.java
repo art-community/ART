@@ -25,7 +25,7 @@ import static io.art.core.checker.EmptinessChecker.*;
 import static io.art.core.constants.ArrayConstants.*;
 import static io.art.core.constants.StringConstants.*;
 import static io.art.core.context.Context.*;
-import static io.art.logging.LoggingModule.*;
+import static io.art.logging.module.LoggingModule.*;
 import static io.art.rocks.db.constants.RocksDbModuleConstants.ExceptionMessages.*;
 import static io.art.rocks.db.constants.RocksDbModuleConstants.LoggingMessages.*;
 import static io.art.rocks.db.module.RocksDbModule.*;
@@ -53,7 +53,7 @@ public class RocksDbPrimitiveStorage {
             }
             rocksDbModule().state().db().put(key, value);
         } catch (RocksDBException throwable) {
-            throw new RocksDbOperationException(PUT_ERROR, throwable);
+            throw new RocksDbException(PUT_ERROR, throwable);
         }
     }
 
@@ -169,7 +169,7 @@ public class RocksDbPrimitiveStorage {
             }
             rocksDbModule().state().db().merge(key, value);
         } catch (RocksDBException throwable) {
-            throw new RocksDbOperationException(MERGE_ERROR, throwable);
+            throw new RocksDbException(MERGE_ERROR, throwable);
         }
     }
 
@@ -292,7 +292,7 @@ public class RocksDbPrimitiveStorage {
             }
             return valueBytes;
         } catch (RocksDBException throwable) {
-            throw new RocksDbOperationException(GET_ERROR, throwable);
+            throw new RocksDbException(GET_ERROR, throwable);
         }
     }
 
@@ -344,7 +344,7 @@ public class RocksDbPrimitiveStorage {
             }
             rocksDbModule().state().db().delete(key);
         } catch (RocksDBException throwable) {
-            throw new RocksDbOperationException(DELETE_ERROR, throwable);
+            throw new RocksDbException(DELETE_ERROR, throwable);
         }
     }
 

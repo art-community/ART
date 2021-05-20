@@ -18,12 +18,12 @@
 
 
 dependencies {
-    val grpcVersion: String by project
+    val protobufVersion: String by project
 
     implementation(project(":core"))
     implementation(project(":value"))
 
-    api("io.grpc", "grpc-protobuf", grpcVersion)
+    api("com.google.protobuf", "protobuf-java", protobufVersion)
             .exclude("com.google.guava")
             .exclude("com.google.code.findbugs")
             .exclude("com.google.errorprone")

@@ -23,12 +23,12 @@ import io.art.communicator.action.*;
 import io.art.http.configuration.*;
 import io.art.http.refresher.*;
 import io.art.http.server.*;
+import io.art.logging.logger.*;
 import lombok.*;
-import org.apache.logging.log4j.*;
 import reactor.core.*;
 import static io.art.communicator.module.CommunicatorModule.*;
 import static io.art.core.wrapper.ExceptionWrapper.*;
-import static io.art.logging.LoggingModule.*;
+import static io.art.logging.module.LoggingModule.*;
 import static io.art.http.constants.HttpModuleConstants.HttpProtocol.*;
 import static lombok.AccessLevel.*;
 
